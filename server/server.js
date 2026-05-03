@@ -182,7 +182,32 @@ app.patch('/requests/:id/status', requireLogin, async (req, res) => {
 
   res.json(updated);
 });
+// Temporary setup route — remove after creating users
+app.get('/setup', async (req, res) => {
+  const bcrypt = require('bcrypt');
 
+  const users = [
+    { name: 'Sneha Sharma', email: 'sneha@gmail.com', password: 'sneha123', role: 'admin' },
+    { name: 'Team Agent',   email: 'agent@gmail.com', password: 'agent123', role: 'agent' }
+  ];
+
+  const results = [];
+
+  for (const user of users) {
+    const hash = await bcrypt.hash(user.password, 10);
+    try {
+      db.prepare(`
+        INSERT INTO users (name, email, password, role)
+        VALUES (?, ?, ?, ?)
+      `).run(user.name, user.email, hash, user.role);
+      results.push(`Created: ${user.email}`);
+    } catch (err) {
+      results.push(`Already exists: ${user.email}`);
+    }
+  }
+
+  res.json({ done: true, results });
+});
 // ─── START ───────────────────────────────────────────
 server.listen(PORT, () => {
   console.log(`CX Channel backend running at http://localhost:${PORT}`);
