@@ -1,6 +1,6 @@
 const API = window.location.hostname === 'localhost'
   ? 'http://localhost:3000'
-  : 'https://your-railway-app.up.railway.app';  // ← you'll fill this in after deploying
+  : 'https://cx-channel-production.up.railway.app';
 let activeFilter = 'all';
 let allRequests  = [];
 

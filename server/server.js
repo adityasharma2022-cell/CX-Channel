@@ -18,7 +18,15 @@ const io     = new Server(server, {
 const PORT = process.env.PORT || 3000;
 
 // ─── MIDDLEWARE ──────────────────────────────────────
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    'https://cx-channel-production.up.railway.app'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '..')));
