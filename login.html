@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CX Channel — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #F5F3EF;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #E2DDD6;
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 14px;
+      color: #7A7570;
+      margin-bottom: 32px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #E2DDD6;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      background: #F5F3EF;
+      margin-bottom: 16px;
+      outline: none;
+    }
+    input:focus { border-color: #888; background: #fff; }
+    button {
+      width: 100%;
+      padding: 11px;
+      background: #1A1714;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.85; }
+    .error {
+      background: #FCEBEB;
+      color: #791F1F;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .error.show { display: block; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">CX Channel</div>
+    <div class="subtitle">Sign in to access the team dashboard</div>
+
+    <div class="error" id="errorMsg"></div>
+
+    <label>Email</label>
+    <input id="email" type="email" placeholder="you@fastech.com" />
+
+    <label>Password</label>
+    <input id="password" type="password" placeholder="••••••••" />
+
+    <button onclick="login()">Sign In</button>
+  </div>
+
+  <script>
+    const API = window.location.hostname === 'localhost'
+  ? 'http://localhost:3000'
+  : 'https://your-railway-app.up.railway.app';  // ← you'll fill this in after deploying
+
+    // If already logged in, go straight to dashboard
+    fetch(`${API}/auth/me`, { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => { if (data.user) window.location.href = '/index.html'; })
+      .catch(() => {});
+
+    async function login() {
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const errorMsg = document.getElementById('errorMsg');
+
+      errorMsg.classList.remove('show');
+
+      if (!email || !password) {
+        errorMsg.textContent = 'Please enter your email and password.';
+        errorMsg.classList.add('show');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API}/auth/login`, {
+          method:      'POST',
+          headers:     { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body:        JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          errorMsg.textContent = data.error || 'Login failed.';
+          errorMsg.classList.add('show');
+          return;
+        }
+
+        // Redirect to dashboard on success
+        window.location.href = '/index.html';
+
+      } catch (err) {
+        errorMsg.textContent = 'Cannot connect to server. Is it running?';
+        errorMsg.classList.add('show');
+      }
+    }
+
+    // Allow Enter key to submit
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') login();
+    });
+  </script>
+</body>
+</html>
