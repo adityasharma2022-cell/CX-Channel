@@ -23,7 +23,8 @@ app.use(cors({
     'http://localhost:3000',
     'http://localhost:5500',
     'http://127.0.0.1:5500',
-    'https://cx-channel-production.up.railway.app'
+    'https://cx-channel-production.up.railway.app',
+    'https://YOUR-VERCEL-URL.vercel.app'   // ← paste your exact Vercel URL
   ],
   credentials: true
 }));
