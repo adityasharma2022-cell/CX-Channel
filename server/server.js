@@ -182,6 +182,17 @@ app.patch('/requests/:id/status', requireLogin, async (req, res) => {
 
   res.json(updated);
 });
+app.get('/setup', async (req, res) => {
+  const hash1 = await bcrypt.hash('sneha123', 10);
+  const hash2 = await bcrypt.hash('agent123', 10);
+  try {
+    db.prepare(`INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`).run('Sneha Sharma', 'sneha@gmail.com', hash1, 'admin');
+    db.prepare(`INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`).run('Team Agent', 'agent@gmail.com', hash2, 'agent');
+    res.json({ done: true, message: 'Users created!' });
+  } catch(e) {
+    res.json({ done: false, message: e.message });
+  }
+});
 // ─── START ───────────────────────────────────────────
 server.listen(PORT, () => {
   console.log(`CX Channel backend running at http://localhost:${PORT}`);
