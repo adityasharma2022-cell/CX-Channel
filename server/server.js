@@ -34,10 +34,14 @@ app.use(express.static(path.join(__dirname, '..')));
 
 app.use(session({
   store:             new SqliteStore({ db: 'sessions.db', dir: '.' }),
-  secret:            'cx-channel-secret-key',
+  secret:            process.env.SESSION_SECRET || 'cx-channel-secret-key',
   resave:            false,
   saveUninitialized: false,
-  cookie:            { maxAge: 1000 * 60 * 60 * 8 }
+  cookie:            { 
+    maxAge:   1000 * 60 * 60 * 8,
+    sameSite: 'none',
+    secure:   true
+  }
 }));
 
 // ─── AUTH MIDDLEWARE ─────────────────────────────────
