@@ -8,7 +8,7 @@ const http           = require('http');
 const { Server }     = require('socket.io');
 const SqliteStore    = require('connect-sqlite3')(session);
 const db             = require('./database');
-
+const bcrypt = require('bcryptjs');
 const app    = express();
 const server = http.createServer(app);
 const io     = new Server(server, {
