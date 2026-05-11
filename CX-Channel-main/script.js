@@ -26,7 +26,7 @@ async function checkLogin() {
 }
 
 // ─── SOCKET.IO ───────────────────────────────────────
-const socket = io('http://localhost:3000');
+const socket = io('https://cx-channel.onrender.com');
 
 // New request came in from a customer
 socket.on('new_request', (request) => {

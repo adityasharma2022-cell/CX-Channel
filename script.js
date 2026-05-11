@@ -1,5 +1,5 @@
 const API = window.location.hostname === 'localhost'
-  ? 'http://localhost:3000'
+  ? 'https://cx-channel.onrender.com'
   : 'https://cx-channel.onrender.com';
 let activeFilter = 'all';
 let allRequests  = [];
@@ -26,7 +26,7 @@ async function checkLogin() {
 }
 
 // ─── SOCKET.IO ───────────────────────────────────────
-const socket = io('http://localhost:3000');
+const socket = io('https://cx-channel.onrender.com');
 
 // New request came in from a customer
 socket.on('new_request', (request) => {

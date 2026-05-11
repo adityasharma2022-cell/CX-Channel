@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3000;
 // ─── MIDDLEWARE ──────────────────────────────────────
 app.use(cors({
   origin: [
-    'http://localhost:3000',
+    'https://cx-channel.onrender.com',
     'http://localhost:5500',
     'http://127.0.0.1:5500',
     'https://cx-channel.vercel.app',
