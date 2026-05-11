@@ -189,4 +189,4 @@ app.patch('/requests/:id/status', requireLogin, async (req, res) => {
 // ─── START ───────────────────────────────────────────
 server.listen(PORT, () => {
   console.log(`CX Channel backend running at http://localhost:${PORT}`);
-});
+}); 
