@@ -1,17 +1,35 @@
-const API = window.location.hostname === 'localhost'
-  ? 'https://cx-channel.onrender.com'
+const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:3000'
   : 'https://cx-channel.onrender.com';
+
 let activeFilter = 'all';
 let allRequests  = [];
+
+// ─── JWT HELPERS ─────────────────────────────────────
+function getToken() { return localStorage.getItem('cx_token'); }
+
+function authFetch(url, opts = {}) {
+  return fetch(url, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + getToken(),
+      ...(opts.headers || {})
+    }
+  });
+}
 
 // ─── CHECK LOGIN ─────────────────────────────────────
 async function checkLogin() {
   try {
-    const res  = await fetch(`${API}/auth/me`, { credentials: 'include' });
+    const token = getToken();
+    if (!token) { window.location.href = 'login.html'; return false; }
+
+    const res  = await authFetch(`${API}/auth/me`);
     const data = await res.json();
 
     if (!data.user) {
-      window.location.href = '/login.html';
+      window.location.href = 'login.html';
       return false;
     }
 
@@ -20,7 +38,7 @@ async function checkLogin() {
     return true;
 
   } catch (err) {
-    window.location.href = '/login.html';
+    window.location.href = 'login.html';
     return false;
   }
 }
@@ -28,14 +46,10 @@ async function checkLogin() {
 // ─── SOCKET.IO ───────────────────────────────────────
 const socket = io('https://cx-channel.onrender.com');
 
-// New request came in from a customer
 socket.on('new_request', (request) => {
-  // Add to top of our local array
   allRequests.unshift(request);
   renderTable();
   updateStats();
-
-  // Show a live alert banner
   showLiveBanner(
     `New request from ${request.name}`,
     `${request.id} — ${request.subject}`,
@@ -43,14 +57,11 @@ socket.on('new_request', (request) => {
   );
 });
 
-// A request status was changed
 socket.on('status_changed', (updated) => {
-  // Update the request in our local array
   const index = allRequests.findIndex(r => r.id === updated.id);
   if (index !== -1) allRequests[index] = updated;
   renderTable();
   updateStats();
-
   showLiveBanner(
     `Request ${updated.status}`,
     `${updated.id} — ${updated.name}`,
@@ -71,10 +82,10 @@ socket.on('disconnect', () => {
 // ─── LIVE BANNER ─────────────────────────────────────
 function showLiveBanner(title, desc, type) {
   const colors = {
-    new:      { bg: '#E6F1FB', color: '#0C447C',  label: 'Live' },
-    approved: { bg: '#E1F5EE', color: '#085041',  label: 'Approved' },
-    rejected: { bg: '#FCEBEB', color: '#791F1F',  label: 'Rejected' },
-    review:   { bg: '#FAEEDA', color: '#633806',  label: 'Review' }
+    new:      { bg: '#E6F1FB', color: '#0C447C', label: 'Live' },
+    approved: { bg: '#E1F5EE', color: '#085041', label: 'Approved' },
+    rejected: { bg: '#FCEBEB', color: '#791F1F', label: 'Rejected' },
+    review:   { bg: '#FAEEDA', color: '#633806', label: 'Review' }
   };
   const c = colors[type] || colors.new;
 
@@ -98,7 +109,6 @@ function showLiveBanner(title, desc, type) {
       cursor:pointer; font-size:16px; color:#7A7570; line-height:1;">✕</button>
   `;
 
-  // Add animation style once
   if (!document.getElementById('bannerStyle')) {
     const style = document.createElement('style');
     style.id = 'bannerStyle';
@@ -121,14 +131,11 @@ function showConnectionDot(connected) {
   if (!dot) {
     dot = document.createElement('div');
     dot.id = 'liveDot';
-    dot.style.cssText = `
-      display: flex; align-items: center; gap: 6px;
-      font-size: 12px; color: #7A7570;
-    `;
-    dot.innerHTML = `<span id="liveDotCircle" style="width:8px; height:8px; border-radius:50%; background:#E2DDD6; display:inline-block;"></span>
-                     <span id="liveDotText">Connecting...</span>`;
-    document.querySelector('.topbar-right') || document.querySelector('.topbar').appendChild(dot);
-    const topbarRight = document.querySelector('.topbar-right');
+    dot.style.cssText = `display: flex; align-items: center; gap: 6px; font-size: 12px; color: #7A7570;`;
+    dot.innerHTML = `
+      <span id="liveDotCircle" style="width:8px;height:8px;border-radius:50%;background:#E2DDD6;display:inline-block;"></span>
+      <span id="liveDotText">Connecting...</span>`;
+    const topbarRight = document.querySelector('.topbar-right') || document.querySelector('.topbar');
     if (topbarRight) topbarRight.prepend(dot);
   }
   document.getElementById('liveDotCircle').style.background = connected ? '#1D9E75' : '#E2DDD6';
@@ -138,17 +145,15 @@ function showConnectionDot(connected) {
 // ─── LOAD REQUESTS ───────────────────────────────────
 async function renderRequests() {
   try {
-    const url      = activeFilter === 'all'
-      ? `${API}/requests`
-      : `${API}/requests?status=${activeFilter}`;
-    const response = await fetch(url, { credentials: 'include' });
+    const url      = activeFilter === 'all' ? `${API}/requests` : `${API}/requests?status=${activeFilter}`;
+    const response = await authFetch(url);
     allRequests    = await response.json();
     renderTable();
     updateStats();
   } catch (err) {
     document.getElementById('requestsList').innerHTML = `
       <div style="padding:40px; text-align:center; color:#A32D2D; font-size:14px;">
-        Cannot connect to server. Make sure node server.js is running.
+        Cannot connect to server.
       </div>`;
   }
 }
@@ -170,12 +175,8 @@ function renderTable() {
 
   list.innerHTML = filtered.map(r => `
     <div class="table-row">
-      <div>${r.subject}<br/>
-        <small style="color:#7A7570">${r.id}</small>
-      </div>
-      <div>${r.name}<br/>
-        <small style="color:#7A7570">${r.email}</small>
-      </div>
+      <div>${r.subject}<br/><small style="color:#7A7570">${r.id}</small></div>
+      <div>${r.name}<br/><small style="color:#7A7570">${r.email}</small></div>
       <div><span class="priority-tag p-${r.priority.toLowerCase()}">${r.priority}</span></div>
       <div><span class="status-pill s-${r.status}">${r.status}</span></div>
       <div>
@@ -205,16 +206,14 @@ function filterRequests(status) {
 // ─── APPROVE ─────────────────────────────────────────
 async function approve(id) {
   try {
-    const response = await fetch(`${API}/requests/${id}/status`, {
-      method:      'PATCH',
-      headers:     { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body:        JSON.stringify({ status: 'approved' })
+    const response = await authFetch(`${API}/requests/${id}/status`, {
+      method: 'PATCH',
+      body:   JSON.stringify({ status: 'approved' })
     });
     const updated = await response.json();
     fireToasts(updated.name, updated.id, 'approved');
   } catch (err) {
-    alert('Could not approve — check that the server is running.');
+    alert('Could not approve — check server.');
   }
 }
 
@@ -236,11 +235,9 @@ async function submitRequest() {
   }
 
   try {
-    const response = await fetch(`${API}/requests`, {
-      method:      'POST',
-      headers:     { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body:        JSON.stringify({ name, email, subject, priority, details })
+    const response = await authFetch(`${API}/requests`, {
+      method: 'POST',
+      body:   JSON.stringify({ name, email, subject, priority, details })
     });
 
     if (!response.ok) {
@@ -257,33 +254,31 @@ async function submitRequest() {
     fireToasts(newRequest.name, newRequest.id, 'submitted');
 
   } catch (err) {
-    alert('Could not submit — check that node server.js is running.');
+    alert('Could not submit — check server.');
   }
 }
 
 // ─── LOGOUT ──────────────────────────────────────────
 async function logout() {
-  await fetch(`${API}/auth/logout`, {
-    method:      'POST',
-    credentials: 'include'
-  });
-  window.location.href = '/login.html';
+  localStorage.removeItem('cx_token');
+  localStorage.removeItem('cx_user');
+  window.location.href = 'login.html';
 }
 
 // ─── TOASTS ──────────────────────────────────────────
 function fireToasts(name, id, action) {
   const messages = {
     submitted: {
-      team:     { title: 'New request received',       desc: `${id} from ${name}` },
-      customer: { title: 'Request submitted!',         desc: `Hi ${name}, your request ${id} is received.` }
+      team:     { title: 'New request received',      desc: `${id} from ${name}` },
+      customer: { title: 'Request submitted!',        desc: `Hi ${name}, your request ${id} is received.` }
     },
     approved: {
-      team:     { title: 'Request approved',           desc: `${id} has been approved` },
-      customer: { title: 'Your request is approved!',  desc: `Hi ${name}, ${id} has been approved.` }
+      team:     { title: 'Request approved',          desc: `${id} has been approved` },
+      customer: { title: 'Your request is approved!', desc: `Hi ${name}, ${id} has been approved.` }
     },
     rejected: {
-      team:     { title: 'Request rejected',           desc: `${id} has been rejected` },
-      customer: { title: 'Request update',             desc: `Hi ${name}, ${id} could not be approved.` }
+      team:     { title: 'Request rejected',          desc: `${id} has been rejected` },
+      customer: { title: 'Request update',            desc: `Hi ${name}, ${id} could not be approved.` }
     }
   };
 
@@ -292,9 +287,9 @@ function fireToasts(name, id, action) {
 
   [['team', m.team], ['customer', m.customer]].forEach(([type, msg], i) => {
     setTimeout(() => {
-      const toast       = document.createElement('div');
-      toast.className   = `toast toast-${type}`;
-      toast.innerHTML   = `
+      const toast     = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `
         <div class="toast-title">${type === 'team' ? '🔵 Team' : '🟢 Customer'}: ${msg.title}</div>
         <div class="toast-desc">${msg.desc}</div>
       `;
