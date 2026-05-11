@@ -235,7 +235,8 @@ async function submitRequest() {
   }
 
   try {
-    const response = await authFetch(`${API}/requests`, {
+    const response = await fetch(`${API}/public/requests`, {
+  headers: { 'Content-Type': 'application/json' },
       method: 'POST',
       body:   JSON.stringify({ name, email, subject, priority, details })
     });
