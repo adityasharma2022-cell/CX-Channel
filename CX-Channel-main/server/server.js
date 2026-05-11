@@ -107,7 +107,6 @@ app.post('/public/requests', async (req, res) => {
 
   const newRequest = db.prepare('SELECT * FROM requests WHERE id = ?').get(id);
 
-  // Broadcast to all connected team dashboards instantly
   io.emit('new_request', newRequest);
 
   res.status(201).json(newRequest);
@@ -159,7 +158,6 @@ app.post('/requests', requireLogin, async (req, res) => {
 
   const newRequest = db.prepare('SELECT * FROM requests WHERE id = ?').get(id);
 
-  // Also broadcast team-submitted requests
   io.emit('new_request', newRequest);
 
   res.status(201).json(newRequest);
@@ -180,7 +178,6 @@ app.patch('/requests/:id/status', requireLogin, async (req, res) => {
 
   const updated = db.prepare('SELECT * FROM requests WHERE id = ?').get(req.params.id);
 
-  // Broadcast status change to all connected clients
   io.emit('status_changed', updated);
 
   res.json(updated);
@@ -193,15 +190,11 @@ app.get('/setup', async (req, res) => {
     { name: 'Sneha Sharma', email: 'sneha@gmail.com', password: 'sneha123', role: 'agent' }
   ];
 
-  db.exec(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT, email TEXT UNIQUE,
-    password TEXT, role TEXT
-  )`);
+  db.exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT UNIQUE, password TEXT, role TEXT)");
 
   for (const u of users) {
     const hash = await bcrypt.hash(u.password, 10);
-    db.prepare(`INSERT OR IGNORE INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`)
+    db.prepare("INSERT OR IGNORE INTO users (name, email, password, role) VALUES (?, ?, ?, ?)")
       .run(u.name, u.email, hash, u.role);
   }
 
