@@ -2,7 +2,7 @@ require('dotenv').config();
 const express        = require('express');
 const cors           = require('cors');
 const session        = require('express-session');
-const bcrypt         = require('bcrypt');
+
 const path           = require('path');
 const http           = require('http');
 const { Server }     = require('socket.io');
