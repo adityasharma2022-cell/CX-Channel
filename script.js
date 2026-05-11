@@ -1,6 +1,6 @@
 const API = window.location.hostname === 'localhost'
   ? 'http://localhost:3000'
-  : 'https://cx-channel-production-5994.up.railway.app';
+  : 'https://cx-channel.onrender.com';
 let activeFilter = 'all';
 let allRequests  = [];
 

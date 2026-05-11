@@ -24,7 +24,7 @@ app.use(cors({
     'http://localhost:5500',
     'http://127.0.0.1:5500',
     'https://cx-channel.vercel.app',
-    'https://cx-channel-production-5994.up.railway.app'
+    'https://cx-channel.onrender.com'
   ],
   credentials: true
 }));
