@@ -193,7 +193,7 @@ app.get('/setup', async (req, res) => {
     { name: 'Admin', email: 'admin@cx.com', password: 'admin123', role: 'admin' },
     { name: 'Sneha Sharma', email: 'sneha@gmail.com', password: 'sneha123', role: 'agent' }
   ];
-  db.exec(CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT UNIQUE, password TEXT, role TEXT));
+  db.exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT UNIQUE, password TEXT, role TEXT)");
   for (const u of users) {
     const hash = await bcrypt.hash(u.password, 10);
     db.prepare('INSERT OR IGNORE INTO users (name, email, password, role) VALUES (?, ?, ?, ?)').run(u.name, u.email, hash, u.role);
