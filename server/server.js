@@ -94,7 +94,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '..')));
+
 
 // ─── JWT AUTH MIDDLEWARE ──────────────────────────────
 function requireLogin(req, res, next) {
@@ -230,6 +230,8 @@ app.get('/test-email', async (req, res) => {
 });
 
 // ─── START ────────────────────────────────────────────
+app.use(express.static(path.join(__dirname, '..')));
+
 server.listen(PORT, () => {
   console.log('CX Channel backend running at http://localhost:' + PORT);
 });
