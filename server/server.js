@@ -213,7 +213,20 @@ app.patch('/requests/:id/status', requireLogin, (req, res) => {
   notifyCustomer(updated, status);
   res.json(updated);
 });
-
+// ─── EMAIL TEST ROUTE ─────────────────────────────────
+app.get('/test-email', async (req, res) => {
+  try {
+    await transporter.sendMail({
+      from:    '"CX Channel" <' + process.env.GMAIL_USER + '>',
+      to:      process.env.TEAM_EMAIL,
+      subject: 'CX Channel Email Test',
+      html:    '<p>Email is working! ✅</p>'
+    });
+    res.json({ success: true, sentTo: process.env.TEAM_EMAIL });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
 // ─── START ────────────────────────────────────────────
 server.listen(PORT, () => {
   console.log('CX Channel backend running at http://localhost:' + PORT);
