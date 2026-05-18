@@ -155,6 +155,10 @@ app.patch("/requests/:id/status", (req, res) => {
       return res.status(404).json({ error: "Request not found." });
     }
 
+    if (existing.status === "approved" || existing.status === "rejected") {
+      return res.status(400).json({ error: "Finalized tickets cannot be changed." });
+    }
+
     db.prepare("UPDATE requests SET status = ? WHERE id = ?").run(status, req.params.id);
 
     const updated = db.prepare("SELECT * FROM requests WHERE id = ?").get(req.params.id);

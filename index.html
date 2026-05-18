@@ -233,6 +233,13 @@
       flex-wrap: wrap;
     }
 
+    .finalized-text {
+      font-size: 12px;
+      font-weight: 800;
+      color: #6b7280;
+      padding-top: 8px;
+    }
+
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -521,8 +528,9 @@
 
   <script>
     const API = window.location.hostname.includes("onrender.com")
-  ? window.location.origin
-  : "http://localhost:3000";
+      ? window.location.origin
+      : "http://localhost:3000";
+
     let activeFilter = "all";
     let allTickets = [];
 
@@ -596,11 +604,17 @@
           </td>
 
           <td>
-            <div class="action-row">
-              <button class="btn-mini approve-btn" onclick="changeStatus('${t.id}', 'approved')">Approve</button>
-              <button class="btn-mini review-btn" onclick="changeStatus('${t.id}', 'review')">Review</button>
-              <button class="btn-mini reject-btn" onclick="changeStatus('${t.id}', 'rejected')">Reject</button>
-            </div>
+            ${
+              t.status === "approved" || t.status === "rejected"
+                ? `<div class="finalized-text">Finalized</div>`
+                : `
+                  <div class="action-row">
+                    <button class="btn-mini approve-btn" onclick="changeStatus('${t.id}', 'approved')">Approve</button>
+                    <button class="btn-mini review-btn" onclick="changeStatus('${t.id}', 'review')">Review</button>
+                    <button class="btn-mini reject-btn" onclick="changeStatus('${t.id}', 'rejected')">Reject</button>
+                  </div>
+                `
+            }
           </td>
         </tr>
       `).join("");
