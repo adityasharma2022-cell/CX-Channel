@@ -20,15 +20,18 @@ const SECRET = process.env.SESSION_SECRET || 'cx-channel-secret-key';
 
 // ─── EMAIL TRANSPORTER ───────────────────────────────
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp-relay.brevo.com',
+  port: 587,
+  secure: false,
+  family: 4,
   auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS
+    user: process.env.BREVO_USER,
+    pass: process.env.BREVO_PASS
   }
 });
 
 async function notifyTeam(request, action) {
-  if (!process.env.GMAIL_USER) return;
+  if (!process.env.BREVO_USER) return;
   const subjects = {
     submitted: 'New Request: ' + request.id,
     approved:  'Approved: '    + request.id,
@@ -36,7 +39,7 @@ async function notifyTeam(request, action) {
     review:    'Under Review: '+ request.id
   };
   await transporter.sendMail({
-    from:    '"CX Channel" <' + process.env.GMAIL_USER + '>',
+    from:    '"CX Channel" <' + process.env.BREVO_USER + '>',
     to:      process.env.TEAM_EMAIL,
     subject: subjects[action] || 'Update: ' + request.id,
     html: '<div style="font-family:sans-serif;max-width:520px;padding:24px;">'
@@ -55,7 +58,7 @@ async function notifyTeam(request, action) {
 }
 
 async function notifyCustomer(request, action) {
-  if (!process.env.GMAIL_USER) return;
+  if (!process.env.BREVO_USER) return;
   const content = {
     submitted: { subject: 'We received your request - ' + request.id, heading: 'Your request has been received!',   msg: 'Hi ' + request.name + ', thank you for reaching out. Your request has been logged and our team will review it shortly.' },
     approved:  { subject: 'Your request is approved - '  + request.id, heading: 'Great news - request approved!',    msg: 'Hi ' + request.name + ', your request has been reviewed and approved. Our team will follow up shortly.' },
@@ -64,7 +67,7 @@ async function notifyCustomer(request, action) {
   };
   const c = content[action] || content.submitted;
   await transporter.sendMail({
-    from:    '"CX Channel" <' + process.env.GMAIL_USER + '>',
+    from:    '"CX Channel" <' + process.env.BREVO_USER + '>',
     to:      request.email,
     subject: c.subject,
     html: '<div style="font-family:sans-serif;max-width:520px;padding:24px;">'
@@ -217,18 +220,39 @@ app.patch('/requests/:id/status', requireLogin, (req, res) => {
 // ─── EMAIL TEST ROUTE ────────────────────────────────
 app.get('/test-email', async (req, res) => {
   try {
-    await transporter.sendMail({
-      from:    '"CX Channel" <' + process.env.GMAIL_USER + '>',
-      to:      process.env.TEAM_EMAIL,
-      subject: 'CX Channel Email Test',
-      html:    '<p>Email is working! 2705 GMAIL_USER=' + process.env.GMAIL_USER + '</p>'
+    if (!process.env.BREVO_USER || !process.env.BREVO_PASS || !process.env.TEAM_EMAIL) {
+      return res.status(500).json({
+        success: false,
+        error: 'Missing BREVO_USER, BREVO_PASS, or TEAM_EMAIL'
+      });
+    }
+
+    const info = await Promise.race([
+      transporter.sendMail({
+        from: '"CX Channel" <' + process.env.BREVO_USER + '>',
+        to: process.env.TEAM_EMAIL,
+        subject: 'CX Channel test email',
+        html: '<p>✅ Email is working via Brevo! Sender: ' + process.env.BREVO_USER + '</p>'
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('SMTP timeout after 15 seconds')), 15000)
+      )
+    ]);
+
+    res.json({
+      success: true,
+      sentTo: process.env.TEAM_EMAIL,
+      via: 'Brevo SMTP',
+      messageId: info.messageId || null
     });
-    res.json({ success: true, sentTo: process.env.TEAM_EMAIL });
   } catch (err) {
-    res.json({ success: false, error: err.message });
+    console.error('TEST EMAIL ERROR:', err);
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
   }
 });
-
 // ─── START ────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, '..')));
 
