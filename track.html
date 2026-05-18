@@ -95,7 +95,9 @@
   </div>
 
   <script>
-    const API = "http://localhost:3000";
+    const API = window.location.hostname.includes("onrender.com")
+  ? window.location.origin
+  : "http://localhost:3000";
 
     async function trackRequest() {
       const query = document.getElementById("query").value.trim();

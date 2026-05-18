@@ -520,7 +520,9 @@
   </div>
 
   <script>
-    const API = "http://localhost:3000";
+    const API = window.location.hostname.includes("onrender.com")
+  ? window.location.origin
+  : "http://localhost:3000";
     let activeFilter = "all";
     let allTickets = [];
 
