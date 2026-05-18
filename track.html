@@ -1,95 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Track Your Request — CX Channel</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:#F5F3EF;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
-.card{background:#fff;border:1px solid #E2DDD6;border-radius:16px;padding:40px;width:100%;max-width:480px;box-shadow:0 4px 24px rgba(0,0,0,0.06)}
-.logo{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:#1A1714;margin-bottom:4px}
-.subtitle{font-size:14px;color:#7A7570;margin-bottom:32px}
-label{display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:#1A1714}
-input{width:100%;padding:10px 12px;border:1px solid #E2DDD6;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:#F5F3EF;margin-bottom:16px;outline:none;transition:border 0.15s}
-input:focus{border-color:#1A1714;background:#fff}
-button{width:100%;padding:12px;background:#1A1714;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;transition:opacity 0.15s;font-family:'DM Sans',sans-serif}
-button:hover{opacity:0.85}
-.result{margin-top:24px}
-.ticket{background:#F5F3EF;border:1px solid #E2DDD6;border-radius:12px;padding:20px;margin-bottom:12px}
-.ticket-id{font-size:12px;color:#7A7570;margin-bottom:6px}
-.ticket-subject{font-size:15px;font-weight:600;color:#1A1714;margin-bottom:12px}
-.ticket-row{display:flex;justify-content:space-between;font-size:13px;color:#7A7570;padding:4px 0;border-bottom:1px solid #E2DDD6}
-.ticket-row:last-child{border:none}
-.ticket-row span:last-child{color:#1A1714;font-weight:500}
-.status-pill{display:inline-block;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600;text-transform:capitalize}
-.s-pending{background:#FEF3C7;color:#92400E}
-.s-approved{background:#D1FAE5;color:#065F46}
-.s-rejected{background:#FEE2E2;color:#991B1B}
-.s-review{background:#DBEAFE;color:#1E40AF}
-.error{color:#A32D2D;font-size:14px;margin-top:16px;text-align:center}
-.back{display:block;text-align:center;margin-top:20px;font-size:13px;color:#7A7570;text-decoration:none}
-.back:hover{color:#1A1714}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Track Request</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Inter, sans-serif;
+      background: #f8fafc;
+      color: #111827;
+    }
+    .wrap {
+      max-width: 760px;
+      margin: 50px auto;
+      padding: 0 16px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 22px;
+      box-shadow: 0 12px 40px rgba(15, 23, 42, 0.06);
+      padding: 28px;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    p {
+      color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .search-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input {
+      flex: 1;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      padding: 13px 14px;
+      font: inherit;
+    }
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 13px 18px;
+      background: #111827;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .result {
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 16px;
+      margin-top: 12px;
+      background: #fafafa;
+    }
+    .line {
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .status {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #fef3c7;
+      color: #92400e;
+    }
+  </style>
 </head>
 <body>
-<div class="card">
-  <div class="logo">CX Channel</div>
-  <div class="subtitle">Track your request status</div>
-  <label>Request ID or Email</label>
-  <input id="query" type="text" placeholder="REQ-1234567890 or your@email.com">
-  <button onclick="track()">Track Request</button>
-  <div class="result" id="result"></div>
-</div>
-<a href="index.html" class="back">← Back to Dashboard</a>
+  <div class="wrap">
+    <div class="card">
+      <h1>Track Your Request</h1>
+      <p>Enter your short TMI ID or email address to find your request quickly.</p>
 
-<script>
-const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? 'http://localhost:3000'
-  : 'https://cx-channel.onrender.com';
-
-async function track() {
-  const q      = document.getElementById('query').value.trim();
-  const result = document.getElementById('result');
-  if (!q) { result.innerHTML = '<div class="error">Please enter a Request ID or email.</div>'; return; }
-
-  result.innerHTML = '<div style="text-align:center;color:#7A7570;font-size:14px;padding:16px;">Looking up...</div>';
-
-  try {
-    const isId  = q.startsWith('REQ-');
-    const url   = isId ? `${API}/public/track?id=${encodeURIComponent(q)}` : `${API}/public/track?email=${encodeURIComponent(q)}`;
-    const res   = await fetch(url);
-    const rows  = await res.json();
-
-    if (!rows.length) {
-      result.innerHTML = '<div class="error">No requests found for that ID or email.</div>';
-      return;
-    }
-
-    result.innerHTML = rows.map(r => `
-      <div class="ticket">
-        <div class="ticket-id">${r.id}</div>
-        <div class="ticket-subject">${r.subject}</div>
-        <div class="ticket-row"><span>Name</span><span>${r.name}</span></div>
-        <div class="ticket-row"><span>Priority</span><span>${r.priority}</span></div>
-        <div class="ticket-row"><span>Submitted</span><span>${r.date}</span></div>
-        <div class="ticket-row"><span>Status</span><span><span class="status-pill s-${r.status}">${r.status}</span></span></div>
+      <div class="search-row">
+        <input id="query" placeholder="Example: TMI-4821 or customer@email.com">
+        <button onclick="trackRequest()">Search</button>
       </div>
-    `).join('');
-  } catch (e) {
-    result.innerHTML = '<div class="error">Cannot connect to server.</div>';
-  }
-}
 
-document.getElementById('query').addEventListener('keydown', e => { if (e.key === 'Enter') track(); });
+      <div id="results"></div>
+    </div>
+  </div>
 
-// Auto-fill from URL param: track.html?id=REQ-xxx
-const params = new URLSearchParams(window.location.search);
-if (params.get('id')) {
-  document.getElementById('query').value = params.get('id');
-  track();
-}
-</script>
+  <script>
+    const API = "http://localhost:3000";
+
+    async function trackRequest() {
+      const query = document.getElementById("query").value.trim();
+      const results = document.getElementById("results");
+
+      if (!query) {
+        results.innerHTML = "<div class='result'>Please enter a TMI ID or email.</div>";
+        return;
+      }
+
+      try {
+        const isId = query.toUpperCase().startsWith("TMI-");
+        const url = isId
+          ? `${API}/public/track?id=${encodeURIComponent(query)}`
+          : `${API}/public/track?email=${encodeURIComponent(query)}`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!data.length) {
+          results.innerHTML = "<div class='result'>No request found.</div>";
+          return;
+        }
+
+        results.innerHTML = data.map(item => `
+          <div class="result">
+            <div class="line"><strong>ID:</strong> ${item.id}</div>
+            <div class="line"><strong>Customer:</strong> ${item.name || "-"}</div>
+            <div class="line"><strong>Product:</strong> ${item.product || "-"}</div>
+            <div class="line"><strong>Description:</strong> ${item.description || "-"}</div>
+            <div class="line"><strong>Status:</strong> <span class="status">${item.status}</span></div>
+          </div>
+        `).join("");
+      } catch (e) {
+        results.innerHTML = "<div class='result'>Could not fetch tracking details.</div>";
+      }
+    }
+  </script>
 </body>
 </html>
