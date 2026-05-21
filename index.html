@@ -1,298 +1,1666 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CX Channel – Team Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FASCAL - Team Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    *{box-sizing:border-box;margin:0;padding:0;}
-    :root{--bg:#f0f4f8;--surface:#ffffff;--surface2:#f8fafc;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--accent:#0ea5e9;--accent-dark:#0284c7;--success:#16a34a;--error:#dc2626;--shadow:0 4px 24px rgba(15,23,42,.07);--radius:16px;}
-    body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);}
-    .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:62px;gap:16px;}
-    .brand{display:flex;align-items:center;gap:10px;}
-    .brand-icon{width:36px;height:36px;background:linear-gradient(135deg,#0ea5e9,#0369a1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-    .brand-name{font-size:20px;font-weight:800;color:var(--text);}
-    .brand-tag{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
-    .top-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-    .user-chip{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:6px 12px 6px 8px;}
-    .user-avatar{width:26px;height:26px;background:linear-gradient(135deg,#0ea5e9,#0369a1);border-radius:999px;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
-    .user-name{font-size:13px;font-weight:700;}
-    .btn-dark,.btn-light{border:none;border-radius:12px;cursor:pointer;font-family:inherit;font-weight:700;font-size:13px;transition:.2s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;}
-    .btn-dark{background:#0f172a;color:#fff;padding:10px 16px;} .btn-dark:hover{background:#1e293b;}
-    .btn-light{background:#fff;color:var(--text);border:1px solid var(--border);padding:10px 16px;} .btn-light:hover{background:var(--surface2);}
-    .btn-csv{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;padding:9px 14px;border-radius:12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;white-space:nowrap;}
-    .btn-csv:hover{background:#dcfce7;}
-    .container{max-width:1320px;margin:26px auto;padding:0 20px 60px;}
-    .page-header{margin-bottom:22px;}
-    .page-header h1{font-size:clamp(22px,3vw,30px);font-weight:800;margin-bottom:5px;}
-    .page-header p{color:var(--muted);font-size:14px;line-height:1.6;}
-    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
-    .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
-    .stat-icon{font-size:22px;margin-bottom:8px;}
-    .stat-label{color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
-    .stat-value{font-size:32px;font-weight:800;}
-    .panel{background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow);}
-    .panel-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
-    .panel-head-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-    .chips{display:flex;gap:6px;flex-wrap:wrap;}
-    .chip{padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;transition:.2s;}
-    .chip.active{background:#0f172a;color:#fff;border-color:#0f172a;}
-    .search-input{padding:9px 14px;border:1.5px solid var(--border);border-radius:12px;font:inherit;font-size:13px;outline:none;min-width:230px;transition:border-color .2s;background:#fff;color:var(--text);}
-    .search-input:focus{border-color:var(--accent);}
-    .table-wrap{overflow-x:auto;}
-    table{width:100%;border-collapse:collapse;min-width:1100px;}
-    th,td{padding:15px 18px;text-align:left;border-bottom:1px solid #f1f5f9;vertical-align:top;font-size:14px;}
-    th{background:#fafafa;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
-    tr:last-child td{border-bottom:none;} tr:hover td{background:#fafbfc;}
-    .tid{font-size:13px;font-weight:800;margin-bottom:4px;}
-    .tsub{font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px;}
-    .customer-name{font-weight:800;cursor:pointer;text-decoration:underline;text-underline-offset:3px;transition:color .15s;}
-    .customer-name:hover{color:var(--accent);}
-    .pill{display:inline-block;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:800;text-transform:capitalize;}
-    .p-pending{background:#fef3c7;color:#92400e;} .p-review{background:#dbeafe;color:#1d4ed8;}
-    .p-approved{background:#dcfce7;color:#166534;} .p-rejected{background:#fee2e2;color:#b91c1c;}
-    .action-row{display:flex;gap:6px;flex-wrap:wrap;}
-    .abtn{padding:7px 11px;border-radius:9px;border:none;font:inherit;font-size:12px;font-weight:800;cursor:pointer;transition:.15s;}
-    .abtn-approve{background:#dcfce7;color:#166534;} .abtn-approve:hover{background:#bbf7d0;}
-    .abtn-review{background:#dbeafe;color:#1d4ed8;} .abtn-review:hover{background:#bfdbfe;}
-    .abtn-reject{background:#fee2e2;color:#b91c1c;} .abtn-reject:hover{background:#fecaca;}
-    .finalized{font-size:12px;font-weight:700;color:var(--muted);}
-    .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;padding:20px;z-index:200;}
-    .modal-bg.open{display:flex;}
-    .modal{width:100%;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 24px 60px rgba(15,23,42,.2);}
-    .modal-lg{max-width:860px;} .modal-sm{max-width:500px;}
-    .mhead{padding:20px 22px;border-bottom:1px solid var(--border);}
-    .mhead h3{font-size:20px;font-weight:800;margin-bottom:4px;}
-    .mhead p{color:var(--muted);font-size:14px;}
-    .mbody{padding:22px;max-height:72vh;overflow-y:auto;}
-    .mfoot{padding:16px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
-    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-    .field{display:flex;flex-direction:column;gap:7px;}
-    .field.full{grid-column:1/-1;}
-    label{font-size:13px;font-weight:700;color:#334155;}
-    input[type="text"],input[type="email"],select,textarea{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;font:inherit;font-size:14px;outline:none;background:#fff;transition:border-color .2s;}
-    input:focus,select:focus,textarea:focus{border-color:var(--accent);}
-    textarea{min-height:100px;resize:vertical;}
-    .detail-row{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid #f1f5f9;font-size:14px;}
-    .detail-row:last-child{border-bottom:none;}
-    .dl{font-weight:700;min-width:140px;color:#334155;flex-shrink:0;} .dv{color:var(--text);}
-    .form-error{display:none;padding:12px 14px;border-radius:11px;margin-bottom:16px;background:#fef2f2;border:1px solid #fecaca;color:var(--error);font-size:13px;font-weight:600;}
-    .form-error.show{display:flex;align-items:center;gap:8px;}
-    .empty{text-align:center;color:var(--muted);padding:36px 14px;font-size:14px;}
-    @media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr);}.form-grid{grid-template-columns:1fr;}}
-    @media(max-width:550px){.stats{grid-template-columns:1fr;}.container{padding:0 12px 30px;}}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --surface-muted: #f1f5f9;
+      --line: #e2e8f0;
+      --line-soft: #edf2f7;
+      --text: #0f172a;
+      --muted: #64748b;
+      --muted-2: #94a3b8;
+      --primary: #0f766e;
+      --primary-soft: #ecfeff;
+      --primary-border: #bae6fd;
+      --blue: #0284c7;
+      --blue-soft: #e0f2fe;
+      --green: #166534;
+      --green-soft: #dcfce7;
+      --amber: #92400e;
+      --amber-soft: #fef3c7;
+      --red: #b91c1c;
+      --red-soft: #fee2e2;
+      --shadow-sm: 0 6px 18px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 18px 50px rgba(15, 23, 42, 0.08);
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-lg: 20px;
+      --radius-xl: 24px;
+    }
+
+    body {
+      font-family: "Inter", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(2,132,199,.05), transparent 24%),
+        linear-gradient(180deg, #f8fbff 0%, #f5f7fb 42%, #f4f7fb 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 80;
+      height: 76px;
+      padding: 0 28px;
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(226,232,240,.9);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #0ea5e9, #0f766e);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 14px 32px rgba(2,132,199,.18);
+    }
+
+    .brand-mark svg { width: 20px; height: 20px; }
+
+    .brand-title {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      line-height: 1.1;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .user-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px 6px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .user-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #38bdf8, #0284c7);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .user-name {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .btn, .btn-dark, .btn-light, .btn-primary {
+      border: none;
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 14px;
+      height: 44px;
+      padding: 0 16px;
+      transition: .2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-dark {
+      background: #0f172a;
+      color: #fff;
+    }
+
+    .btn-dark:hover { background: #1e293b; }
+
+    .btn-light {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-light:hover { background: var(--surface-soft); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      color: #fff;
+      box-shadow: 0 10px 26px rgba(14,165,233,.22);
+    }
+
+    .btn-primary:hover { filter: brightness(.98); }
+
+    .container {
+      max-width: 1400px;
+      margin: 30px auto;
+      padding: 0 22px 56px;
+    }
+
+    .hero {
+      margin-bottom: 26px;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 4vw, 56px);
+      font-weight: 800;
+      letter-spacing: -.05em;
+      line-height: 1.02;
+      margin-bottom: 10px;
+    }
+
+    .hero p {
+      max-width: 760px;
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 15px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card {
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(226,232,240,.9);
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .stat-value {
+      font-size: 44px;
+      font-weight: 800;
+      letter-spacing: -.05em;
+      line-height: 1;
+    }
+
+    .active-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+      min-height: 18px;
+    }
+
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: var(--blue-soft);
+      color: #075985;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .filter-chip button {
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: inherit;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .status-tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .status-tabs button {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 14px;
+      padding: 11px 16px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: .2s ease;
+    }
+
+    .status-tabs button.active {
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 12px 24px rgba(14,165,233,.22);
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: auto;
+      position: relative;
+    }
+
+    .icon-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.94);
+      box-shadow: var(--shadow-sm);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: .2s ease;
+      position: relative;
+    }
+
+    .icon-btn:hover,
+    .icon-btn.active {
+      background: #fff;
+      border-color: var(--primary-border);
+    }
+
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+      color: var(--text);
+    }
+
+    .filter-dot {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #0ea5e9;
+      display: none;
+    }
+
+    .icon-btn.has-filters .filter-dot { display: block; }
+
+    .filter-popover {
+      position: absolute;
+      top: 60px;
+      right: 64px;
+      width: 380px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 28px 60px rgba(15,23,42,.16);
+      display: none;
+      z-index: 40;
+    }
+
+    .filter-popover.show { display: block; }
+
+    .popover-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .popover-head h3 {
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .popover-head button {
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--muted);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-bottom: 12px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1.5px solid var(--line);
+      background: #fff;
+      border-radius: 13px;
+      padding: 12px 13px;
+      font: inherit;
+      color: var(--text);
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: #7dd3fc;
+      box-shadow: 0 0 0 4px rgba(14,165,233,.1);
+    }
+
+    .popover-actions,
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .table-shell {
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(226,232,240,.9);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 18px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--line-soft);
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th {
+      background: #fbfdff;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    tr:hover td {
+      background: #fcfdff;
+    }
+
+    .ticket-link,
+    .customer-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .ticket-link {
+      color: #0284c7;
+      font-weight: 800;
+    }
+
+    .ticket-link:hover,
+    .customer-link:hover {
+      text-decoration: underline;
+    }
+
+    .customer-link {
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+      text-transform: capitalize;
+    }
+
+    .pill-pending { background: var(--amber-soft); color: var(--amber); }
+    .pill-review { background: var(--blue-soft); color: #1d4ed8; }
+    .pill-approved { background: var(--green-soft); color: var(--green); }
+    .pill-rejected { background: var(--red-soft); color: var(--red); }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .mini-btn {
+      border: none;
+      cursor: pointer;
+      border-radius: 12px;
+      padding: 9px 12px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      transition: .2s ease;
+    }
+
+    .mini-view { background: var(--blue-soft); color: #075985; }
+    .mini-review { background: #dbeafe; color: #1d4ed8; }
+    .mini-approve { background: var(--green-soft); color: var(--green); }
+    .mini-reject { background: var(--red-soft); color: var(--red); }
+
+    .empty-note {
+      padding: 18px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.52);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 120;
+    }
+
+    .modal-backdrop.show { display: flex; }
+
+    .modal {
+      width: min(1120px, 100%);
+      max-height: 92vh;
+      overflow: auto;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 34px 80px rgba(0,0,0,.24);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 22px 22px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .modal-title h2 {
+      font-size: 25px;
+      font-weight: 800;
+      letter-spacing: -.03em;
+      margin-bottom: 6px;
+    }
+
+    .modal-title p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .close-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--surface-soft);
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .modal-body {
+      padding: 20px 22px 24px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
+    }
+
+    .panel {
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+    }
+
+    .panel h3 {
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px dashed #dbe3ee;
+    }
+
+    .kv:last-child { border-bottom: none; }
+
+    .kv .k {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .kv .v {
+      font-size: 14px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .history-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .history-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .history-id {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0284c7;
+    }
+
+    .history-meta {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .customer-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .summary-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .summary-card .label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .summary-card .value {
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -.03em;
+    }
+
+    .badge-inline {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .badge-frequent {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .badge-occasional {
+      background: var(--blue-soft);
+      color: #075985;
+    }
+
+    .oem-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+
+    .oem-search {
+      min-width: 220px;
+      flex: 1 1 240px;
+      position: relative;
+    }
+
+    .oem-search input {
+      width: 100%;
+      padding: 12px 14px 12px 38px;
+      border: 1.5px solid var(--line);
+      border-radius: 13px;
+      background: #fff;
+      font: inherit;
+      outline: none;
+    }
+
+    .oem-search svg {
+      width: 16px;
+      height: 16px;
+      color: var(--muted);
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .oem-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .oem-chip {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: #334155;
+      border-radius: 999px;
+      padding: 9px 12px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .oem-chip.active {
+      background: #0f172a;
+      color: #fff;
+      border-color: #0f172a;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 200;
+      padding: 14px 18px;
+      border-radius: 14px;
+      background: #0f172a;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      box-shadow: 0 14px 34px rgba(0,0,0,.22);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: .25s ease;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1080px) {
+      .stats, .customer-summary, .grid-2 { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 760px) {
+      .topbar { padding: 0 14px; }
+      .container { padding: 0 12px 36px; }
+      .stats, .customer-summary, .grid-2, .split { grid-template-columns: 1fr; }
+      .modal-body, .modal-header { padding-left: 14px; padding-right: 14px; }
+      .kv { grid-template-columns: 1fr; }
+      .filter-popover {
+        right: 0;
+        left: 0;
+        width: 100%;
+        top: 60px;
+      }
+      th:nth-child(4), td:nth-child(4),
+      th:nth-child(5), td:nth-child(5) { display: none; }
+    }
   </style>
 </head>
 <body>
-<div class="topbar">
-  <div class="brand">
-    <div class="brand-icon">📡</div>
-    <div>
-      <div class="brand-name">CX Channel</div>
-      <div class="brand-tag">Team Dashboard</div>
-    </div>
-  </div>
-  <div class="top-right">
-    <div class="user-chip">
-      <div class="user-avatar" id="userAvatar">?</div>
-      <div class="user-name" id="userName">Loading…</div>
-    </div>
-    <button class="btn-light" onclick="logout()">Sign Out</button>
-    <button class="btn-dark" onclick="openNewModal()">+ New Request</button>
-  </div>
-</div>
-
-<div class="container">
-  <div class="page-header">
-    <h1>Approval Dashboard</h1>
-    <p>Review customer support requests, assign teams, and approve or reject tickets.</p>
-  </div>
-  <div class="stats">
-    <div class="stat"><div class="stat-icon">🎫</div><div class="stat-label">Total Tickets</div><div class="stat-value" id="sTot">0</div></div>
-    <div class="stat"><div class="stat-icon">⏳</div><div class="stat-label">Pending</div><div class="stat-value" id="sPen">0</div></div>
-    <div class="stat"><div class="stat-icon">✅</div><div class="stat-label">Approved</div><div class="stat-value" id="sApp">0</div></div>
-    <div class="stat"><div class="stat-icon">🔍</div><div class="stat-label">Under Review</div><div class="stat-value" id="sRev">0</div></div>
-  </div>
-  <div class="panel">
-    <div class="panel-head">
-      <div class="panel-head-left">
-        <div class="chips">
-          <button class="chip active" onclick="setFilter('all',this)">All</button>
-          <button class="chip" onclick="setFilter('pending',this)">Pending</button>
-          <button class="chip" onclick="setFilter('review',this)">Review</button>
-          <button class="chip" onclick="setFilter('approved',this)">Approved</button>
-          <button class="chip" onclick="setFilter('rejected',this)">Rejected</button>
-        </div>
-        <input class="search-input" id="searchInput" type="text" placeholder="Search name, ticket, product…" oninput="renderTable()"/>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 18h16"></path>
+          <path d="M6 14h12"></path>
+          <path d="M8 10h8"></path>
+          <path d="M10 6h4"></path>
+        </svg>
       </div>
-      <button class="btn-csv" onclick="downloadCSV()">⬇ Export CSV</button>
+      <div>
+        <div class="brand-title">FASCAl</div>
+        <div class="brand-subtitle">Team Dashboard</div>
+      </div>
     </div>
-    <div class="table-wrap">
+
+    <div class="top-actions">
+      <div class="user-chip">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div class="user-name" id="userName">admin</div>
+      </div>
+      <button class="btn-dark" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Requests Overview</h1>
+      <p>Review ticket activity, update request status, route work to teams, export request data, and inspect customer history with OEM-focused drill-down.</p>
+    </section>
+
+    <section class="stats">
+      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value" id="statTotal">0</div></div>
+      <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" id="statPending">0</div></div>
+      <div class="stat-card"><div class="stat-label">In Review</div><div class="stat-value" id="statReview">0</div></div>
+      <div class="stat-card"><div class="stat-label">Finalized</div><div class="stat-value" id="statFinalized">0</div></div>
+    </section>
+
+    <div class="active-filters" id="activeFilters"></div>
+
+    <section class="toolbar">
+      <div class="status-tabs">
+        <button class="active" onclick="setFilter('all', this)">All</button>
+        <button onclick="setFilter('pending', this)">Pending</button>
+        <button onclick="setFilter('review', this)">Review</button>
+        <button onclick="setFilter('approved', this)">Approved</button>
+        <button onclick="setFilter('rejected', this)">Rejected</button>
+      </div>
+
+      <div class="toolbar-right">
+        <button class="icon-btn" id="filterBtn" onclick="toggleFilterPopover()" aria-label="Open filters" title="Filters">
+          <span class="filter-dot"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 5h18l-7 8v5l-4 2v-7L3 5z"></path>
+          </svg>
+        </button>
+
+        <button class="btn-light" onclick="exportCSV()">Export CSV</button>
+
+        <div class="filter-popover" id="filterPopover">
+          <div class="popover-head">
+            <h3>Filter Requests</h3>
+            <button type="button" onclick="clearAdvancedFilters()">Clear all</button>
+          </div>
+
+          <div class="field">
+            <label for="filterSearch">Keyword Search</label>
+            <input id="filterSearch" type="text" placeholder="Ticket, customer, email, product" />
+          </div>
+
+          <div class="field">
+            <label for="filterStatus">Status</label>
+            <select id="filterStatus">
+              <option value="">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="review">Review</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="filterTeam">Forward To</label>
+            <select id="filterTeam">
+              <option value="">All routing</option>
+              <option value="operations">Operations</option>
+              <option value="service">Service</option>
+              <option value="both">Both Teams</option>
+              <option value="not assigned">Not assigned</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="filterCreated">Created Date</label>
+            <input id="filterCreated" type="date" />
+          </div>
+
+          <div class="popover-actions">
+            <button class="btn-light" type="button" onclick="closeFilterPopover()">Cancel</button>
+            <button class="btn-primary" type="button" onclick="applyAdvancedFilters()">Apply Filters</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="table-shell">
       <table>
-        <thead><tr><th>Ticket</th><th>Customer</th><th>Product</th><th>Status</th><th>Teams</th><th>Actions</th></tr></thead>
-        <tbody id="ticketRows"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+        <thead>
+          <tr>
+            <th>Ticket</th>
+            <th>Customer</th>
+            <th>Product</th>
+            <th>Forward To</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="7" class="empty-note">Loading requests…</td></tr>
+        </tbody>
       </table>
-    </div>
-  </div>
-</div>
+    </section>
+  </main>
 
-<!-- NEW REQUEST MODAL -->
-<div class="modal-bg" id="newModal">
-  <div class="modal modal-lg">
-    <div class="mhead"><h3>Create New Request</h3><p>Add an internal ticket with full customer and product details.</p></div>
-    <div class="mbody">
-      <div id="newErr" class="form-error"><span>⚠</span><span id="newErrMsg"></span></div>
-      <div class="form-grid">
-        <div class="field"><label>Customer Name *</label><input type="text" id="fName" placeholder="Full name"/></div>
-        <div class="field"><label>Phone</label><input type="text" id="fPhone" placeholder="Phone number"/></div>
-        <div class="field"><label>Email *</label><input type="email" id="fEmail" placeholder="Email address"/></div>
-        <div class="field"><label>Product *</label><input type="text" id="fProduct" placeholder="Product name"/></div>
-        <div class="field"><label>Product Details</label><input type="text" id="fPD" placeholder="OEM / variant"/></div>
-        <div class="field"><label>Serial Number</label><input type="text" id="fSN" placeholder="S/N"/></div>
-        <div class="field"><label>Operation Team</label><input type="text" id="fOp" placeholder="Operation team"/></div>
-        <div class="field"><label>Service Team</label><input type="text" id="fSvc" placeholder="Service team"/></div>
-        <div class="field"><label>Status</label>
-          <select id="fStatus"><option value="pending">Pending</option><option value="review">Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+  <div class="modal-backdrop" id="ticketModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">
+          <h2 id="modalTicketId">Ticket Details</h2>
+          <p id="modalTicketMeta">View and update complete request information.</p>
         </div>
-        <div class="field full"><label>Description *</label><textarea id="fDesc" placeholder="Describe the issue in detail"></textarea></div>
+        <button class="close-btn" onclick="closeTicketModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="grid-2">
+          <div class="panel">
+            <h3>Request Details</h3>
+            <div id="detailView"></div>
+          </div>
+
+          <div class="panel">
+            <h3>Team Actions</h3>
+
+            <div class="field">
+              <label>Status</label>
+              <select id="editStatus">
+                <option value="pending">Pending</option>
+                <option value="review">Review</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Forward To</label>
+              <select id="editForwardTo">
+                <option value="">Select team</option>
+                <option value="operations">Operations Team</option>
+                <option value="service">Service Team</option>
+                <option value="both">Both Teams</option>
+              </select>
+            </div>
+
+            <div class="split">
+              <div class="field">
+                <label>Operations Team</label>
+                <input id="editOperationTeam" placeholder="Assign operations owner" />
+              </div>
+              <div class="field">
+                <label>Service Team</label>
+                <input id="editServiceTeam" placeholder="Assign service owner" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Customer Feedback</label>
+              <textarea id="editCustomerFeedback" placeholder="Message shown to customer"></textarea>
+            </div>
+
+            <div class="field">
+              <label>Internal Note</label>
+              <textarea id="editInternalNote" placeholder="Internal team note"></textarea>
+            </div>
+
+            <div class="modal-actions">
+              <button class="btn-light" type="button" onclick="closeTicketModal()">Close</button>
+              <button class="btn-primary" type="button" onclick="saveRequest()">Save Changes</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:18px;">
+          <h3>Customer History</h3>
+          <div id="ticketCustomerHistory" class="history-list"></div>
+        </div>
       </div>
     </div>
-    <div class="mfoot">
-      <button class="btn-light" onclick="closeNewModal()">Cancel</button>
-      <button class="btn-dark" onclick="submitNewRequest()">Save Request</button>
+  </div>
+
+  <div class="modal-backdrop" id="customerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">
+          <h2 id="customerModalName">Customer Details</h2>
+          <p id="customerModalMeta">Customer profile, activity pattern, and OEM-filtered request history.</p>
+        </div>
+        <button class="close-btn" onclick="closeCustomerModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="customer-summary" id="customerSummary"></div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <h3>Customer Profile</h3>
+            <div id="customerProfile"></div>
+          </div>
+          <div class="panel">
+            <h3>Request Pattern</h3>
+            <div id="customerPattern"></div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:18px;">
+          <h3>Browse by OEM</h3>
+
+          <div class="oem-toolbar">
+            <div class="oem-search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="M20 20l-3.5-3.5"></path>
+              </svg>
+              <input id="customerOemSearch" type="text" placeholder="Search OEM or product name" oninput="renderCustomerHistory()" />
+            </div>
+
+            <div class="oem-chips" id="customerOemChips"></div>
+          </div>
+
+          <div id="customerHistoryList" class="history-list"></div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- CUSTOMER DETAIL MODAL -->
-<div class="modal-bg" id="custModal">
-  <div class="modal modal-sm">
-    <div class="mhead"><h3 id="cName">Customer</h3><p id="cTid" style="font-weight:700;color:#0369a1;"></p></div>
-    <div class="mbody">
-      <div class="detail-row"><div class="dl">Email</div><div class="dv" id="cEmail"></div></div>
-      <div class="detail-row"><div class="dl">Phone</div><div class="dv" id="cPhone"></div></div>
-      <div class="detail-row"><div class="dl">Product</div><div class="dv" id="cProduct"></div></div>
-      <div class="detail-row"><div class="dl">Serial Number</div><div class="dv" id="cSN"></div></div>
-      <div class="detail-row"><div class="dl">Status</div><div class="dv" id="cStatus"></div></div>
-      <div class="detail-row"><div class="dl">Operation Team</div><div class="dv" id="cOp"></div></div>
-      <div class="detail-row"><div class="dl">Service Team</div><div class="dv" id="cSvc"></div></div>
-      <div class="detail-row"><div class="dl">Description</div><div class="dv" id="cDesc"></div></div>
-      <div class="detail-row"><div class="dl">Created At</div><div class="dv" id="cDate"></div></div>
-    </div>
-    <div class="mfoot"><button class="btn-light" onclick="document.getElementById('custModal').classList.remove('open')">Close</button></div>
-  </div>
-</div>
+  <div class="toast" id="toast"></div>
 
-<script>
-  if(sessionStorage.getItem("cx_auth")!=="1") window.location.href="team-login.html";
-  try{
-    const u=JSON.parse(sessionStorage.getItem("cx_user")||"{}");
-    const initials=((u.firstName||"?")[0]+(u.lastName||"")[0]).toUpperCase();
-    document.getElementById("userAvatar").textContent=initials||"?";
-    document.getElementById("userName").textContent=[u.firstName,u.lastName].filter(Boolean).join(" ")||u.username||"Team";
-  }catch{}
+  <script>
+    const API = window.location.origin;
+    let allRequests = [];
+    let currentFilter = "all";
+    let currentRequest = null;
+    let currentCustomerRows = [];
+    let currentCustomerOem = "all";
 
-  const API=window.location.origin;
-  let activeFilter="all", allTickets=[];
+    const advancedFilters = {
+      keyword: "",
+      status: "",
+      team: "",
+      createdDate: ""
+    };
 
-  function logout(){sessionStorage.clear();window.location.href="team-login.html";}
-  function openNewModal(){document.getElementById("newModal").classList.add("open");}
-  function closeNewModal(){document.getElementById("newModal").classList.remove("open");document.getElementById("newErr").classList.remove("show");}
-  document.getElementById("newModal").addEventListener("click",e=>{if(e.target===document.getElementById("newModal"))closeNewModal();});
-  document.getElementById("custModal").addEventListener("click",e=>{if(e.target===document.getElementById("custModal"))document.getElementById("custModal").classList.remove("open");});
+    function getUser() {
+      try {
+        return JSON.parse(localStorage.getItem("cxUser") || "null");
+      } catch {
+        return null;
+      }
+    }
 
-  function showCustomer(json){
-    const t=JSON.parse(json);
-    document.getElementById("cName").textContent=t.name||"-";
-    document.getElementById("cTid").textContent="Ticket: "+t.id;
-    document.getElementById("cEmail").textContent=t.email||"-";
-    document.getElementById("cPhone").textContent=t.phone||"-";
-    document.getElementById("cProduct").textContent=[t.product,t.productDetails].filter(Boolean).join(" / ")||"-";
-    document.getElementById("cSN").textContent=t.serialNumber||"-";
-    document.getElementById("cStatus").textContent=t.status||"-";
-    document.getElementById("cOp").textContent=t.operationTeam||"-";
-    document.getElementById("cSvc").textContent=t.serviceTeam||"-";
-    document.getElementById("cDesc").textContent=t.description||"-";
-    document.getElementById("cDate").textContent=t.createdAt||"-";
-    document.getElementById("custModal").classList.add("open");
-  }
+    function setupUser() {
+      const user = getUser();
+      if (!user) return;
+      const name = user.username || "User";
+      document.getElementById("userName").textContent = name;
+      document.getElementById("userAvatar").textContent = name.charAt(0).toUpperCase();
+    }
 
-  function setFilter(f,el){
-    activeFilter=f;
-    document.querySelectorAll(".chip").forEach(b=>b.classList.remove("active"));
-    el.classList.add("active");renderTable();
-  }
-  function pillClass(s){return{approved:"p-approved",review:"p-review",rejected:"p-rejected",pending:"p-pending"}[s]||"p-pending";}
-  function renderStats(){
-    document.getElementById("sTot").textContent=allTickets.length;
-    document.getElementById("sPen").textContent=allTickets.filter(t=>t.status==="pending").length;
-    document.getElementById("sApp").textContent=allTickets.filter(t=>t.status==="approved").length;
-    document.getElementById("sRev").textContent=allTickets.filter(t=>t.status==="review").length;
-  }
-  function renderTable(){
-    const rows=document.getElementById("ticketRows");
-    const search=(document.getElementById("searchInput").value||"").toLowerCase().trim();
-    let filtered=activeFilter==="all"?[...allTickets]:allTickets.filter(t=>t.status===activeFilter);
-    if(search) filtered=filtered.filter(t=>(t.id||"").toLowerCase().includes(search)||(t.name||"").toLowerCase().includes(search)||(t.email||"").toLowerCase().includes(search)||(t.product||"").toLowerCase().includes(search)||(t.serialNumber||"").toLowerCase().includes(search)||(t.description||"").toLowerCase().includes(search));
-    if(!filtered.length){rows.innerHTML=`<tr><td colspan="6" class="empty">No tickets found.</td></tr>`;return;}
-    rows.innerHTML=filtered.map(t=>{
-      const safe=JSON.stringify(t).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;");
-      const fin=t.status==="approved"||t.status==="rejected";
-      return`<tr>
-        <td><div class="tid">${t.id}</div><div class="tsub">${t.createdAt||""}</div><div class="tsub">${(t.description||"").substring(0,60)}${(t.description||"").length>60?"…":""}</div></td>
-        <td><div class="customer-name" onclick='showCustomer("${safe}")'>${t.name||"-"}</div><div class="tsub">${t.email||"-"}</div><div class="tsub">${t.phone||"-"}</div></td>
-        <td><div>${t.product||"-"}</div><div class="tsub">${t.productDetails||""}</div><div class="tsub">S/N: ${t.serialNumber||"-"}</div></td>
-        <td><span class="pill ${pillClass(t.status)}">${t.status}</span></td>
-        <td><div>${t.operationTeam||"-"}</div><div class="tsub">${t.serviceTeam||"-"}</div></td>
-        <td>${fin?`<div class="finalized">Finalized</div>`:`<div class="action-row"><button class="abtn abtn-approve" onclick="chStatus('${t.id}','approved')">Approve</button><button class="abtn abtn-review" onclick="chStatus('${t.id}','review')">Review</button><button class="abtn abtn-reject" onclick="chStatus('${t.id}','rejected')">Reject</button></div>`}</td>
-      </tr>`;
-    }).join("");
-  }
-  async function loadTickets(){
-    try{
-      const res=await fetch(`${API}/requests`);
-      const data=await res.json();
-      allTickets=Array.isArray(data)?data:[];
-      renderStats();renderTable();
-    }catch{document.getElementById("ticketRows").innerHTML=`<tr><td colspan="6" class="empty" style="color:#b91c1c;">Could not connect to backend.</td></tr>`;}
-  }
-  async function submitNewRequest(){
-    const errDiv=document.getElementById("newErr"),errMsg=document.getElementById("newErrMsg");
-    errDiv.classList.remove("show");
-    const payload={name:document.getElementById("fName").value.trim(),phone:document.getElementById("fPhone").value.trim(),email:document.getElementById("fEmail").value.trim(),product:document.getElementById("fProduct").value.trim(),productDetails:document.getElementById("fPD").value.trim(),serialNumber:document.getElementById("fSN").value.trim(),description:document.getElementById("fDesc").value.trim(),operationTeam:document.getElementById("fOp").value.trim(),serviceTeam:document.getElementById("fSvc").value.trim(),status:document.getElementById("fStatus").value};
-    if(!payload.name||!payload.email||!payload.product||!payload.description){errMsg.textContent="Name, email, product and description are required.";errDiv.classList.add("show");return;}
-    try{
-      const res=await fetch(`${API}/requests`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-      const data=await res.json();
-      if(!res.ok){errMsg.textContent=data.error||"Could not save.";errDiv.classList.add("show");return;}
-      closeNewModal();
-      ["fName","fPhone","fEmail","fProduct","fPD","fSN","fDesc","fOp","fSvc"].forEach(i=>document.getElementById(i).value="");
-      document.getElementById("fStatus").value="pending";
-      await loadTickets();
-    }catch{errMsg.textContent="Could not connect to backend.";errDiv.classList.add("show");}
-  }
-  async function chStatus(id,status){
-    try{
-      const res=await fetch(`${API}/requests/${id}/status`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status})});
-      if(!res.ok){alert("Could not update status.");return;}
-      await loadTickets();
-    }catch{alert("Could not update status.");}
-  }
-  function downloadCSV(){
-    const search=(document.getElementById("searchInput").value||"").toLowerCase().trim();
-    let filtered=activeFilter==="all"?[...allTickets]:allTickets.filter(t=>t.status===activeFilter);
-    if(search) filtered=filtered.filter(t=>(t.id||"").toLowerCase().includes(search)||(t.name||"").toLowerCase().includes(search)||(t.product||"").toLowerCase().includes(search)||(t.email||"").toLowerCase().includes(search));
-    const h=["Ticket ID","Name","Email","Phone","Product","Product Details","Serial No","Status","Operation Team","Service Team","Description","Created At"];
-    const rows=filtered.map(t=>[t.id,t.name,t.email,t.phone,t.product,t.productDetails,t.serialNumber,t.status,t.operationTeam,t.serviceTeam,t.description,t.createdAt].map(v=>`"${String(v||"").replace(/"/g,'""')}"`));
-    const csv=[h.map(v=>`"${v}"`), ...rows].map(r=>r.join(",")).join("\n");
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
-    a.download=`cx-tickets-${new Date().toISOString().slice(0,10)}.csv`;a.click();
-  }
-  loadTickets();
-</script>
+    function logout() {
+      localStorage.removeItem("cxUser");
+      window.location.href = "team-login.html";
+    }
+
+    function showToast(message, ok = true) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.style.background = ok ? "#166534" : "#b91c1c";
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+
+    function pillClass(status) {
+      return `pill pill-${status || "pending"}`;
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeJs(str) {
+      return String(str ?? "")
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'");
+    }
+
+    function kv(k, v) {
+      return `<div class="kv"><div class="k">${escapeHtml(k)}</div><div class="v">${v}</div></div>`;
+    }
+
+    function setFilter(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll(".status-tabs button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderTable();
+    }
+
+    function toggleFilterPopover() {
+      const popover = document.getElementById("filterPopover");
+      const btn = document.getElementById("filterBtn");
+      const willShow = !popover.classList.contains("show");
+      popover.classList.toggle("show", willShow);
+      btn.classList.toggle("active", willShow);
+
+      if (willShow) {
+        document.getElementById("filterSearch").value = advancedFilters.keyword;
+        document.getElementById("filterStatus").value = advancedFilters.status;
+        document.getElementById("filterTeam").value = advancedFilters.team;
+        document.getElementById("filterCreated").value = advancedFilters.createdDate;
+      }
+    }
+
+    function closeFilterPopover() {
+      document.getElementById("filterPopover").classList.remove("show");
+      document.getElementById("filterBtn").classList.remove("active");
+    }
+
+    function applyAdvancedFilters() {
+      advancedFilters.keyword = document.getElementById("filterSearch").value.trim().toLowerCase();
+      advancedFilters.status = document.getElementById("filterStatus").value;
+      advancedFilters.team = document.getElementById("filterTeam").value.toLowerCase();
+      advancedFilters.createdDate = document.getElementById("filterCreated").value;
+
+      refreshFilterState();
+      renderTable();
+      closeFilterPopover();
+    }
+
+    function clearAdvancedFilters() {
+      advancedFilters.keyword = "";
+      advancedFilters.status = "";
+      advancedFilters.team = "";
+      advancedFilters.createdDate = "";
+
+      document.getElementById("filterSearch").value = "";
+      document.getElementById("filterStatus").value = "";
+      document.getElementById("filterTeam").value = "";
+      document.getElementById("filterCreated").value = "";
+
+      refreshFilterState();
+      renderTable();
+    }
+
+    function refreshFilterState() {
+      const btn = document.getElementById("filterBtn");
+      const hasAny = advancedFilters.keyword || advancedFilters.status || advancedFilters.team || advancedFilters.createdDate;
+      btn.classList.toggle("has-filters", !!hasAny);
+
+      const chips = [];
+      if (advancedFilters.keyword) chips.push(makeFilterChip("Keyword", advancedFilters.keyword, "keyword"));
+      if (advancedFilters.status) chips.push(makeFilterChip("Status", advancedFilters.status, "status"));
+      if (advancedFilters.team) chips.push(makeFilterChip("Forward To", advancedFilters.team, "team"));
+      if (advancedFilters.createdDate) chips.push(makeFilterChip("Created", advancedFilters.createdDate, "createdDate"));
+
+      document.getElementById("activeFilters").innerHTML = chips.join("");
+    }
+
+    function makeFilterChip(label, value, key) {
+      return `
+        <div class="filter-chip">
+          <span>${escapeHtml(label)}: ${escapeHtml(value)}</span>
+          <button type="button" onclick="removeAdvancedFilter('${key}')">×</button>
+        </div>
+      `;
+    }
+
+    function removeAdvancedFilter(key) {
+      advancedFilters[key] = "";
+      refreshFilterState();
+      renderTable();
+    }
+
+    function normalizeDateString(value) {
+      if (!value) return "";
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) {
+        const y = parsed.getFullYear();
+        const m = String(parsed.getMonth() + 1).padStart(2, "0");
+        const d = String(parsed.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      }
+      return "";
+    }
+
+    function matchesCreatedDate(value, targetDate) {
+      if (!targetDate) return true;
+      const normalized = normalizeDateString(value);
+      return normalized === targetDate;
+    }
+
+    async function loadRequests() {
+      try {
+        const res = await fetch(`${API}/requests`);
+        const data = await res.json();
+        allRequests = Array.isArray(data) ? data : [];
+        updateStats();
+        renderTable();
+      } catch (err) {
+        document.getElementById("tableBody").innerHTML =
+          `<tr><td colspan="7" class="empty-note">Could not load requests.</td></tr>`;
+      }
+    }
+
+    function updateStats() {
+      const total = allRequests.length;
+      const pending = allRequests.filter(r => r.status === "pending").length;
+      const review = allRequests.filter(r => r.status === "review").length;
+      const finalized = allRequests.filter(r => r.status === "approved" || r.status === "rejected").length;
+
+      document.getElementById("statTotal").textContent = total;
+      document.getElementById("statPending").textContent = pending;
+      document.getElementById("statReview").textContent = review;
+      document.getElementById("statFinalized").textContent = finalized;
+    }
+
+    function getFilteredRows() {
+      let rows = [...allRequests];
+
+      if (currentFilter !== "all") {
+        rows = rows.filter(r => r.status === currentFilter);
+      }
+
+      if (advancedFilters.keyword) {
+        rows = rows.filter(r =>
+          (r.id || "").toLowerCase().includes(advancedFilters.keyword) ||
+          (r.name || "").toLowerCase().includes(advancedFilters.keyword) ||
+          (r.email || "").toLowerCase().includes(advancedFilters.keyword) ||
+          (r.product || "").toLowerCase().includes(advancedFilters.keyword) ||
+          (r.productDetails || "").toLowerCase().includes(advancedFilters.keyword) ||
+          (r.forwardTo || "").toLowerCase().includes(advancedFilters.keyword)
+        );
+      }
+
+      if (advancedFilters.status) {
+        rows = rows.filter(r => (r.status || "").toLowerCase() === advancedFilters.status);
+      }
+
+      if (advancedFilters.team) {
+        rows = rows.filter(r => {
+          const val = (r.forwardTo || "not assigned").toLowerCase();
+          return val.includes(advancedFilters.team);
+        });
+      }
+
+      if (advancedFilters.createdDate) {
+        rows = rows.filter(r => matchesCreatedDate(r.createdAt, advancedFilters.createdDate));
+      }
+
+      return rows;
+    }
+
+    function renderTable() {
+      const rows = getFilteredRows();
+      const tbody = document.getElementById("tableBody");
+
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-note">No matching requests found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map(row => {
+        const finalized = row.status === "approved" || row.status === "rejected";
+
+        return `
+          <tr>
+            <td>
+              <a class="ticket-link" onclick="openTicketModal('${escapeJs(row.id)}')">${escapeHtml(row.id)}</a>
+            </td>
+            <td>
+              <div><a class="customer-link" onclick="openCustomerModal('${escapeJs(row.email || "")}')">${escapeHtml(row.name || "-")}</a></div>
+              <div class="subtle">${escapeHtml(row.email || "-")}</div>
+            </td>
+            <td>
+              <div style="font-weight:800;">${escapeHtml(row.product || "-")}</div>
+              <div class="subtle">${escapeHtml(row.productDetails || "—")}</div>
+            </td>
+            <td>${escapeHtml(row.forwardTo || "Not assigned")}</td>
+            <td><span class="${pillClass(row.status)}">${escapeHtml(row.status)}</span></td>
+            <td>${escapeHtml(row.createdAt || "-")}</td>
+            <td>
+              <div class="actions">
+                <button class="mini-btn mini-view" onclick="openTicketModal('${escapeJs(row.id)}')">View</button>
+                ${finalized ? "" : `<button class="mini-btn mini-review" onclick="quickStatus('${escapeJs(row.id)}','review')">Review</button>`}
+                ${finalized ? "" : `<button class="mini-btn mini-approve" onclick="quickStatus('${escapeJs(row.id)}','approved')">Approve</button>`}
+                ${finalized ? "" : `<button class="mini-btn mini-reject" onclick="quickStatus('${escapeJs(row.id)}','rejected')">Reject</button>`}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    async function quickStatus(id, status) {
+      try {
+        const res = await fetch(`${API}/requests/${id}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showToast(data.error || "Could not update status.", false);
+          return;
+        }
+
+        showToast(`Ticket ${id} updated to ${status}.`);
+        await loadRequests();
+      } catch {
+        showToast("Network error.", false);
+      }
+    }
+
+    async function openTicketModal(id) {
+      try {
+        const res = await fetch(`${API}/requests/${id}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          showToast(data.error || "Could not load request.", false);
+          return;
+        }
+
+        currentRequest = data;
+
+        document.getElementById("modalTicketId").textContent = data.id || "Ticket Details";
+        document.getElementById("modalTicketMeta").textContent = `${data.name || "-"} • ${data.email || "-"}`;
+
+        document.getElementById("detailView").innerHTML = `
+          ${kv("Customer", escapeHtml(data.name || "-"))}
+          ${kv("Phone", escapeHtml(data.phone || "-"))}
+          ${kv("Email", escapeHtml(data.email || "-"))}
+          ${kv("Product", escapeHtml(data.product || "-"))}
+          ${kv("Product Details", escapeHtml(data.productDetails || "-"))}
+          ${kv("Serial Number", escapeHtml(data.serialNumber || "-"))}
+          ${kv("Description", escapeHtml(data.description || "-"))}
+          ${kv("Status", `<span class="${pillClass(data.status)}">${escapeHtml(data.status || "-")}</span>`)}
+          ${kv("Created", escapeHtml(data.createdAt || "-"))}
+        `;
+
+        document.getElementById("editStatus").value = data.status || "pending";
+        document.getElementById("editForwardTo").value = data.forwardTo || "";
+        document.getElementById("editOperationTeam").value = data.operationTeam || "";
+        document.getElementById("editServiceTeam").value = data.serviceTeam || "";
+        document.getElementById("editCustomerFeedback").value = data.customerFeedback || "";
+        document.getElementById("editInternalNote").value = data.internalNote || "";
+
+        const history = Array.isArray(data.customerHistory) ? data.customerHistory : [];
+        document.getElementById("ticketCustomerHistory").innerHTML = history.length
+          ? history.map(item => `
+              <div class="history-card">
+                <div class="history-top">
+                  <div class="history-id">${escapeHtml(item.id || "-")}</div>
+                  <span class="${pillClass(item.status)}">${escapeHtml(item.status || "-")}</span>
+                </div>
+                <div class="history-meta">
+                  <div><strong>Product:</strong> ${escapeHtml(item.product || "-")}</div>
+                  <div><strong>Details:</strong> ${escapeHtml(item.productDetails || "-")}</div>
+                  <div><strong>Serial:</strong> ${escapeHtml(item.serialNumber || "-")}</div>
+                  <div><strong>Created:</strong> ${escapeHtml(item.createdAt || "-")}</div>
+                  <div><strong>Feedback:</strong> ${escapeHtml(item.customerFeedback || "-")}</div>
+                </div>
+              </div>
+            `).join("")
+          : `<div class="empty-note">No customer history found.</div>`;
+
+        document.getElementById("ticketModal").classList.add("show");
+      } catch {
+        showToast("Could not open request.", false);
+      }
+    }
+
+    function closeTicketModal() {
+      document.getElementById("ticketModal").classList.remove("show");
+      currentRequest = null;
+    }
+
+    async function saveRequest() {
+      if (!currentRequest) return;
+
+      const payload = {
+        status: document.getElementById("editStatus").value,
+        forwardTo: document.getElementById("editForwardTo").value,
+        operationTeam: document.getElementById("editOperationTeam").value,
+        serviceTeam: document.getElementById("editServiceTeam").value,
+        customerFeedback: document.getElementById("editCustomerFeedback").value,
+        internalNote: document.getElementById("editInternalNote").value
+      };
+
+      try {
+        const res = await fetch(`${API}/requests/${currentRequest.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showToast(data.error || "Could not save request.", false);
+          return;
+        }
+
+        showToast("Request updated successfully.");
+        closeTicketModal();
+        await loadRequests();
+      } catch {
+        showToast("Network error.", false);
+      }
+    }
+
+    function groupCustomerOems(rows) {
+      const set = new Set();
+      rows.forEach(r => {
+        const product = (r.product || "").trim();
+        if (product) set.add(product);
+      });
+      return ["all", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+    }
+
+    function renderCustomerOemChips(oems) {
+      const wrap = document.getElementById("customerOemChips");
+      wrap.innerHTML = oems.map(oem => `
+        <button
+          type="button"
+          class="oem-chip ${currentCustomerOem === oem ? "active" : ""}"
+          onclick="setCustomerOem('${escapeJs(oem)}')"
+        >
+          ${oem === "all" ? "All Products" : escapeHtml(oem)}
+        </button>
+      `).join("");
+    }
+
+    function setCustomerOem(oem) {
+      currentCustomerOem = oem;
+      renderCustomerOemChips(groupCustomerOems(currentCustomerRows));
+      renderCustomerHistory();
+    }
+
+    async function openCustomerModal(email) {
+      const rows = allRequests.filter(r => (r.email || "").toLowerCase() === (email || "").toLowerCase());
+
+      if (!rows.length) {
+        showToast("Customer history not found.", false);
+        return;
+      }
+
+      currentCustomerRows = [...rows].sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+      currentCustomerOem = "all";
+      document.getElementById("customerOemSearch").value = "";
+
+      const first = currentCustomerRows[0];
+      const total = currentCustomerRows.length;
+      const approved = currentCustomerRows.filter(r => r.status === "approved").length;
+      const rejected = currentCustomerRows.filter(r => r.status === "rejected").length;
+      const review = currentCustomerRows.filter(r => r.status === "review").length;
+      const pending = currentCustomerRows.filter(r => r.status === "pending").length;
+      const frequent = total >= 3;
+
+      document.getElementById("customerModalName").textContent = first.name || "Customer Details";
+      document.getElementById("customerModalMeta").textContent = first.email || "";
+
+      document.getElementById("customerSummary").innerHTML = `
+        <div class="summary-card"><div class="label">Total Requests</div><div class="value">${total}</div></div>
+        <div class="summary-card"><div class="label">Approved</div><div class="value">${approved}</div></div>
+        <div class="summary-card"><div class="label">Pending / Review</div><div class="value">${pending + review}</div></div>
+        <div class="summary-card"><div class="label">Rejected</div><div class="value">${rejected}</div></div>
+      `;
+
+      document.getElementById("customerProfile").innerHTML = `
+        ${kv("Customer Name", escapeHtml(first.name || "-"))}
+        ${kv("Email", escapeHtml(first.email || "-"))}
+        ${kv("Phone", escapeHtml(first.phone || "-"))}
+        ${kv("Latest Product", escapeHtml(first.product || "-"))}
+        ${kv("Latest Ticket", escapeHtml(first.id || "-"))}
+      `;
+
+      document.getElementById("customerPattern").innerHTML = `
+        ${kv("Customer Type", frequent
+          ? `<span class="badge-inline badge-frequent">Frequent Customer</span>`
+          : `<span class="badge-inline badge-occasional">Occasional Customer</span>`)}
+        ${kv("Latest Status", `<span class="${pillClass(first.status)}">${escapeHtml(first.status || "-")}</span>`)}
+        ${kv("Open Requests", String(pending + review))}
+        ${kv("Finalized Requests", String(approved + rejected))}
+        ${kv("Observation", frequent
+          ? "Customer has submitted multiple requests and should be treated as a repeat customer."
+          : "Customer has limited request history so far.")}
+      `;
+
+      renderCustomerOemChips(groupCustomerOems(currentCustomerRows));
+      renderCustomerHistory();
+
+      document.getElementById("customerModal").classList.add("show");
+    }
+
+    function renderCustomerHistory() {
+      const q = document.getElementById("customerOemSearch").value.trim().toLowerCase();
+
+      let rows = [...currentCustomerRows];
+
+      if (currentCustomerOem !== "all") {
+        rows = rows.filter(r => (r.product || "").toLowerCase() === currentCustomerOem.toLowerCase());
+      }
+
+      if (q) {
+        rows = rows.filter(r =>
+          (r.product || "").toLowerCase().includes(q) ||
+          (r.productDetails || "").toLowerCase().includes(q) ||
+          (r.description || "").toLowerCase().includes(q)
+        );
+      }
+
+      const list = document.getElementById("customerHistoryList");
+
+      if (!rows.length) {
+        list.innerHTML = `<div class="empty-note">No requests found for the selected OEM filter.</div>`;
+        return;
+      }
+
+      list.innerHTML = rows.map(item => `
+        <div class="history-card">
+          <div class="history-top">
+            <div class="history-id">${escapeHtml(item.id || "-")}</div>
+            <span class="${pillClass(item.status)}">${escapeHtml(item.status || "-")}</span>
+          </div>
+          <div class="history-meta">
+            <div><strong>OEM / Product:</strong> ${escapeHtml(item.product || "-")}</div>
+            <div><strong>Product Details:</strong> ${escapeHtml(item.productDetails || "-")}</div>
+            <div><strong>Description:</strong> ${escapeHtml(item.description || "-")}</div>
+            <div><strong>Created:</strong> ${escapeHtml(item.createdAt || "-")}</div>
+            <div><strong>Forward To:</strong> ${escapeHtml(item.forwardTo || "Not assigned")}</div>
+            <div><strong>Feedback:</strong> ${escapeHtml(item.customerFeedback || "-")}</div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function closeCustomerModal() {
+      document.getElementById("customerModal").classList.remove("show");
+      currentCustomerRows = [];
+      currentCustomerOem = "all";
+    }
+
+    function exportCSV() {
+      const headers = [
+        "Ticket ID",
+        "Customer Name",
+        "Phone",
+        "Email",
+        "Product",
+        "Product Details",
+        "Serial Number",
+        "Description",
+        "Status",
+        "Forward To",
+        "Operations Team",
+        "Service Team",
+        "Customer Feedback",
+        "Internal Note",
+        "Created At"
+      ];
+
+      const rows = getFilteredRows().map(r => [
+        r.id || "",
+        r.name || "",
+        r.phone || "",
+        r.email || "",
+        r.product || "",
+        r.productDetails || "",
+        r.serialNumber || "",
+        r.description || "",
+        r.status || "",
+        r.forwardTo || "",
+        r.operationTeam || "",
+        r.serviceTeam || "",
+        r.customerFeedback || "",
+        r.internalNote || "",
+        r.createdAt || ""
+      ]);
+
+      const csv = [headers, ...rows]
+        .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+        .join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "cx-requests.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.addEventListener("click", (e) => {
+      const ticketModal = document.getElementById("ticketModal");
+      const customerModal = document.getElementById("customerModal");
+      const popover = document.getElementById("filterPopover");
+      const filterBtn = document.getElementById("filterBtn");
+
+      if (e.target === ticketModal) closeTicketModal();
+      if (e.target === customerModal) closeCustomerModal();
+
+      if (
+        popover.classList.contains("show") &&
+        !popover.contains(e.target) &&
+        !filterBtn.contains(e.target)
+      ) {
+        closeFilterPopover();
+      }
+    });
+
+    setupUser();
+    refreshFilterState();
+    loadRequests();
+  </script>
 </body>
 </html>

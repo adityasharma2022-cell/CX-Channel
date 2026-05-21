@@ -1,213 +1,464 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CX Channel – Customer Portal</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FASCAL - Customer Request Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    *{box-sizing:border-box;margin:0;padding:0;}
+    *{box-sizing:border-box;margin:0;padding:0}
+
     :root{
-      --bg:#f0f4f8;--surface:#ffffff;--surface2:#f8fafc;
-      --border:#e2e8f0;--text:#0f172a;--muted:#64748b;
-      --accent:#0ea5e9;--accent-dark:#0284c7;
-      --success:#16a34a;--error:#dc2626;
-      --radius:16px;--shadow:0 4px 24px rgba(15,23,42,.08);
+      --bg:#f4f7fb;
+      --surface:#ffffff;
+      --surface-2:#f8fafc;
+      --line:#e2e8f0;
+      --line-soft:#edf2f7;
+      --text:#0f172a;
+      --muted:#64748b;
+      --primary:#0ea5e9;
+      --primary-dark:#0284c7;
+      --primary-soft:#e0f2fe;
+      --shadow-sm:0 8px 24px rgba(15,23,42,.05);
+      --shadow-md:0 18px 50px rgba(15,23,42,.08);
     }
-    body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-    header{background:linear-gradient(135deg,#0ea5e9 0%,#0369a1 100%);padding:0 24px;color:#fff;}
-    .header-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:64px;}
-    .logo{display:flex;align-items:center;gap:10px;}
-    .logo-icon{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
-    .logo-text{font-size:20px;font-weight:800;}
-    .logo-sub{font-size:11px;opacity:.75;letter-spacing:.5px;text-transform:uppercase;}
-    .header-badge{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;}
-    .hero{background:linear-gradient(135deg,#0ea5e9 0%,#0369a1 100%);padding:40px 24px 60px;color:#fff;text-align:center;}
-    .hero h1{font-size:clamp(24px,4vw,40px);font-weight:800;margin-bottom:10px;}
-    .hero p{font-size:16px;opacity:.85;max-width:560px;margin:0 auto;line-height:1.6;}
-    main{max-width:820px;margin:-30px auto 60px;padding:0 18px;}
-    .tabs{display:flex;gap:6px;background:var(--surface);border-radius:16px;padding:6px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:22px;}
-    .tab{flex:1;padding:12px;border-radius:12px;border:none;font:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;color:var(--muted);background:transparent;}
-    .tab.active{background:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(14,165,233,.35);}
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:30px 28px;box-shadow:var(--shadow);}
-    .card-title{font-size:22px;font-weight:800;margin-bottom:6px;}
-    .card-sub{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:24px;}
-    .section{display:none;} .section.active{display:block;}
-    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-    .field{display:flex;flex-direction:column;gap:7px;}
-    .field.full{grid-column:1/-1;}
-    label{font-size:13px;font-weight:700;color:#334155;}
-    .req{color:var(--accent);margin-left:2px;}
-    input,textarea{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;font:inherit;outline:none;background:#fff;transition:border-color .2s,box-shadow .2s;font-size:14px;}
-    input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(14,165,233,.12);}
-    textarea{min-height:110px;resize:vertical;}
-    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff;border:none;border-radius:13px;padding:14px 28px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;transition:.2s;box-shadow:0 4px 14px rgba(14,165,233,.35);}
-    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(14,165,233,.45);}
-    .btn-secondary{background:#fff;color:#374151;border:1.5px solid var(--border);border-radius:13px;padding:14px 28px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;transition:.2s;}
-    .btn-secondary:hover{background:#f8fafc;}
-    .alert{display:none;padding:13px 16px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:16px;}
-    .alert.show{display:flex;align-items:center;gap:8px;}
-    .alert-error{background:#fef2f2;border:1px solid #fecaca;color:var(--error);}
-    .alert-success{background:#f0fdf4;border:1px solid #bbf7d0;color:var(--success);}
-    .track-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
-    .track-row input{flex:1;min-width:180px;}
-    .divider-text{text-align:center;color:var(--muted);font-size:13px;font-weight:700;margin:14px 0;position:relative;}
-    .divider-text::before,.divider-text::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--border);}
-    .divider-text::before{left:0;}.divider-text::after{right:0;}
-    .results{display:flex;flex-direction:column;gap:14px;margin-top:8px;}
-    .result-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:20px;}
-    .result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
-    .result-id{font-size:18px;font-weight:800;}
-    .result-product{font-size:14px;color:var(--muted);margin-bottom:12px;}
-    .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-    .result-item{font-size:13px;} .result-item span{color:var(--muted);} .result-item strong{color:var(--text);}
-    .pill{display:inline-block;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:800;text-transform:capitalize;}
-    .pill-pending{background:#fef3c7;color:#92400e;}
-    .pill-review{background:#dbeafe;color:#1d4ed8;}
-    .pill-approved{background:#dcfce7;color:#166534;}
-    .pill-rejected{background:#fee2e2;color:#b91c1c;}
-    .toast{position:fixed;bottom:28px;right:24px;z-index:9999;background:#0f172a;color:#fff;padding:15px 20px;border-radius:14px;font-size:14px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:360px;display:flex;align-items:center;gap:10px;opacity:0;transform:translateY(14px);transition:opacity .3s ease,transform .3s ease;pointer-events:none;}
-    .toast.show{opacity:1;transform:translateY(0);}
-    footer{background:#0f172a;color:#94a3b8;text-align:center;padding:22px;font-size:13px;}
-    footer a{color:#38bdf8;text-decoration:none;}
-    @media(max-width:600px){.form-grid,.result-grid{grid-template-columns:1fr;}.card{padding:20px 16px;}}
+
+    body{
+      font-family:"Inter",sans-serif;
+      background:linear-gradient(180deg,#f8fbff 0%,#f4f7fb 100%);
+      color:var(--text);
+      min-height:100vh;
+    }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:50;
+      height:72px;
+      padding:0 24px;
+      background:rgba(255,255,255,.9);
+      backdrop-filter:blur(10px);
+      border-bottom:1px solid rgba(226,232,240,.9);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .brand-mark{
+      width:42px;
+      height:42px;
+      border-radius:14px;
+      background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#fff;
+      box-shadow:0 10px 24px rgba(14,165,233,.22);
+      flex-shrink:0;
+    }
+
+    .brand-mark svg{width:18px;height:18px}
+
+    .brand-title{
+      font-size:18px;
+      font-weight:800;
+      letter-spacing:-.03em;
+      line-height:1;
+    }
+
+    .brand-subtitle{
+      font-size:11px;
+      color:var(--muted);
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      margin-top:4px;
+    }
+
+    .btn-light,.btn-primary{
+      height:44px;
+      border:none;
+      border-radius:14px;
+      padding:0 18px;
+      font:inherit;
+      font-size:14px;
+      font-weight:700;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      text-decoration:none;
+      transition:.2s ease;
+      white-space:nowrap;
+    }
+
+    .btn-light{
+      background:#fff;
+      color:var(--text);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow-sm);
+    }
+
+    .btn-light:hover{background:var(--surface-2)}
+
+    .btn-primary{
+      background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+      color:#fff;
+      box-shadow:0 10px 24px rgba(14,165,233,.2);
+    }
+
+    .btn-primary:hover{filter:brightness(.98)}
+
+    .wrap{
+      max-width:1320px;
+      margin:24px auto;
+      padding:0 18px 40px;
+    }
+
+    .page-head{
+      margin-bottom:18px;
+    }
+
+    .page-head h1{
+      font-size:40px;
+      font-weight:800;
+      letter-spacing:-.05em;
+      margin-bottom:8px;
+    }
+
+    .page-head p{
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.7;
+      max-width:760px;
+    }
+
+    .panel{
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(226,232,240,.92);
+      border-radius:22px;
+      box-shadow:var(--shadow-md);
+      padding:18px;
+    }
+
+    .panel-title{
+      font-size:16px;
+      font-weight:800;
+      margin-bottom:16px;
+    }
+
+    .help-strip{
+      margin-bottom:16px;
+      padding:14px 16px;
+      border-radius:16px;
+      background:#f8fbff;
+      border:1px solid #e0eefc;
+      color:#35506b;
+      font-size:14px;
+      line-height:1.6;
+    }
+
+    .request-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:14px;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:7px;
+    }
+
+    .field label{
+      font-size:12px;
+      color:#475569;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+
+    .field input,
+    .field select,
+    .field textarea{
+      width:100%;
+      border:1.5px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+      padding:13px 14px;
+      font:inherit;
+      color:var(--text);
+      outline:none;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus{
+      border-color:#7dd3fc;
+      box-shadow:0 0 0 4px rgba(14,165,233,.1);
+    }
+
+    .span-3{grid-column:span 3}
+
+    .form-actions{
+      grid-column:span 3;
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      padding-top:6px;
+    }
+
+    .advanced-toggle{
+      height:40px;
+      border-radius:999px;
+      padding-inline:16px;
+      font-size:13px;
+    }
+
+    @media(max-width:1024px){
+      .request-grid{
+        grid-template-columns:repeat(2,1fr);
+      }
+      .span-3,.form-actions{
+        grid-column:span 2;
+      }
+    }
+
+    @media(max-width:760px){
+      .topbar{padding:0 14px}
+      .wrap{padding:0 12px 32px}
+      .page-head h1{font-size:32px}
+      .request-grid{grid-template-columns:1fr}
+      .span-3,.form-actions{grid-column:span 1}
+    }
   </style>
 </head>
 <body>
-<header>
-  <div class="header-inner">
-    <div class="logo">
-      <div class="logo-icon">📡</div>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 18h16"></path>
+          <path d="M6 14h12"></path>
+          <path d="M8 10h8"></path>
+          <path d="M10 6h4"></path>
+        </svg>
+      </div>
       <div>
-        <div class="logo-text">CX Channel</div>
-        <div class="logo-sub">Customer Support Portal</div>
+        <div class="brand-title">FASCAL</div>
+        <div class="brand-subtitle">Customer Portal</div>
       </div>
     </div>
-    <div class="header-badge">Customer Portal</div>
-  </div>
-</header>
-<div class="hero">
-  <h1>How can we help you?</h1>
-  <p>Submit a new support request for your product or track the status of an existing ticket anytime.</p>
-</div>
-<main>
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('submit',this)">📝 Submit a Request</button>
-    <button class="tab" onclick="switchTab('track',this)">🔍 Track My Request</button>
-  </div>
 
-  <!-- SUBMIT -->
-  <div id="section-submit" class="section active">
-    <div class="card">
-      <div class="card-title">Submit a Support Request</div>
-      <div class="card-sub">Fill in the details below. You'll receive a unique Ticket ID — use it to track your request anytime.</div>
-      <div id="submitError" class="alert alert-error"><span>⚠</span><span id="submitErrorMsg"></span></div>
-      <div class="form-grid">
-        <div class="field"><label>Full Name <span class="req">*</span></label><input id="sName" placeholder="Your full name"/></div>
-        <div class="field"><label>Phone Number</label><input id="sPhone" type="tel" placeholder="+91 98765 43210"/></div>
-        <div class="field"><label>Email Address <span class="req">*</span></label><input id="sEmail" type="email" placeholder="you@company.com"/></div>
-        <div class="field"><label>Product Name <span class="req">*</span></label><input id="sProduct" placeholder="e.g. VeEX TX300S"/></div>
-        <div class="field"><label>Product Model / Details</label><input id="sProductDetails" placeholder="Model variant or OEM"/></div>
-        <div class="field"><label>Serial Number</label><input id="sSN" placeholder="Device serial number"/></div>
-        <div class="field full"><label>Description of Issue <span class="req">*</span></label><textarea id="sDesc" placeholder="Describe the problem in detail — what happened, when it started, error messages, etc."></textarea></div>
-      </div>
-      <div style="margin-top:18px;">
-        <button class="btn-primary" onclick="submitRequest()">Submit Request →</button>
-      </div>
-    </div>
-  </div>
+    <a href="/" class="btn-light">Back to Home</a>
+  </header>
 
-  <!-- TRACK -->
-  <div id="section-track" class="section">
-    <div class="card">
-      <div class="card-title">Track Your Request</div>
-      <div class="card-sub">Enter your Ticket ID (e.g. TMI-1234) or registered email to find your tickets.</div>
-      <div id="trackError" class="alert alert-error"><span>⚠</span><span id="trackErrorMsg"></span></div>
-      <div class="track-row">
-        <input id="trackId" placeholder="Ticket ID – e.g. TMI-1234" onkeydown="if(event.key==='Enter')trackRequest()"/>
-        <button class="btn-primary" onclick="trackRequest()">Track →</button>
+  <main class="wrap">
+    <section class="page-head">
+      <h1>Request Assistance</h1>
+      <p>Submit a service request, share product details, and describe the issue so our team can assist you quickly.</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">New Request</div>
+
+      <div class="help-strip">
+        Just fill in the key fields and hit submit. If you have extra details like PO number or addresses you can add them under “More details (optional)”.
       </div>
-      <div class="divider-text">or search by email</div>
-      <div class="track-row">
-        <input id="trackEmail" type="email" placeholder="Your registered email address" onkeydown="if(event.key==='Enter')trackRequest()"/>
-        <button class="btn-secondary" onclick="trackRequest()">Search</button>
-      </div>
-      <div id="trackResults" class="results"></div>
-    </div>
-  </div>
-</main>
-<footer>
-  <p>© 2026 CX Channel · Customer Support Portal · Powered by TMI</p>
-  <p style="margin-top:6px;font-size:12px;">Team members: <a href="team-login.html">Team Dashboard →</a></p>
-</footer>
-<div id="toast" class="toast"></div>
-<script>
-  const API = window.location.origin;
-  function switchTab(name, el) {
-    document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
-    document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
-    el.classList.add("active");
-    document.getElementById("section-"+name).classList.add("active");
-  }
-  function showToast(msg,ok=true){
-    const t=document.getElementById("toast");
-    t.innerHTML=(ok?"✅ ":"❌ ")+msg;
-    t.style.background=ok?"#166534":"#b91c1c";
-    t.classList.add("show");
-    setTimeout(()=>t.classList.remove("show"),5000);
-  }
-  async function submitRequest(){
-    const errBox=document.getElementById("submitError"),errMsg=document.getElementById("submitErrorMsg");
-    errBox.classList.remove("show");
-    const payload={
-      name:document.getElementById("sName").value.trim(),
-      phone:document.getElementById("sPhone").value.trim(),
-      email:document.getElementById("sEmail").value.trim(),
-      product:document.getElementById("sProduct").value.trim(),
-      productDetails:document.getElementById("sProductDetails").value.trim(),
-      serialNumber:document.getElementById("sSN").value.trim(),
-      description:document.getElementById("sDesc").value.trim()
-    };
-    if(!payload.name||!payload.email||!payload.product||!payload.description){
-      errMsg.textContent="Please fill in all required fields.";errBox.classList.add("show");return;
-    }
-    try{
-      const res=await fetch(`${API}/public/requests`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-      const data=await res.json();
-      if(!res.ok){errMsg.textContent=data.error||"Could not submit.";errBox.classList.add("show");showToast(data.error||"Failed.",false);return;}
-      ["sName","sPhone","sEmail","sProduct","sProductDetails","sSN","sDesc"].forEach(id=>document.getElementById(id).value="");
-      showToast(`Request submitted! Your Ticket ID is ${data.id}`);
-    }catch{errMsg.textContent="Network error. Please try again.";errBox.classList.add("show");showToast("Network error.",false);}
-  }
-  function pillClass(s){return{approved:"pill-approved",review:"pill-review",rejected:"pill-rejected",pending:"pill-pending"}[s]||"pill-pending";}
-  async function trackRequest(){
-    const errBox=document.getElementById("trackError"),errMsg=document.getElementById("trackErrorMsg"),results=document.getElementById("trackResults");
-    errBox.classList.remove("show");results.innerHTML="";
-    const id=document.getElementById("trackId").value.trim();
-    const email=document.getElementById("trackEmail").value.trim();
-    if(!id&&!email){errMsg.textContent="Please enter a Ticket ID or email address.";errBox.classList.add("show");return;}
-    results.innerHTML=`<div style="color:#64748b;font-size:14px;padding:8px 0;">Searching…</div>`;
-    const params=id?`id=${encodeURIComponent(id)}`:`email=${encodeURIComponent(email)}`;
-    try{
-      const res=await fetch(`${API}/public/track?${params}`);
-      const data=await res.json();
-      if(!res.ok){errMsg.textContent=data.error||"Could not fetch.";errBox.classList.add("show");results.innerHTML="";return;}
-      if(!data.length){results.innerHTML=`<div style="color:#64748b;font-size:14px;padding:12px 0;">No tickets found.</div>`;return;}
-      results.innerHTML=data.map(t=>`
-        <div class="result-card">
-          <div class="result-header"><div class="result-id">${t.id}</div><span class="pill ${pillClass(t.status)}">${t.status}</span></div>
-          <div class="result-product">${t.product}${t.productDetails?" · "+t.productDetails:""}${t.serialNumber?" · S/N: "+t.serialNumber:""}</div>
-          <div class="result-grid">
-            <div class="result-item"><span>Name: </span><strong>${t.name||"-"}</strong></div>
-            <div class="result-item"><span>Email: </span><strong>${t.email||"-"}</strong></div>
-            <div class="result-item"><span>Submitted: </span><strong>${t.createdAt||"-"}</strong></div>
-            <div class="result-item"><span>Issue: </span><strong>${(t.description||"-").substring(0,80)}</strong></div>
+
+      <div class="request-grid">
+        <!-- CORE, SIMPLE FIELDS -->
+        <div class="field">
+          <label for="reqOem">OEM</label>
+          <select id="reqOem">
+            <option value="">Select OEM</option>
+            <option value="VeEX">VeEX</option>
+            <option value="Narda">Narda</option>
+            <option value="Cubro">Cubro</option>
+            <option value="EXFO">EXFO</option>
+            <option value="Anritsu">Anritsu</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="reqServiceType">Service Type</label>
+          <select id="reqServiceType">
+            <option value="">Select Service</option>
+            <option value="Repair">Repair</option>
+            <option value="Calibration">Calibration</option>
+            <option value="Technical Assistance">Technical Assistance</option>
+            <option value="General Support">General Support</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="reqProductModel">Product Model</label>
+          <input id="reqProductModel" type="text" placeholder="Enter product model" />
+        </div>
+
+        <div class="field">
+          <label for="reqCustomerName">Sender Full Name</label>
+          <input id="reqCustomerName" type="text" placeholder="Enter full name" />
+        </div>
+
+        <div class="field">
+          <label for="reqEmail">Email ID</label>
+          <input id="reqEmail" type="email" placeholder="Enter email address" />
+        </div>
+
+        <div class="field">
+          <label for="reqContactNumber">Contact Number</label>
+          <input id="reqContactNumber" type="text" placeholder="Enter contact number" />
+        </div>
+
+        <div class="field span-3">
+          <label for="reqIssueDescription">Description of Issue</label>
+          <textarea id="reqIssueDescription" rows="5" placeholder="Describe the issue"></textarea>
+        </div>
+
+        <!-- TOGGLE FOR OPTIONAL FIELDS -->
+        <div class="field span-3">
+          <button type="button" class="btn-light advanced-toggle" onclick="toggleAdvanced()" id="advancedToggle">
+            More details (optional)
+          </button>
+        </div>
+
+        <!-- ADVANCED, OPTIONAL FIELDS -->
+        <div class="span-3" id="advancedSection" style="display:none; margin-top:4px;">
+          <div class="request-grid" style="grid-template-columns:repeat(3,1fr);gap:12px;">
+            <div class="field">
+              <label for="reqCompanyName">Company Name</label>
+              <input id="reqCompanyName" type="text" placeholder="Enter company name" />
+            </div>
+
+            <div class="field">
+              <label for="reqDesignation">Designation</label>
+              <input id="reqDesignation" type="text" placeholder="Enter designation" />
+            </div>
+
+            <div class="field">
+              <label for="reqDepartment">Department</label>
+              <input id="reqDepartment" type="text" placeholder="Enter department" />
+            </div>
+
+            <div class="field">
+              <label for="reqSerialNumber">Product Serial Number</label>
+              <input id="reqSerialNumber" type="text" placeholder="Enter serial number" />
+            </div>
+
+            <div class="field">
+              <label for="reqPoNumber">PO Number</label>
+              <input id="reqPoNumber" type="text" placeholder="Enter PO number" />
+            </div>
+
+            <div class="field">
+              <label for="reqPoDate">PO Date</label>
+              <input id="reqPoDate" type="date" />
+            </div>
+
+            <div class="field span-3">
+              <label for="reqBillingAddress">Billing Address</label>
+              <textarea id="reqBillingAddress" rows="3" placeholder="Enter billing address"></textarea>
+            </div>
+
+            <div class="field span-3">
+              <label for="reqReturnAddress">Return Address</label>
+              <textarea id="reqReturnAddress" rows="3" placeholder="Enter return address"></textarea>
+            </div>
+
+            <div class="field span-3">
+              <label for="reqAdditionalInfo">Additional Info (accessories, RF cable, antenna, etc.)</label>
+              <textarea id="reqAdditionalInfo" rows="3" placeholder="Accessories, RF cable, antenna, other notes"></textarea>
+            </div>
           </div>
-        </div>`).join("");
-    }catch{errMsg.textContent="Could not connect.";errBox.classList.add("show");results.innerHTML="";}
-  }
-</script>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="form-actions">
+          <button class="btn-primary" type="button" onclick="submitNewRequest()">Submit Request</button>
+          <button class="btn-light" type="button" onclick="resetRequestForm()">Cancel</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API = window.location.origin;
+
+    function toggleAdvanced(){
+      const section = document.getElementById("advancedSection");
+      const toggle = document.getElementById("advancedToggle");
+      const isOpen = section.style.display === "block";
+      section.style.display = isOpen ? "none" : "block";
+      toggle.textContent = isOpen ? "More details (optional)" : "Hide additional details";
+    }
+
+    function collectPayload(){
+      return {
+        oem: document.getElementById("reqOem").value,
+        serviceType: document.getElementById("reqServiceType").value,
+        product: document.getElementById("reqOem").value,
+        productDetails: document.getElementById("reqProductModel").value,
+        name: document.getElementById("reqCustomerName").value,
+        company: document.getElementById("reqCompanyName").value,
+        designation: document.getElementById("reqDesignation").value,
+        department: document.getElementById("reqDepartment").value,
+        phone: document.getElementById("reqContactNumber").value,
+        email: document.getElementById("reqEmail").value,
+        serialNumber: document.getElementById("reqSerialNumber").value,
+        poNumber: document.getElementById("reqPoNumber").value,
+        poDate: document.getElementById("reqPoDate").value,
+        billingAddress: document.getElementById("reqBillingAddress").value,
+        returnAddress: document.getElementById("reqReturnAddress").value,
+        additionalInfo: document.getElementById("reqAdditionalInfo").value,
+        description: document.getElementById("reqIssueDescription").value
+      };
+    }
+
+    function resetRequestForm(){
+      [
+        "reqOem","reqServiceType","reqProductModel","reqCustomerName","reqCompanyName",
+        "reqDesignation","reqDepartment","reqContactNumber","reqEmail","reqSerialNumber",
+        "reqPoNumber","reqPoDate","reqBillingAddress","reqReturnAddress",
+        "reqAdditionalInfo","reqIssueDescription"
+      ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+      });
+    }
+
+    async function submitNewRequest(){
+      const payload = collectPayload();
+
+      // Only minimal required fields
+      if(!payload.oem || !payload.serviceType || !payload.name || !payload.email || !payload.description){
+        alert("Please fill OEM, service type, sender name, email, and issue description.");
+        return;
+      }
+
+      try{
+        const res = await fetch(`${API}/public/request`, {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body:JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        alert(data.message || "Request submitted successfully.");
+        resetRequestForm();
+      }catch(err){
+        alert("Could not submit request.");
+      }
+    }
+  </script>
 </body>
 </html>

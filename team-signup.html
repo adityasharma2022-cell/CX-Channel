@@ -1,141 +1,577 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CX Channel – Team Signup</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CX Channel - Team Signup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:Inter,sans-serif;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f2940 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
-    .wrap{width:100%;max-width:480px;}
-    .logo-row{text-align:center;margin-bottom:28px;}
-    .logo-icon{width:60px;height:60px;background:linear-gradient(135deg,#0ea5e9,#0369a1);border-radius:18px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 8px 24px rgba(14,165,233,.4);}
-    .logo-name{color:#fff;font-size:26px;font-weight:800;}
-    .logo-sub{color:#94a3b8;font-size:13px;margin-top:4px;}
-    .card{background:#1e293b;border:1px solid #334155;border-radius:22px;padding:36px 32px;box-shadow:0 20px 60px rgba(0,0,0,.4);}
-    .card-title{color:#f1f5f9;font-size:22px;font-weight:800;margin-bottom:6px;}
-    .card-sub{color:#64748b;font-size:14px;margin-bottom:20px;line-height:1.5;}
-    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-    .field{display:flex;flex-direction:column;gap:7px;}
-    .field.full{grid-column:1/-1;}
-    label{font-size:13px;font-weight:700;color:#94a3b8;display:block;}
-    .input-wrap{position:relative;}
-    input,select{width:100%;background:#0f172a;border:1.5px solid #334155;color:#f1f5f9;border-radius:12px;padding:13px 14px;font:inherit;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;}
-    input:focus,select:focus{border-color:#0ea5e9;box-shadow:0 0 0 3px rgba(14,165,233,.15);}
-    input::placeholder{color:#475569;}
-    select option{background:#1e293b;}
-    .eye-btn{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#475569;font-size:18px;padding:4px;transition:color .2s;line-height:1;}
-    .eye-btn:hover{color:#94a3b8;}
-    .has-eye input{padding-right:44px;}
-    .strength{height:4px;border-radius:999px;background:#1e3a5f;margin-top:6px;overflow:hidden;}
-    .strength-bar{height:100%;border-radius:999px;transition:width .3s,background .3s;width:0%;}
-    .btn-submit{width:100%;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border:none;border-radius:13px;padding:14px;font:inherit;font-weight:800;font-size:15px;cursor:pointer;margin-top:18px;transition:.2s;box-shadow:0 4px 14px rgba(14,165,233,.35);}
-    .btn-submit:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(14,165,233,.45);}
-    .alert{display:none;padding:12px 14px;border-radius:11px;font-size:13px;font-weight:600;margin-bottom:16px;}
-    .alert.show{display:flex;align-items:center;gap:8px;}
-    .alert-error{background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);color:#fca5a5;}
-    .alert-success{background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.3);color:#86efac;}
-    .divider{border:none;border-top:1px solid #334155;margin:24px 0;}
-    .links{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
-    .link-text{color:#64748b;font-size:13px;}
-    .link-btn{color:#38bdf8;font-size:13px;font-weight:700;text-decoration:none;transition:color .2s;}
-    .invite-note{background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.2);border-radius:12px;padding:12px 14px;color:#7dd3fc;font-size:13px;margin-bottom:20px;line-height:1.5;}
-    @media(max-width:480px){.form-grid{grid-template-columns:1fr;}.card{padding:24px 18px;}}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root{
+      --bg1:#0b1324;
+      --bg2:#16263f;
+      --panel:#1e2b3f;
+      --panel2:#223249;
+      --line:rgba(255,255,255,.10);
+      --text:#f8fafc;
+      --muted:#94a3b8;
+      --blue:#1fb6ff;
+      --blue2:#1992d4;
+      --danger:#f87171;
+      --danger-bg:rgba(239,68,68,.12);
+      --ok:#4ade80;
+      --ok-bg:rgba(34,197,94,.12);
+      --warn:#f59e0b;
+      --radius:20px;
+      --shadow:0 20px 60px rgba(0,0,0,.35);
+    }
+
+    body{
+      min-height:100vh;
+      font-family:Inter,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(31,182,255,.10), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(56,189,248,.08), transparent 30%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    .shell{
+      width:100%;
+      max-width:1100px;
+      display:grid;
+      grid-template-columns: 1fr 520px;
+      border:1px solid var(--line);
+      border-radius:28px;
+      overflow:hidden;
+      box-shadow:var(--shadow);
+      background:rgba(255,255,255,.03);
+      backdrop-filter: blur(10px);
+    }
+
+    .hero{
+      padding:48px;
+      position:relative;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(31,182,255,.16), transparent 25%),
+        radial-gradient(circle at 80% 80%, rgba(25,146,212,.12), transparent 28%);
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 14px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:999px;
+      color:#dbeafe;
+      background:rgba(255,255,255,.04);
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.3px;
+      margin-bottom:22px;
+    }
+
+    .logo{
+      width:64px;
+      height:64px;
+      border-radius:18px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(135deg,var(--blue),var(--blue2));
+      box-shadow:0 12px 30px rgba(31,182,255,.25);
+      margin-bottom:20px;
+      font-size:28px;
+    }
+
+    .hero h1{
+      font-size:clamp(30px,4vw,52px);
+      line-height:1.05;
+      font-weight:800;
+      margin-bottom:14px;
+    }
+
+    .hero p{
+      color:#cbd5e1;
+      max-width:46ch;
+      font-size:15px;
+      line-height:1.75;
+      margin-bottom:28px;
+    }
+
+    .hero-list{
+      display:grid;
+      gap:14px;
+      margin-top:24px;
+    }
+
+    .hero-item{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:16px;
+      padding:14px 16px;
+    }
+
+    .hero-item .icon{
+      width:30px;
+      height:30px;
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(31,182,255,.14);
+      flex-shrink:0;
+    }
+
+    .hero-item h3{
+      font-size:14px;
+      font-weight:700;
+      margin-bottom:4px;
+    }
+
+    .hero-item p{
+      margin:0;
+      font-size:13px;
+      line-height:1.6;
+      color:var(--muted);
+    }
+
+    .card{
+      background:rgba(30,43,63,.92);
+      padding:42px 34px;
+      border-left:1px solid var(--line);
+    }
+
+    .card h2{
+      font-size:32px;
+      font-weight:800;
+      margin-bottom:8px;
+    }
+
+    .subtext{
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.6;
+      margin-bottom:20px;
+    }
+
+    .alert{
+      display:none;
+      border-radius:14px;
+      padding:13px 14px;
+      font-size:14px;
+      font-weight:700;
+      margin-bottom:18px;
+      border:1px solid transparent;
+    }
+
+    .alert.show{ display:block; }
+    .alert.error{
+      background:var(--danger-bg);
+      color:#fca5a5;
+      border-color:rgba(248,113,113,.22);
+    }
+    .alert.success{
+      background:var(--ok-bg);
+      color:#86efac;
+      border-color:rgba(74,222,128,.22);
+    }
+
+    .grid-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
+    .field{
+      margin-bottom:14px;
+    }
+
+    label{
+      display:block;
+      margin-bottom:8px;
+      font-size:13px;
+      font-weight:700;
+      color:#cbd5e1;
+    }
+
+    input, select{
+      width:100%;
+      height:54px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background:#0f172a;
+      color:#fff;
+      padding:0 14px;
+      outline:none;
+      font:inherit;
+      transition:.2s ease;
+    }
+
+    input::placeholder{
+      color:#64748b;
+    }
+
+    input:focus, select:focus{
+      border-color:rgba(31,182,255,.7);
+      box-shadow:0 0 0 4px rgba(31,182,255,.12);
+    }
+
+    .password-wrap{
+      position:relative;
+    }
+
+    .password-wrap input{
+      padding-right:48px;
+    }
+
+    .toggle{
+      position:absolute;
+      right:12px;
+      top:50%;
+      transform:translateY(-50%);
+      background:transparent;
+      border:none;
+      color:#94a3b8;
+      cursor:pointer;
+      font-size:16px;
+    }
+
+    .strength{
+      margin-top:10px;
+      height:6px;
+      background:rgba(255,255,255,.08);
+      border-radius:999px;
+      overflow:hidden;
+    }
+
+    .strength span{
+      display:block;
+      height:100%;
+      width:0%;
+      border-radius:999px;
+      transition:.25s ease;
+      background:var(--warn);
+    }
+
+    .hint{
+      margin-top:8px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.5;
+    }
+
+    .submit-btn{
+      width:100%;
+      height:56px;
+      margin-top:8px;
+      border:none;
+      border-radius:16px;
+      cursor:pointer;
+      font:inherit;
+      font-size:17px;
+      font-weight:800;
+      color:#fff;
+      background:linear-gradient(135deg,var(--blue),var(--blue2));
+      box-shadow:0 10px 30px rgba(31,182,255,.28);
+      transition:.2s ease;
+    }
+
+    .submit-btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 16px 34px rgba(31,182,255,.32);
+    }
+
+    .submit-btn:disabled{
+      opacity:.7;
+      cursor:not-allowed;
+      transform:none;
+    }
+
+    .footer-row{
+      margin-top:22px;
+      padding-top:18px;
+      border-top:1px solid rgba(255,255,255,.08);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .footer-row p{
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .footer-row a{
+      color:var(--blue);
+      text-decoration:none;
+      font-weight:700;
+    }
+
+    .footer-row a:hover{
+      text-decoration:underline;
+    }
+
+    @media (max-width: 920px){
+      .shell{
+        grid-template-columns:1fr;
+      }
+      .hero{
+        display:none;
+      }
+      .card{
+        border-left:none;
+      }
+    }
+
+    @media (max-width: 560px){
+      body{ padding:14px; }
+      .card{ padding:26px 18px; }
+      .grid-2{ grid-template-columns:1fr; }
+      .card h2{ font-size:28px; }
+    }
   </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="logo-row">
-    <div class="logo-icon">📡</div>
-    <div class="logo-name">CX Channel</div>
-    <div class="logo-sub">Team Member Registration</div>
-  </div>
-  <div class="card">
-    <div class="card-title">Create Team Account</div>
-    <div class="card-sub">Register as a new team member to access the CX Channel approval dashboard.</div>
-    <div class="invite-note">🔒 Accounts require an <strong>invite code</strong> issued by your manager. Contact your team lead if you don't have one.</div>
-    <div id="errBox" class="alert alert-error"><span>⚠</span><span id="errMsg"></span></div>
-    <div id="okBox"  class="alert alert-success"><span>✅</span><span id="okMsg"></span></div>
-    <div class="form-grid">
-      <div class="field"><label>First Name</label><input id="rFirst" placeholder="First name"/></div>
-      <div class="field"><label>Last Name</label><input id="rLast" placeholder="Last name"/></div>
-      <div class="field full"><label>Username</label><input id="rUser" placeholder="Choose a username (no spaces)"/></div>
-      <div class="field full"><label>Email Address</label><input id="rEmail" type="email" placeholder="Work email address"/></div>
-      <div class="field full">
-        <label>Role / Department</label>
-        <select id="rRole">
-          <option value="">Select role…</option>
-          <option value="operation">Operations Team</option>
-          <option value="service">Service Team</option>
-          <option value="manager">Manager</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-      <div class="field full">
-        <label>Password</label>
-        <div class="input-wrap has-eye">
-          <input id="rPass" type="password" placeholder="Min 8 characters" oninput="checkStrength()"/>
-          <button class="eye-btn" onclick="togglePass('rPass','eye1')" aria-label="Toggle password"><span id="eye1">👁</span></button>
+  <div class="shell">
+    <section class="hero">
+      <div class="badge">📡 CX Channel · Team Access</div>
+      <div class="logo">🛰️</div>
+      <h1>Create your team account.</h1>
+      <p>
+        Register a new team member to access the CX Channel approval dashboard,
+        manage incoming requests, and collaborate across support operations.
+      </p>
+
+      <div class="hero-list">
+        <div class="hero-item">
+          <div class="icon">✓</div>
+          <div>
+            <h3>Fast onboarding</h3>
+            <p>Create internal accounts directly from the signup page without any invite code.</p>
+          </div>
         </div>
-        <div class="strength"><div class="strength-bar" id="strengthBar"></div></div>
-      </div>
-      <div class="field full">
-        <label>Confirm Password</label>
-        <div class="input-wrap has-eye">
-          <input id="rPass2" type="password" placeholder="Repeat your password"/>
-          <button class="eye-btn" onclick="togglePass('rPass2','eye2')" aria-label="Toggle password"><span id="eye2">👁</span></button>
+
+        <div class="hero-item">
+          <div class="icon">🔒</div>
+          <div>
+            <h3>Secure password storage</h3>
+            <p>Passwords are sent to the backend and stored as hashes, not plain text.</p>
+          </div>
+        </div>
+
+        <div class="hero-item">
+          <div class="icon">👥</div>
+          <div>
+            <h3>Role-based setup</h3>
+            <p>Assign each member to Admin, Operations, Service, or Support during registration.</p>
+          </div>
         </div>
       </div>
-      <div class="field full"><label>Invite Code</label><input id="rInvite" placeholder="Enter your invite code"/></div>
-    </div>
-    <button class="btn-submit" onclick="doSignup()">Create Account →</button>
-    <hr class="divider"/>
-    <div class="links">
-      <span class="link-text">Already have an account?</span>
-      <a class="link-btn" href="team-login.html">← Sign In</a>
-    </div>
+    </section>
+
+    <section class="card">
+      <h2>Create Account</h2>
+      <p class="subtext">
+        Register as a new team member to access the CX Channel approval dashboard.
+      </p>
+
+      <div id="errorBox" class="alert error"></div>
+      <div id="successBox" class="alert success"></div>
+
+      <form id="signupForm">
+        <div class="grid-2">
+          <div class="field">
+            <label for="firstName">First Name</label>
+            <input id="firstName" type="text" placeholder="Admin" required />
+          </div>
+
+          <div class="field">
+            <label for="lastName">Last Name</label>
+            <input id="lastName" type="text" placeholder="User" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" type="text" placeholder="admin" required />
+        </div>
+
+        <div class="field">
+          <label for="email">Email Address</label>
+          <input id="email" type="email" placeholder="admin@cx.com" required />
+        </div>
+
+        <div class="field">
+          <label for="role">Role / Department</label>
+          <select id="role" required>
+            <option value="">Select role</option>
+            <option value="admin">Admin</option>
+            <option value="operations">Operations</option>
+            <option value="service">Service</option>
+            <option value="support">Support</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="password-wrap">
+            <input id="password" type="password" placeholder="Minimum 8 characters" required />
+            <button class="toggle" type="button" onclick="togglePassword('password', this)">👁</button>
+          </div>
+          <div class="strength"><span id="strengthBar"></span></div>
+          <div class="hint">Use at least 8 characters. A stronger password is recommended.</div>
+        </div>
+
+        <div class="field">
+          <label for="confirmPassword">Confirm Password</label>
+          <div class="password-wrap">
+            <input id="confirmPassword" type="password" placeholder="Re-enter password" required />
+            <button class="toggle" type="button" onclick="togglePassword('confirmPassword', this)">👁</button>
+          </div>
+        </div>
+
+        <button id="submitBtn" class="submit-btn" type="submit">Create Account →</button>
+      </form>
+
+      <div class="footer-row">
+        <p>Already have an account?</p>
+        <a href="team-login.html">Sign In →</a>
+      </div>
+    </section>
   </div>
-</div>
-<script>
-  const API = window.location.origin;
-  function togglePass(inputId,iconId){
-    const inp=document.getElementById(inputId),ico=document.getElementById(iconId);
-    inp.type=inp.type==="password"?"text":"password";
-    ico.textContent=inp.type==="password"?"👁":"🙈";
-  }
-  function checkStrength(){
-    const val=document.getElementById("rPass").value,bar=document.getElementById("strengthBar");
-    let score=0;
-    if(val.length>=8)score++;if(/[A-Z]/.test(val))score++;if(/[0-9]/.test(val))score++;if(/[^a-zA-Z0-9]/.test(val))score++;
-    bar.style.width=[0,25,50,75,100][score]+"%";
-    bar.style.background=["#334155","#dc2626","#f59e0b","#3b82f6","#16a34a"][score];
-  }
-  async function doSignup(){
-    const errBox=document.getElementById("errBox"),errMsg=document.getElementById("errMsg");
-    const okBox=document.getElementById("okBox"),okMsg=document.getElementById("okMsg");
-    errBox.classList.remove("show");okBox.classList.remove("show");
-    const first=document.getElementById("rFirst").value.trim();
-    const last=document.getElementById("rLast").value.trim();
-    const username=document.getElementById("rUser").value.trim();
-    const email=document.getElementById("rEmail").value.trim();
-    const role=document.getElementById("rRole").value;
-    const pass=document.getElementById("rPass").value;
-    const pass2=document.getElementById("rPass2").value;
-    const invite=document.getElementById("rInvite").value.trim();
-    if(!first||!last||!username||!email||!role||!pass||!invite){errMsg.textContent="All fields are required.";errBox.classList.add("show");return;}
-    if(pass.length<8){errMsg.textContent="Password must be at least 8 characters.";errBox.classList.add("show");return;}
-    if(pass!==pass2){errMsg.textContent="Passwords do not match.";errBox.classList.add("show");return;}
-    try{
-      const res=await fetch(`${API}/auth/signup`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({firstName:first,lastName:last,username,email,role,password:pass,inviteCode:invite})});
-      const data=await res.json();
-      if(!res.ok){errMsg.textContent=data.error||"Registration failed.";errBox.classList.add("show");return;}
-      okMsg.textContent="Account created! Redirecting to login…";okBox.classList.add("show");
-      setTimeout(()=>window.location.href="team-login.html",2000);
-    }catch{errMsg.textContent="Could not connect to server.";errBox.classList.add("show");}
-  }
-</script>
+
+  <script>
+    const API = window.location.origin;
+
+    const form = document.getElementById("signupForm");
+    const errorBox = document.getElementById("errorBox");
+    const successBox = document.getElementById("successBox");
+    const submitBtn = document.getElementById("submitBtn");
+    const passwordInput = document.getElementById("password");
+    const strengthBar = document.getElementById("strengthBar");
+
+    passwordInput.addEventListener("input", updateStrength);
+
+    function showError(message) {
+      successBox.classList.remove("show");
+      errorBox.textContent = message;
+      errorBox.classList.add("show");
+    }
+
+    function showSuccess(message) {
+      errorBox.classList.remove("show");
+      successBox.textContent = message;
+      successBox.classList.add("show");
+    }
+
+    function togglePassword(id, btn) {
+      const input = document.getElementById(id);
+      const isPassword = input.type === "password";
+      input.type = isPassword ? "text" : "password";
+      btn.textContent = isPassword ? "🙈" : "👁";
+    }
+
+    function updateStrength() {
+      const value = passwordInput.value;
+      let score = 0;
+
+      if (value.length >= 8) score++;
+      if (/[A-Z]/.test(value)) score++;
+      if (/[a-z]/.test(value)) score++;
+      if (/[0-9]/.test(value)) score++;
+      if (/[^A-Za-z0-9]/.test(value)) score++;
+
+      const widthMap = ["0%", "20%", "40%", "60%", "80%", "100%"];
+      const colorMap = ["#334155", "#ef4444", "#f59e0b", "#f59e0b", "#22c55e", "#16a34a"];
+
+      strengthBar.style.width = widthMap[score];
+      strengthBar.style.background = colorMap[score];
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      errorBox.classList.remove("show");
+      successBox.classList.remove("show");
+
+      const firstName = document.getElementById("firstName").value.trim();
+      const lastName = document.getElementById("lastName").value.trim();
+      const username = document.getElementById("username").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const role = document.getElementById("role").value.trim();
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+
+      if (!firstName || !lastName || !username || !email || !role || !password || !confirmPassword) {
+        showError("Please fill in all fields.");
+        return;
+      }
+
+      if (password.length < 8) {
+        showError("Password must be at least 8 characters.");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        showError("Passwords do not match.");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Creating Account...";
+
+      try {
+        const res = await fetch(`${API}/auth/signup`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            firstName,
+            lastName,
+            username,
+            email,
+            role,
+            password
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || "Could not create account.");
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Create Account →";
+          return;
+        }
+
+        showSuccess("Account created successfully. Redirecting to login...");
+        form.reset();
+        updateStrength();
+
+        setTimeout(() => {
+          window.location.href = "team-login.html";
+        }, 1200);
+      } catch (err) {
+        showError("Network error. Please try again.");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Create Account →";
+      }
+    });
+  </script>
 </body>
 </html>
