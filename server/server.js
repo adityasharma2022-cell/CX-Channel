@@ -1,484 +1,389 @@
 const express = require("express");
-const cors = require("cors");
+const fs = require("fs");
 const path = require("path");
-const crypto = require("crypto");
-const Database = require("better-sqlite3");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const db = new Database(path.join(__dirname, "cxchannel.db"));
+const ROOT_DIR = path.join(__dirname, "..");
+const DATA_FILE = path.join(__dirname, "requests.json");
 
-app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "..")));
 
-function hashPassword(password) {
-  return crypto.createHash("sha256").update(password).digest("hex");
-}
+app.use(express.static(ROOT_DIR));
 
-function generateShortId() {
-  let id;
-  let exists = true;
-
-  while (exists) {
-    id = "TMI-" + Math.floor(1000 + Math.random() * 9000);
-    const row = db.prepare("SELECT id FROM requests WHERE id = ?").get(id);
-    exists = !!row;
-  }
-
-  return id;
-}
-
-function normalizeStatus(status) {
-  const allowed = ["pending", "review", "approved", "rejected"];
-  return allowed.includes((status || "").toLowerCase()) ? status.toLowerCase() : "pending";
-}
-
-function getColumns(tableName) {
-  return db.prepare(`PRAGMA table_info(${tableName})`).all();
-}
-
-function hasColumn(tableName, columnName) {
-  const columns = getColumns(tableName);
-  return columns.some(col => col.name === columnName);
-}
-
-function ensureColumn(tableName, columnName, definition) {
-  if (!hasColumn(tableName, columnName)) {
-    db.prepare(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`).run();
-    console.log(`Added missing column: ${tableName}.${columnName}`);
+function ensureDataFile() {
+  if (!fs.existsSync(DATA_FILE)) {
+    fs.writeFileSync(DATA_FILE, "[]", "utf8");
   }
 }
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    firstName TEXT NOT NULL,
-    lastName TEXT NOT NULL,
-    username TEXT NOT NULL UNIQUE,
-    email TEXT NOT NULL UNIQUE,
-    role TEXT DEFAULT '',
-    password TEXT DEFAULT '',
-    passwordHash TEXT DEFAULT '',
-    createdAt TEXT DEFAULT ''
-  )
-`);
+function readRequests() {
+  try {
+    ensureDataFile();
+    const raw = fs.readFileSync(DATA_FILE, "utf8");
+    return JSON.parse(raw || "[]");
+  } catch (error) {
+    console.error("readRequests error:", error);
+    return [];
+  }
+}
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS requests (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    phone TEXT,
-    email TEXT NOT NULL,
-    product TEXT NOT NULL,
-    productDetails TEXT,
-    serialNumber TEXT,
-    description TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending',
-    operationTeam TEXT,
-    serviceTeam TEXT,
-    createdAt TEXT NOT NULL
-  )
-`);
+function saveRequests(data) {
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), "utf8");
+    return true;
+  } catch (error) {
+    console.error("saveRequests error:", error);
+    return false;
+  }
+}
 
-ensureColumn("users", "role", "TEXT DEFAULT ''");
-ensureColumn("users", "password", "TEXT DEFAULT ''");
-ensureColumn("users", "passwordHash", "TEXT DEFAULT ''");
-ensureColumn("users", "createdAt", "TEXT DEFAULT ''");
+function makeId() {
+  return `TMI-${Date.now()}`;
+}
 
-ensureColumn("requests", "forwardTo", "TEXT DEFAULT ''");
-ensureColumn("requests", "customerFeedback", "TEXT DEFAULT ''");
-ensureColumn("requests", "internalNote", "TEXT DEFAULT ''");
+function nowLabel() {
+  return new Date().toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "team-login.html"));
+function text(v) {
+  return String(v || "").trim();
+}
+
+function escapeCsv(value) {
+  const str = String(value ?? "");
+  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+app.get("/health", (req, res) => {
+  res.json({
+    ok: true,
+    service: "cx-channel",
+    port: PORT,
+    dataFile: "server/requests.json",
+    time: new Date().toISOString()
+  });
 });
 
-app.post("/auth/signup", (req, res) => {
-  const firstName = (req.body.firstName || "").trim();
-  const lastName = (req.body.lastName || "").trim();
-  const username = (req.body.username || "").trim().toLowerCase();
-  const email = (req.body.email || "").trim().toLowerCase();
-  const role = (req.body.role || "").trim().toLowerCase();
-  const password = req.body.password || "";
-
-  if (!firstName || !lastName || !username || !email || !role || !password) {
-    return res.status(400).json({ error: "All fields are required." });
-  }
-
-  if (password.length < 8) {
-    return res.status(400).json({ error: "Password must be at least 8 characters." });
-  }
-
+app.post("/public/request", (req, res) => {
   try {
-    const existing = db
-      .prepare("SELECT id FROM users WHERE username = ? OR email = ?")
-      .get(username, email);
+    const payload = {
+      id: makeId(),
+      oem: text(req.body.oem),
+      serviceType: text(req.body.serviceType),
+      product: text(req.body.product || req.body.oem),
+      productDetails: text(req.body.productDetails),
+      name: text(req.body.name),
+      company: text(req.body.company),
+      designation: text(req.body.designation),
+      department: text(req.body.department),
+      phone: text(req.body.phone),
+      email: text(req.body.email),
+      serialNumber: text(req.body.serialNumber),
+      poNumber: text(req.body.poNumber),
+      poDate: text(req.body.poDate),
+      basicUnit: text(req.body.basicUnit),
+      antenna: text(req.body.antenna),
+      probe: text(req.body.probe),
+      other: text(req.body.other),
+      rfCable: text(req.body.rfCable),
+      billingAddress: text(req.body.billingAddress),
+      returnAddress: text(req.body.returnAddress),
+      calibrationAddress: text(req.body.calibrationAddress),
+      additionalInfo: text(req.body.additionalInfo),
+      description: text(req.body.description),
+      status: "pending",
+      forwardTo: "",
+      operationsTeam: "",
+      serviceTeam: "",
+      customerFeedback: "",
+      internalNote: "",
+      createdAt: nowLabel(),
+      updatedAt: nowLabel()
+    };
 
-    if (existing) {
-      return res.status(400).json({ error: "Username or email already exists." });
+    if (!payload.oem || !payload.serviceType || !payload.name || !payload.email || !payload.description) {
+      return res.status(400).json({
+        message: "OEM, service type, sender name, email, and issue description are required."
+      });
     }
 
-    const createdAt = new Date().toISOString();
-    const passwordHashed = hashPassword(password);
+    const requests = readRequests();
+    requests.push(payload);
 
-    const userColumns = getColumns("users").map(col => col.name);
-
-    if (userColumns.includes("password") && userColumns.includes("passwordHash")) {
-      db.prepare(`
-        INSERT INTO users (firstName, lastName, username, email, role, password, passwordHash, createdAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        firstName,
-        lastName,
-        username,
-        email,
-        role,
-        password,
-        passwordHashed,
-        createdAt
-      );
-    } else if (userColumns.includes("passwordHash")) {
-      db.prepare(`
-        INSERT INTO users (firstName, lastName, username, email, role, passwordHash, createdAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        firstName,
-        lastName,
-        username,
-        email,
-        role,
-        passwordHashed,
-        createdAt
-      );
-    } else if (userColumns.includes("password")) {
-      db.prepare(`
-        INSERT INTO users (firstName, lastName, username, email, role, password, createdAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        firstName,
-        lastName,
-        username,
-        email,
-        role,
-        password,
-        createdAt
-      );
-    } else {
-      return res.status(500).json({ error: "Users table schema is invalid." });
-    }
-
-    return res.status(201).json({
-      success: true,
-      message: "Account created successfully."
-    });
-  } catch (err) {
-    console.error("SIGNUP ERROR:", err);
-    return res.status(500).json({
-      error: err.message || "Could not create account."
-    });
-  }
-});
-
-app.post("/auth/login", (req, res) => {
-  const username = (req.body.username || "").trim().toLowerCase();
-  const password = req.body.password || "";
-
-  if (!username || !password) {
-    return res.status(400).json({ error: "Username and password are required." });
-  }
-
-  try {
-    const user = db.prepare(`
-      SELECT id, firstName, lastName, username, email, role, password, passwordHash
-      FROM users
-      WHERE username = ?
-    `).get(username);
-
-    if (!user) {
-      return res.status(401).json({ error: "Invalid username or password." });
-    }
-
-    const hashedInput = hashPassword(password);
-    const passwordMatches =
-      (user.passwordHash && user.passwordHash === hashedInput) ||
-      (user.password && user.password === password);
-
-    if (!passwordMatches) {
-      return res.status(401).json({ error: "Invalid username or password." });
+    if (!saveRequests(requests)) {
+      return res.status(500).json({ message: "Failed to save request." });
     }
 
     return res.json({
-      success: true,
-      user: {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        username: user.username,
-        email: user.email,
-        role: user.role
-      }
+      message: "Request submitted successfully.",
+      request: payload
     });
-  } catch (err) {
-    console.error("LOGIN ERROR:", err);
-    return res.status(500).json({
-      error: err.message || "Could not login."
-    });
+  } catch (error) {
+    console.error("POST /public/request error:", error);
+    return res.status(500).json({ message: "Failed to submit request." });
   }
 });
 
-app.get("/requests", (req, res) => {
-  const status = (req.query.status || "").toLowerCase();
-
+app.get("/public/track", (req, res) => {
   try {
-    let rows;
-    if (status && ["pending", "review", "approved", "rejected"].includes(status)) {
-      rows = db.prepare("SELECT * FROM requests WHERE status = ? ORDER BY rowid DESC").all(status);
-    } else {
-      rows = db.prepare("SELECT * FROM requests ORDER BY rowid DESC").all();
+    const requests = readRequests();
+    const email = text(req.query.email).toLowerCase();
+    const id = text(req.query.id).toLowerCase();
+
+    let results = requests;
+
+    if (email) {
+      results = results.filter(r => String(r.email || "").toLowerCase() === email);
     }
 
-    res.json(rows);
-  } catch (err) {
-    console.error("FETCH REQUESTS ERROR:", err);
-    res.status(500).json({ error: "Could not fetch requests." });
-  }
-});
-
-app.get("/requests/:id", (req, res) => {
-  try {
-    const row = db.prepare("SELECT * FROM requests WHERE id = ?").get(req.params.id);
-
-    if (!row) {
-      return res.status(404).json({ error: "Request not found." });
+    if (id) {
+      results = results.filter(r => String(r.id || "").toLowerCase() === id);
     }
 
-    const history = db.prepare(`
-      SELECT id, product, productDetails, serialNumber, status, createdAt, customerFeedback
-      FROM requests
-      WHERE email = ?
-      ORDER BY rowid DESC
-    `).all(row.email);
-
-    res.json({
-      ...row,
-      customerHistory: history
-    });
-  } catch (err) {
-    console.error("FETCH REQUEST ERROR:", err);
-    res.status(500).json({ error: "Could not fetch request." });
+    return res.json(results.slice().reverse());
+  } catch (error) {
+    console.error("GET /public/track error:", error);
+    return res.status(500).json({ message: "Failed to fetch requests." });
   }
 });
 
-app.post("/requests", (req, res) => {
-  const {
-    name,
-    phone,
-    email,
-    product,
-    productDetails,
-    serialNumber,
-    description,
-    operationTeam,
-    serviceTeam,
-    status,
-    forwardTo,
-    customerFeedback,
-    internalNote
-  } = req.body;
-
-  if (!name || !email || !product || !description) {
-    return res.status(400).json({
-      error: "Name, email, product, and description are required."
-    });
-  }
-
+app.get("/api/requests", (req, res) => {
   try {
-    const id = generateShortId();
-    const createdAt = new Date().toLocaleString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    });
+    let requests = readRequests().slice().reverse();
 
-    db.prepare(`
-      INSERT INTO requests (
-        id, name, phone, email, product, productDetails, serialNumber,
-        description, status, operationTeam, serviceTeam, createdAt,
-        forwardTo, customerFeedback, internalNote
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      id,
-      name.trim(),
-      phone ? phone.trim() : "",
-      email.trim().toLowerCase(),
-      product.trim(),
-      productDetails ? productDetails.trim() : "",
-      serialNumber ? serialNumber.trim() : "",
-      description.trim(),
-      normalizeStatus(status),
-      operationTeam ? operationTeam.trim() : "",
-      serviceTeam ? serviceTeam.trim() : "",
-      createdAt,
-      forwardTo ? forwardTo.trim() : "",
-      customerFeedback ? customerFeedback.trim() : "",
-      internalNote ? internalNote.trim() : ""
-    );
+    const status = text(req.query.status).toLowerCase();
+    const oem = text(req.query.oem).toLowerCase();
+    const serviceType = text(req.query.serviceType).toLowerCase();
+    const q = text(req.query.q).toLowerCase();
 
-    const newRequest = db.prepare("SELECT * FROM requests WHERE id = ?").get(id);
-    res.status(201).json(newRequest);
-  } catch (err) {
-    console.error("CREATE REQUEST ERROR:", err);
-    res.status(500).json({ error: "Could not create request." });
-  }
-});
-
-app.patch("/requests/:id/status", (req, res) => {
-  const status = normalizeStatus(req.body.status);
-
-  try {
-    const existing = db.prepare("SELECT * FROM requests WHERE id = ?").get(req.params.id);
-
-    if (!existing) {
-      return res.status(404).json({ error: "Request not found." });
+    if (status && status !== "all") {
+      requests = requests.filter(r => String(r.status || "").toLowerCase() === status);
     }
 
-    if (existing.status === "approved" || existing.status === "rejected") {
-      return res.status(400).json({ error: "Finalized tickets cannot be changed." });
+    if (oem && oem !== "all") {
+      requests = requests.filter(r => String(r.oem || r.product || "").toLowerCase() === oem);
     }
 
-    db.prepare("UPDATE requests SET status = ? WHERE id = ?").run(status, req.params.id);
+    if (serviceType && serviceType !== "all") {
+      requests = requests.filter(r => String(r.serviceType || "").toLowerCase() === serviceType);
+    }
 
-    const updated = db.prepare("SELECT * FROM requests WHERE id = ?").get(req.params.id);
-    res.json(updated);
-  } catch (err) {
-    console.error("UPDATE STATUS ERROR:", err);
-    res.status(500).json({ error: "Could not update status." });
+    if (q) {
+      requests = requests.filter(r =>
+        [
+          r.id,
+          r.oem,
+          r.product,
+          r.productDetails,
+          r.name,
+          r.company,
+          r.designation,
+          r.department,
+          r.phone,
+          r.email,
+          r.serialNumber,
+          r.description,
+          r.status
+        ].join(" ").toLowerCase().includes(q)
+      );
+    }
+
+    return res.json(requests);
+  } catch (error) {
+    console.error("GET /api/requests error:", error);
+    return res.status(500).json({ message: "Failed to load requests." });
   }
 });
 
-app.patch("/requests/:id", (req, res) => {
-  const existing = db.prepare("SELECT * FROM requests WHERE id = ?").get(req.params.id);
-
-  if (!existing) {
-    return res.status(404).json({ error: "Request not found." });
-  }
-
-  if (existing.status === "approved" || existing.status === "rejected") {
-    return res.status(400).json({ error: "Finalized tickets cannot be edited." });
-  }
-
-  const updated = {
-    name: req.body.name ?? existing.name,
-    phone: req.body.phone ?? existing.phone,
-    email: req.body.email ?? existing.email,
-    product: req.body.product ?? existing.product,
-    productDetails: req.body.productDetails ?? existing.productDetails,
-    serialNumber: req.body.serialNumber ?? existing.serialNumber,
-    description: req.body.description ?? existing.description,
-    status: normalizeStatus(req.body.status ?? existing.status),
-    operationTeam: req.body.operationTeam ?? existing.operationTeam,
-    serviceTeam: req.body.serviceTeam ?? existing.serviceTeam,
-    forwardTo: req.body.forwardTo ?? existing.forwardTo,
-    customerFeedback: req.body.customerFeedback ?? existing.customerFeedback,
-    internalNote: req.body.internalNote ?? existing.internalNote
-  };
-
+app.get("/api/requests/:id", (req, res) => {
   try {
-    db.prepare(`
-      UPDATE requests
-      SET name = ?, phone = ?, email = ?, product = ?, productDetails = ?,
-          serialNumber = ?, description = ?, status = ?, operationTeam = ?,
-          serviceTeam = ?, forwardTo = ?, customerFeedback = ?, internalNote = ?
-      WHERE id = ?
-    `).run(
-      updated.name,
-      updated.phone,
-      updated.email,
-      updated.product,
-      updated.productDetails,
-      updated.serialNumber,
-      updated.description,
-      updated.status,
-      updated.operationTeam,
-      updated.serviceTeam,
-      updated.forwardTo,
-      updated.customerFeedback,
-      updated.internalNote,
-      req.params.id
-    );
+    const requests = readRequests();
+    const item = requests.find(r => r.id === req.params.id);
 
-    const row = db.prepare("SELECT * FROM requests WHERE id = ?").get(req.params.id);
-    res.json(row);
-  } catch (err) {
-    console.error("UPDATE REQUEST ERROR:", err);
-    res.status(500).json({ error: "Could not update request." });
+    if (!item) {
+      return res.status(404).json({ message: "Request not found." });
+    }
+
+    const history = requests
+      .filter(r => r.email && item.email && r.email.toLowerCase() === item.email.toLowerCase())
+      .slice()
+      .reverse();
+
+    return res.json({
+      request: item,
+      history
+    });
+  } catch (error) {
+    console.error("GET /api/requests/:id error:", error);
+    return res.status(500).json({ message: "Failed to fetch request." });
   }
 });
 
-app.post("/public/requests", (req, res) => {
-  const {
-    name,
-    phone,
-    email,
-    product,
-    productDetails,
-    serialNumber,
-    description
-  } = req.body;
-
-  if (!name || !email || !product || !description) {
-    return res.status(400).json({
-      error: "Name, email, product, and description are required."
-    });
-  }
-
+app.put("/api/requests/:id", (req, res) => {
   try {
-    const id = generateShortId();
-    const createdAt = new Date().toLocaleString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
+    const requests = readRequests();
+    const index = requests.findIndex(r => r.id === req.params.id);
+
+    if (index === -1) {
+      return res.status(404).json({ message: "Request not found." });
+    }
+
+    const current = requests[index];
+    const allowedStatuses = ["pending", "review", "forwarded", "approved", "resolved", "closed"];
+    const nextStatus = text(req.body.status || current.status).toLowerCase();
+
+    requests[index] = {
+      ...current,
+      status: allowedStatuses.includes(nextStatus) ? nextStatus : current.status,
+      forwardTo: text(req.body.forwardTo ?? current.forwardTo),
+      operationsTeam: text(req.body.operationsTeam ?? current.operationsTeam),
+      serviceTeam: text(req.body.serviceTeam ?? current.serviceTeam),
+      customerFeedback: text(req.body.customerFeedback ?? current.customerFeedback),
+      internalNote: text(req.body.internalNote ?? current.internalNote),
+      updatedAt: nowLabel()
+    };
+
+    if (!saveRequests(requests)) {
+      return res.status(500).json({ message: "Failed to update request." });
+    }
+
+    return res.json({
+      message: "Request updated successfully.",
+      request: requests[index]
     });
-
-    db.prepare(`
-      INSERT INTO requests (
-        id, name, phone, email, product, productDetails, serialNumber,
-        description, status, operationTeam, serviceTeam, createdAt,
-        forwardTo, customerFeedback, internalNote
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      id,
-      name.trim(),
-      phone ? phone.trim() : "",
-      email.trim().toLowerCase(),
-      product.trim(),
-      productDetails ? productDetails.trim() : "",
-      serialNumber ? serialNumber.trim() : "",
-      description.trim(),
-      "pending",
-      "",
-      "",
-      createdAt,
-      "",
-      "Your request has been received. Our team will review it shortly.",
-      ""
-    );
-
-    const newRequest = db.prepare("SELECT * FROM requests WHERE id = ?").get(id);
-    res.status(201).json(newRequest);
-  } catch (err) {
-    console.error("PUBLIC REQUEST ERROR:", err);
-    res.status(500).json({ error: "Could not create public request." });
+  } catch (error) {
+    console.error("PUT /api/requests/:id error:", error);
+    return res.status(500).json({ message: "Failed to update request." });
   }
+});
+
+app.get("/api/export/csv", (req, res) => {
+  try {
+    const requests = readRequests();
+
+    const headers = [
+      "Ticket ID",
+      "OEM",
+      "Service Type",
+      "Product",
+      "Product Details",
+      "Sender Name",
+      "Company",
+      "Designation",
+      "Department",
+      "Phone",
+      "Email",
+      "Serial Number",
+      "PO Number",
+      "PO Date",
+      "Billing Address",
+      "Return Address",
+      "Calibration Address",
+      "Additional Info",
+      "Description",
+      "Status",
+      "Forward To",
+      "Operations Team",
+      "Service Team",
+      "Customer Feedback",
+      "Internal Note",
+      "Created At",
+      "Updated At"
+    ];
+
+    const rows = requests.map(r => [
+      r.id,
+      r.oem,
+      r.serviceType,
+      r.product,
+      r.productDetails,
+      r.name,
+      r.company,
+      r.designation,
+      r.department,
+      r.phone,
+      r.email,
+      r.serialNumber,
+      r.poNumber,
+      r.poDate,
+      r.billingAddress,
+      r.returnAddress,
+      r.calibrationAddress,
+      r.additionalInfo,
+      r.description,
+      r.status,
+      r.forwardTo,
+      r.operationsTeam,
+      r.serviceTeam,
+      r.customerFeedback,
+      r.internalNote,
+      r.createdAt,
+      r.updatedAt
+    ]);
+
+    const csv = [headers, ...rows]
+      .map(row => row.map(escapeCsv).join(","))
+      .join("\n");
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", 'attachment; filename="requests-export.csv"');
+    return res.send(csv);
+  } catch (error) {
+    console.error("GET /api/export/csv error:", error);
+    return res.status(500).json({ message: "Failed to export CSV." });
+  }
+});
+
+app.delete("/api/requests/:id", (req, res) => {
+  try {
+    const requests = readRequests();
+    const next = requests.filter(r => r.id !== req.params.id);
+
+    if (next.length === requests.length) {
+      return res.status(404).json({ message: "Request not found." });
+    }
+
+    if (!saveRequests(next)) {
+      return res.status(500).json({ message: "Failed to delete request." });
+    }
+
+    return res.json({ message: "Request deleted successfully." });
+  } catch (error) {
+    console.error("DELETE /api/requests/:id error:", error);
+    return res.status(500).json({ message: "Failed to delete request." });
+  }
+});
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(ROOT_DIR, "index.html"));
+});
+
+app.get("/customer.html", (req, res) => {
+  res.sendFile(path.join(ROOT_DIR, "customer.html"));
+});
+
+app.get("*", (req, res) => {
+  const requestedPath = path.join(ROOT_DIR, req.path);
+
+  if (fs.existsSync(requestedPath) && fs.statSync(requestedPath).isFile()) {
+    return res.sendFile(requestedPath);
+  }
+
+  return res.sendFile(path.join(ROOT_DIR, "index.html"));
 });
 
 app.listen(PORT, () => {
-  console.log(`CX Channel backend running at http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
