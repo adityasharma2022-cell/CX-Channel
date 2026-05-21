@@ -1,558 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CX Channel Customer Portal</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CX Channel – Customer Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: Inter, sans-serif;
-      background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
-      color: #111827;
-      min-height: 100vh;
+    *{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --bg:#f0f4f8;--surface:#ffffff;--surface2:#f8fafc;
+      --border:#e2e8f0;--text:#0f172a;--muted:#64748b;
+      --accent:#0ea5e9;--accent-dark:#0284c7;
+      --success:#16a34a;--error:#dc2626;
+      --radius:16px;--shadow:0 4px 24px rgba(15,23,42,.08);
     }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      padding: 18px 24px;
-      flex-wrap: wrap;
-    }
-
-    .brand {
-      font-size: 22px;
-      font-weight: 800;
-      color: #111827;
-    }
-
-    .top-links {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .top-links a {
-      text-decoration: none;
-      color: #374151;
-      background: #fff;
-      border: 1px solid #dbe2ea;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 14px;
-    }
-
-    .page {
-      max-width: 960px;
-      margin: 10px auto 40px;
-      padding: 0 16px;
-    }
-
-    .hero {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    .hero h1 {
-      font-size: 36px;
-      font-weight: 800;
-      margin-bottom: 10px;
-    }
-
-    .hero p {
-      color: #6b7280;
-      font-size: 15px;
-      max-width: 660px;
-      margin: 0 auto;
-      line-height: 1.6;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-
-    .tab {
-      border: 1px solid #d1d5db;
-      background: #fff;
-      color: #4b5563;
-      border-radius: 999px;
-      padding: 10px 18px;
-      cursor: pointer;
-      font-weight: 800;
-      font-size: 14px;
-    }
-
-    .tab.active {
-      background: #111827;
-      color: #fff;
-      border-color: #111827;
-    }
-
-    .card {
-      background: rgba(255,255,255,0.96);
-      border: 1px solid #e5e7eb;
-      border-radius: 24px;
-      padding: 24px;
-      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .section-title {
-      font-size: 24px;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    .section-sub {
-      color: #6b7280;
-      margin-bottom: 20px;
-      line-height: 1.6;
-      font-size: 14px;
-    }
-
-    .notice {
-      padding: 14px 16px;
-      border-radius: 14px;
-      background: #eff6ff;
-      color: #1d4ed8;
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 18px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 14px;
-    }
-
-    .field.full {
-      grid-column: 1 / -1;
-    }
-
-    label {
-      font-size: 13px;
-      font-weight: 700;
-      color: #374151;
-    }
-
-    input, textarea {
-      width: 100%;
-      border: 1px solid #d1d5db;
-      border-radius: 14px;
-      padding: 13px 14px;
-      font: inherit;
-      background: #fff;
-      outline: none;
-    }
-
-    textarea {
-      min-height: 110px;
-      resize: vertical;
-    }
-
-    .btn-primary, .btn-secondary {
-      border: none;
-      border-radius: 14px;
-      padding: 13px 18px;
-      cursor: pointer;
-      font-family: inherit;
-      font-weight: 800;
-      font-size: 14px;
-    }
-
-    .btn-primary {
-      background: #111827;
-      color: #fff;
-    }
-
-    .btn-secondary {
-      background: #fff;
-      color: #374151;
-      border: 1px solid #d1d5db;
-    }
-
-    .error {
-      display: none;
-      background: #fef2f2;
-      color: #b91c1c;
-      border: 1px solid #fecaca;
-      padding: 12px 14px;
-      border-radius: 12px;
-      margin-bottom: 16px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .error.show {
-      display: block;
-    }
-
-    .success {
-      text-align: center;
-      padding: 16px 8px 4px;
-    }
-
-    .success-badge {
-      width: 62px;
-      height: 62px;
-      margin: 0 auto 14px;
-      border-radius: 50%;
-      background: #dcfce7;
-      display: grid;
-      place-items: center;
-      font-size: 30px;
-      font-weight: 800;
-      color: #166534;
-    }
-
-    .id-box {
-      display: inline-block;
-      margin: 14px 0;
-      padding: 14px 18px;
-      border-radius: 16px;
-      background: #f3f4f6;
-      font-weight: 800;
-      font-size: 22px;
-      letter-spacing: .04em;
-    }
-
-    .action-group {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .track-row {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 18px;
-      flex-wrap: wrap;
-    }
-
-    .track-row input {
-      flex: 1;
-      min-width: 220px;
-    }
-
-    .track-note {
-      color: #6b7280;
-      font-size: 13px;
-      margin-bottom: 14px;
-    }
-
-    .result-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 18px;
-      padding: 18px;
-      background: #fafafa;
-      margin-top: 12px;
-    }
-
-    .result-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 8px;
-    }
-
-    .result-id {
-      font-weight: 800;
-      font-size: 18px;
-    }
-
-    .pill {
-      display: inline-block;
-      padding: 7px 12px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 800;
-      text-transform: capitalize;
-    }
-
-    .pending { background: #fef3c7; color: #92400e; }
-    .review { background: #dbeafe; color: #1d4ed8; }
-    .approved { background: #dcfce7; color: #166534; }
-    .rejected { background: #fee2e2; color: #b91c1c; }
-
-    .muted {
-      color: #6b7280;
-      font-size: 14px;
-      line-height: 1.6;
-      margin-top: 4px;
-    }
-
-    @media (max-width: 720px) {
-      .hero h1 { font-size: 28px; }
-      .grid { grid-template-columns: 1fr; }
-      .card { padding: 18px; }
-    }
+    body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    header{background:linear-gradient(135deg,#0ea5e9 0%,#0369a1 100%);padding:0 24px;color:#fff;}
+    .header-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:64px;}
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo-icon{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+    .logo-text{font-size:20px;font-weight:800;}
+    .logo-sub{font-size:11px;opacity:.75;letter-spacing:.5px;text-transform:uppercase;}
+    .header-badge{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;}
+    .hero{background:linear-gradient(135deg,#0ea5e9 0%,#0369a1 100%);padding:40px 24px 60px;color:#fff;text-align:center;}
+    .hero h1{font-size:clamp(24px,4vw,40px);font-weight:800;margin-bottom:10px;}
+    .hero p{font-size:16px;opacity:.85;max-width:560px;margin:0 auto;line-height:1.6;}
+    main{max-width:820px;margin:-30px auto 60px;padding:0 18px;}
+    .tabs{display:flex;gap:6px;background:var(--surface);border-radius:16px;padding:6px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:22px;}
+    .tab{flex:1;padding:12px;border-radius:12px;border:none;font:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;color:var(--muted);background:transparent;}
+    .tab.active{background:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(14,165,233,.35);}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:30px 28px;box-shadow:var(--shadow);}
+    .card-title{font-size:22px;font-weight:800;margin-bottom:6px;}
+    .card-sub{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:24px;}
+    .section{display:none;} .section.active{display:block;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .field{display:flex;flex-direction:column;gap:7px;}
+    .field.full{grid-column:1/-1;}
+    label{font-size:13px;font-weight:700;color:#334155;}
+    .req{color:var(--accent);margin-left:2px;}
+    input,textarea{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;font:inherit;outline:none;background:#fff;transition:border-color .2s,box-shadow .2s;font-size:14px;}
+    input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(14,165,233,.12);}
+    textarea{min-height:110px;resize:vertical;}
+    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff;border:none;border-radius:13px;padding:14px 28px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;transition:.2s;box-shadow:0 4px 14px rgba(14,165,233,.35);}
+    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(14,165,233,.45);}
+    .btn-secondary{background:#fff;color:#374151;border:1.5px solid var(--border);border-radius:13px;padding:14px 28px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;transition:.2s;}
+    .btn-secondary:hover{background:#f8fafc;}
+    .alert{display:none;padding:13px 16px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:16px;}
+    .alert.show{display:flex;align-items:center;gap:8px;}
+    .alert-error{background:#fef2f2;border:1px solid #fecaca;color:var(--error);}
+    .alert-success{background:#f0fdf4;border:1px solid #bbf7d0;color:var(--success);}
+    .track-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+    .track-row input{flex:1;min-width:180px;}
+    .divider-text{text-align:center;color:var(--muted);font-size:13px;font-weight:700;margin:14px 0;position:relative;}
+    .divider-text::before,.divider-text::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--border);}
+    .divider-text::before{left:0;}.divider-text::after{right:0;}
+    .results{display:flex;flex-direction:column;gap:14px;margin-top:8px;}
+    .result-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:20px;}
+    .result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+    .result-id{font-size:18px;font-weight:800;}
+    .result-product{font-size:14px;color:var(--muted);margin-bottom:12px;}
+    .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .result-item{font-size:13px;} .result-item span{color:var(--muted);} .result-item strong{color:var(--text);}
+    .pill{display:inline-block;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:800;text-transform:capitalize;}
+    .pill-pending{background:#fef3c7;color:#92400e;}
+    .pill-review{background:#dbeafe;color:#1d4ed8;}
+    .pill-approved{background:#dcfce7;color:#166534;}
+    .pill-rejected{background:#fee2e2;color:#b91c1c;}
+    .toast{position:fixed;bottom:28px;right:24px;z-index:9999;background:#0f172a;color:#fff;padding:15px 20px;border-radius:14px;font-size:14px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:360px;display:flex;align-items:center;gap:10px;opacity:0;transform:translateY(14px);transition:opacity .3s ease,transform .3s ease;pointer-events:none;}
+    .toast.show{opacity:1;transform:translateY(0);}
+    footer{background:#0f172a;color:#94a3b8;text-align:center;padding:22px;font-size:13px;}
+    footer a{color:#38bdf8;text-decoration:none;}
+    @media(max-width:600px){.form-grid,.result-grid{grid-template-columns:1fr;}.card{padding:20px 16px;}}
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand">CX Channel</div>
-    <div class="top-links">
-      <a href="index.html">Team Dashboard</a>
-      <a href="track.html">Tracking Page</a>
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">📡</div>
+      <div>
+        <div class="logo-text">CX Channel</div>
+        <div class="logo-sub">Customer Support Portal</div>
+      </div>
     </div>
+    <div class="header-badge">Customer Portal</div>
+  </div>
+</header>
+<div class="hero">
+  <h1>How can we help you?</h1>
+  <p>Submit a new support request for your product or track the status of an existing ticket anytime.</p>
+</div>
+<main>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('submit',this)">📝 Submit a Request</button>
+    <button class="tab" onclick="switchTab('track',this)">🔍 Track My Request</button>
   </div>
 
-  <div class="page">
-    <div class="hero">
-      <h1>Customer Request Portal</h1>
-      <p>Submit a support request or track an existing one with your email address or your short ticket ID.</p>
-    </div>
-
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('submit', this)">Submit Request</button>
-      <button class="tab" onclick="switchTab('track', this)">Track Request</button>
-    </div>
-
+  <!-- SUBMIT -->
+  <div id="section-submit" class="section active">
     <div class="card">
-      <div id="submitTab">
-        <div id="submitFormWrap">
-          <div class="section-title">New request</div>
-          <div class="section-sub">Fill in the details below. Your request will be sent to the support team for validation.</div>
-          <div class="notice">Use a short and clear issue description so the team can process the request faster.</div>
-          <div id="submitError" class="error"></div>
-
-          <div class="grid">
-            <div class="field">
-              <label>Customer Name</label>
-              <input id="cName" placeholder="Your name">
-            </div>
-
-            <div class="field">
-              <label>Email</label>
-              <input id="cEmail" type="email" placeholder="your@email.com">
-            </div>
-
-            <div class="field">
-              <label>Phone No</label>
-              <input id="cPhone" placeholder="Phone number">
-            </div>
-
-            <div class="field">
-              <label>Product</label>
-              <input id="cProduct" placeholder="Product">
-            </div>
-
-            <div class="field">
-              <label>Product Details</label>
-              <input id="cProductDetails" placeholder="VeEX / NARDA / CUBRO / ATDI etc.">
-            </div>
-
-            <div class="field">
-              <label>Serial Number</label>
-              <input id="cSN" placeholder="S/N">
-            </div>
-
-            <div class="field full">
-              <label>Description</label>
-              <textarea id="cDescription" placeholder="Briefly explain the issue"></textarea>
-            </div>
-          </div>
-
-          <button class="btn-primary" id="submitBtn" onclick="submitRequest()">Submit Request</button>
-        </div>
-
-        <div id="submitSuccess" class="success hidden">
-          <div class="success-badge">✓</div>
-          <div class="section-title">Request submitted</div>
-          <div class="section-sub">Your request has been received successfully.</div>
-          <div class="id-box" id="successId">TMI-0000</div>
-          <div class="section-sub">Please save this ID for tracking.</div>
-          <div class="action-group">
-            <button class="btn-secondary" onclick="resetForm()">Submit Another</button>
-            <button class="btn-primary" onclick="trackById()">Track This Request</button>
-          </div>
-        </div>
+      <div class="card-title">Submit a Support Request</div>
+      <div class="card-sub">Fill in the details below. You'll receive a unique Ticket ID — use it to track your request anytime.</div>
+      <div id="submitError" class="alert alert-error"><span>⚠</span><span id="submitErrorMsg"></span></div>
+      <div class="form-grid">
+        <div class="field"><label>Full Name <span class="req">*</span></label><input id="sName" placeholder="Your full name"/></div>
+        <div class="field"><label>Phone Number</label><input id="sPhone" type="tel" placeholder="+91 98765 43210"/></div>
+        <div class="field"><label>Email Address <span class="req">*</span></label><input id="sEmail" type="email" placeholder="you@company.com"/></div>
+        <div class="field"><label>Product Name <span class="req">*</span></label><input id="sProduct" placeholder="e.g. VeEX TX300S"/></div>
+        <div class="field"><label>Product Model / Details</label><input id="sProductDetails" placeholder="Model variant or OEM"/></div>
+        <div class="field"><label>Serial Number</label><input id="sSN" placeholder="Device serial number"/></div>
+        <div class="field full"><label>Description of Issue <span class="req">*</span></label><textarea id="sDesc" placeholder="Describe the problem in detail — what happened, when it started, error messages, etc."></textarea></div>
       </div>
-
-      <div id="trackTab" class="hidden">
-        <div class="section-title">Track request</div>
-        <div class="section-sub">Search using your email address or short ticket ID.</div>
-        <div class="track-note">Example: TMI-4821 or customer@email.com</div>
-
-        <div class="track-row">
-          <input id="trackQuery" placeholder="Email or TMI-4821">
-          <button class="btn-primary" onclick="trackRequest()">Search</button>
-        </div>
-
-        <div id="trackResults" class="muted">Enter your email or ticket ID to check status.</div>
+      <div style="margin-top:18px;">
+        <button class="btn-primary" onclick="submitRequest()">Submit Request →</button>
       </div>
     </div>
   </div>
 
-  <script>
-    const API = window.location.hostname.includes("onrender.com")
-      ? window.location.origin
-      : "http://localhost:3000";
-
-    let lastSubmittedId = "";
-    let lastSubmittedEmail = "";
-
-    function switchTab(tab, el) {
-      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-      el.classList.add("active");
-      document.getElementById("submitTab").classList.toggle("hidden", tab !== "submit");
-      document.getElementById("trackTab").classList.toggle("hidden", tab !== "track");
+  <!-- TRACK -->
+  <div id="section-track" class="section">
+    <div class="card">
+      <div class="card-title">Track Your Request</div>
+      <div class="card-sub">Enter your Ticket ID (e.g. TMI-1234) or registered email to find your tickets.</div>
+      <div id="trackError" class="alert alert-error"><span>⚠</span><span id="trackErrorMsg"></span></div>
+      <div class="track-row">
+        <input id="trackId" placeholder="Ticket ID – e.g. TMI-1234" onkeydown="if(event.key==='Enter')trackRequest()"/>
+        <button class="btn-primary" onclick="trackRequest()">Track →</button>
+      </div>
+      <div class="divider-text">or search by email</div>
+      <div class="track-row">
+        <input id="trackEmail" type="email" placeholder="Your registered email address" onkeydown="if(event.key==='Enter')trackRequest()"/>
+        <button class="btn-secondary" onclick="trackRequest()">Search</button>
+      </div>
+      <div id="trackResults" class="results"></div>
+    </div>
+  </div>
+</main>
+<footer>
+  <p>© 2026 CX Channel · Customer Support Portal · Powered by TMI</p>
+  <p style="margin-top:6px;font-size:12px;">Team members: <a href="team-login.html">Team Dashboard →</a></p>
+</footer>
+<div id="toast" class="toast"></div>
+<script>
+  const API = window.location.origin;
+  function switchTab(name, el) {
+    document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+    el.classList.add("active");
+    document.getElementById("section-"+name).classList.add("active");
+  }
+  function showToast(msg,ok=true){
+    const t=document.getElementById("toast");
+    t.innerHTML=(ok?"✅ ":"❌ ")+msg;
+    t.style.background=ok?"#166534":"#b91c1c";
+    t.classList.add("show");
+    setTimeout(()=>t.classList.remove("show"),5000);
+  }
+  async function submitRequest(){
+    const errBox=document.getElementById("submitError"),errMsg=document.getElementById("submitErrorMsg");
+    errBox.classList.remove("show");
+    const payload={
+      name:document.getElementById("sName").value.trim(),
+      phone:document.getElementById("sPhone").value.trim(),
+      email:document.getElementById("sEmail").value.trim(),
+      product:document.getElementById("sProduct").value.trim(),
+      productDetails:document.getElementById("sProductDetails").value.trim(),
+      serialNumber:document.getElementById("sSN").value.trim(),
+      description:document.getElementById("sDesc").value.trim()
+    };
+    if(!payload.name||!payload.email||!payload.product||!payload.description){
+      errMsg.textContent="Please fill in all required fields.";errBox.classList.add("show");return;
     }
-
-    async function submitRequest() {
-      const name = document.getElementById("cName").value.trim();
-      const email = document.getElementById("cEmail").value.trim();
-      const phone = document.getElementById("cPhone").value.trim();
-      const product = document.getElementById("cProduct").value.trim();
-      const productDetails = document.getElementById("cProductDetails").value.trim();
-      const serialNumber = document.getElementById("cSN").value.trim();
-      const description = document.getElementById("cDescription").value.trim();
-
-      const err = document.getElementById("submitError");
-      const btn = document.getElementById("submitBtn");
-
-      err.classList.remove("show");
-
-      if (!name || !email || !product || !description) {
-        err.textContent = "Please fill in customer name, email, product, and description.";
-        err.classList.add("show");
-        return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = "Submitting...";
-
-      try {
-        const res = await fetch(`${API}/public/requests`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name,
-            email,
-            phone,
-            product,
-            productDetails,
-            serialNumber,
-            description
-          })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          err.textContent = data.error || "Submission failed.";
-          err.classList.add("show");
-          btn.disabled = false;
-          btn.textContent = "Submit Request";
-          return;
-        }
-
-        lastSubmittedId = data.id;
-        lastSubmittedEmail = email;
-
-        document.getElementById("successId").textContent = data.id;
-        document.getElementById("submitFormWrap").classList.add("hidden");
-        document.getElementById("submitSuccess").classList.remove("hidden");
-      } catch (e) {
-        err.textContent = "Could not connect to server.";
-        err.classList.add("show");
-        btn.disabled = false;
-        btn.textContent = "Submit Request";
-      }
-    }
-
-    function resetForm() {
-      ["cName","cEmail","cPhone","cProduct","cProductDetails","cSN","cDescription"].forEach(id => {
-        document.getElementById(id).value = "";
-      });
-
-      document.getElementById("submitError").classList.remove("show");
-      document.getElementById("submitBtn").disabled = false;
-      document.getElementById("submitBtn").textContent = "Submit Request";
-      document.getElementById("submitFormWrap").classList.remove("hidden");
-      document.getElementById("submitSuccess").classList.add("hidden");
-    }
-
-    function trackById() {
-      const trackTabBtn = document.querySelectorAll(".tab")[1];
-      switchTab("track", trackTabBtn);
-      document.getElementById("trackQuery").value = lastSubmittedId || lastSubmittedEmail;
-      trackRequest();
-    }
-
-    async function trackRequest() {
-      const query = document.getElementById("trackQuery").value.trim();
-      const results = document.getElementById("trackResults");
-
-      if (!query) {
-        results.innerHTML = `Enter your email or ticket ID to check status.`;
-        return;
-      }
-
-      results.innerHTML = `Searching...`;
-
-      try {
-        const isId = query.toUpperCase().startsWith("TMI-");
-        const url = isId
-          ? `${API}/public/track?id=${encodeURIComponent(query)}`
-          : `${API}/public/track?email=${encodeURIComponent(query)}`;
-
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (!Array.isArray(data) || !data.length) {
-          results.innerHTML = `<div class="muted">No requests found.</div>`;
-          return;
-        }
-
-        results.innerHTML = data.map(r => `
-          <div class="result-card">
-            <div class="result-top">
-              <div class="result-id">${r.id}</div>
-              <span class="pill ${r.status}">${r.status}</span>
-            </div>
-            <div class="muted"><strong>Name:</strong> ${r.name || "-"}</div>
-            <div class="muted"><strong>Product:</strong> ${r.product || "-"}</div>
-            <div class="muted"><strong>Product Details:</strong> ${r.productDetails || "-"}</div>
-            <div class="muted"><strong>Serial Number:</strong> ${r.serialNumber || "-"}</div>
-            <div class="muted"><strong>Description:</strong> ${r.description || "-"}</div>
-            <div class="muted"><strong>Email:</strong> ${r.email || "-"}</div>
-            <div class="muted"><strong>Submitted:</strong> ${r.createdAt || "-"}</div>
+    try{
+      const res=await fetch(`${API}/public/requests`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      const data=await res.json();
+      if(!res.ok){errMsg.textContent=data.error||"Could not submit.";errBox.classList.add("show");showToast(data.error||"Failed.",false);return;}
+      ["sName","sPhone","sEmail","sProduct","sProductDetails","sSN","sDesc"].forEach(id=>document.getElementById(id).value="");
+      showToast(`Request submitted! Your Ticket ID is ${data.id}`);
+    }catch{errMsg.textContent="Network error. Please try again.";errBox.classList.add("show");showToast("Network error.",false);}
+  }
+  function pillClass(s){return{approved:"pill-approved",review:"pill-review",rejected:"pill-rejected",pending:"pill-pending"}[s]||"pill-pending";}
+  async function trackRequest(){
+    const errBox=document.getElementById("trackError"),errMsg=document.getElementById("trackErrorMsg"),results=document.getElementById("trackResults");
+    errBox.classList.remove("show");results.innerHTML="";
+    const id=document.getElementById("trackId").value.trim();
+    const email=document.getElementById("trackEmail").value.trim();
+    if(!id&&!email){errMsg.textContent="Please enter a Ticket ID or email address.";errBox.classList.add("show");return;}
+    results.innerHTML=`<div style="color:#64748b;font-size:14px;padding:8px 0;">Searching…</div>`;
+    const params=id?`id=${encodeURIComponent(id)}`:`email=${encodeURIComponent(email)}`;
+    try{
+      const res=await fetch(`${API}/public/track?${params}`);
+      const data=await res.json();
+      if(!res.ok){errMsg.textContent=data.error||"Could not fetch.";errBox.classList.add("show");results.innerHTML="";return;}
+      if(!data.length){results.innerHTML=`<div style="color:#64748b;font-size:14px;padding:12px 0;">No tickets found.</div>`;return;}
+      results.innerHTML=data.map(t=>`
+        <div class="result-card">
+          <div class="result-header"><div class="result-id">${t.id}</div><span class="pill ${pillClass(t.status)}">${t.status}</span></div>
+          <div class="result-product">${t.product}${t.productDetails?" · "+t.productDetails:""}${t.serialNumber?" · S/N: "+t.serialNumber:""}</div>
+          <div class="result-grid">
+            <div class="result-item"><span>Name: </span><strong>${t.name||"-"}</strong></div>
+            <div class="result-item"><span>Email: </span><strong>${t.email||"-"}</strong></div>
+            <div class="result-item"><span>Submitted: </span><strong>${t.createdAt||"-"}</strong></div>
+            <div class="result-item"><span>Issue: </span><strong>${(t.description||"-").substring(0,80)}</strong></div>
           </div>
-        `).join("");
-      } catch (e) {
-        results.innerHTML = `<div class="muted" style="color:#b91c1c;">Could not connect to server.</div>`;
-      }
-    }
-
-    document.getElementById("trackQuery").addEventListener("keydown", e => {
-      if (e.key === "Enter") trackRequest();
-    });
-  </script>
+        </div>`).join("");
+    }catch{errMsg.textContent="Could not connect.";errBox.classList.add("show");results.innerHTML="";}
+  }
+</script>
 </body>
 </html>

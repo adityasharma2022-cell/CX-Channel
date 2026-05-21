@@ -1,714 +1,298 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CX Channel Dashboard</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CX Channel – Team Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: Inter, sans-serif;
-      background: #f5f7fb;
-      color: #111827;
-    }
-
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid #e5e7eb;
-      padding: 14px 22px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .brand {
-      font-size: 22px;
-      font-weight: 800;
-      color: #111827;
-    }
-
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .btn, .btn-dark, .btn-light, .btn-mini {
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-family: inherit;
-      font-weight: 700;
-      transition: .2s ease;
-    }
-
-    .btn-dark {
-      background: #111827;
-      color: #fff;
-      padding: 11px 16px;
-    }
-
-    .btn-light {
-      background: #fff;
-      color: #374151;
-      border: 1px solid #d1d5db;
-      padding: 11px 16px;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    .btn-mini {
-      padding: 8px 12px;
-      font-size: 12px;
-      border-radius: 10px;
-    }
-
-    .approve-btn { background: #dcfce7; color: #166534; }
-    .review-btn { background: #dbeafe; color: #1d4ed8; }
-    .reject-btn { background: #fee2e2; color: #b91c1c; }
-
-    .container {
-      max-width: 1280px;
-      margin: 24px auto;
-      padding: 0 18px 40px;
-    }
-
-    .hero {
-      display: flex;
-      justify-content: space-between;
-      align-items: end;
-      gap: 16px;
-      margin-bottom: 22px;
-      flex-wrap: wrap;
-    }
-
-    .hero h1 {
-      font-size: 30px;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-
-    .hero p {
-      color: #6b7280;
-      font-size: 14px;
-      max-width: 700px;
-      line-height: 1.6;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-      margin-bottom: 20px;
-    }
-
-    .stat {
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 18px;
-      padding: 18px;
-      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
-    }
-
-    .stat-label {
-      color: #6b7280;
-      font-size: 13px;
-      margin-bottom: 8px;
-    }
-
-    .stat-value {
-      font-size: 30px;
-      font-weight: 800;
-      color: #111827;
-    }
-
-    .panel {
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
-    }
-
-    .panel-head {
-      padding: 16px 18px;
-      border-bottom: 1px solid #eef2f7;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .chips {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .chip {
-      padding: 9px 14px;
-      border-radius: 999px;
-      border: 1px solid #d1d5db;
-      background: #fff;
-      color: #4b5563;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .chip.active {
-      background: #111827;
-      color: #fff;
-      border-color: #111827;
-    }
-
-    .table-wrap {
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 1180px;
-    }
-
-    th, td {
-      padding: 16px 18px;
-      text-align: left;
-      border-bottom: 1px solid #eef2f7;
-      vertical-align: top;
-      font-size: 14px;
-    }
-
-    th {
-      background: #fafafa;
-      color: #6b7280;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-    }
-
-    .ticket-id {
-      font-size: 14px;
-      font-weight: 800;
-      color: #111827;
-      margin-bottom: 4px;
-    }
-
-    .muted {
-      font-size: 12px;
-      color: #6b7280;
-      line-height: 1.5;
-    }
-
-    .pill {
-      display: inline-block;
-      padding: 7px 11px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 800;
-      text-transform: capitalize;
-    }
-
-    .pending-pill { background: #fef3c7; color: #92400e; }
-    .review-pill { background: #dbeafe; color: #1d4ed8; }
-    .approved-pill { background: #dcfce7; color: #166534; }
-    .rejected-pill { background: #fee2e2; color: #b91c1c; }
-
-    .action-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .finalized-text {
-      font-size: 12px;
-      font-weight: 800;
-      color: #6b7280;
-      padding-top: 8px;
-    }
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.45);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 100;
-    }
-
-    .modal-backdrop.open {
-      display: flex;
-    }
-
-    .modal {
-      width: 100%;
-      max-width: 860px;
-      background: #fff;
-      border-radius: 22px;
-      overflow: hidden;
-      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
-    }
-
-    .modal-head, .modal-foot {
-      padding: 18px 20px;
-      border-bottom: 1px solid #eef2f7;
-    }
-
-    .modal-foot {
-      border-bottom: none;
-      border-top: 1px solid #eef2f7;
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-
-    .modal-body {
-      padding: 20px;
-    }
-
-    .modal-head h3 {
-      font-size: 22px;
-      font-weight: 800;
-      margin-bottom: 4px;
-    }
-
-    .modal-head p {
-      color: #6b7280;
-      font-size: 14px;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .field.full {
-      grid-column: 1 / -1;
-    }
-
-    label {
-      font-size: 13px;
-      font-weight: 700;
-      color: #374151;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      border: 1px solid #d1d5db;
-      border-radius: 14px;
-      padding: 12px 14px;
-      font: inherit;
-      outline: none;
-      background: #fff;
-    }
-
-    textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
-
-    .error-box {
-      display: none;
-      margin-bottom: 16px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      color: #b91c1c;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .error-box.show {
-      display: block;
-    }
-
-    .empty-state {
-      text-align: center;
-      color: #6b7280;
-      padding: 30px 14px;
-      font-size: 14px;
-    }
-
-    @media (max-width: 980px) {
-      .stats {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 600px) {
-      .stats {
-        grid-template-columns: 1fr;
-      }
-
-      .container {
-        padding: 0 12px 28px;
-      }
-
-      .topbar {
-        padding: 12px 14px;
-      }
-
-      .hero h1 {
-        font-size: 24px;
-      }
-    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    :root{--bg:#f0f4f8;--surface:#ffffff;--surface2:#f8fafc;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--accent:#0ea5e9;--accent-dark:#0284c7;--success:#16a34a;--error:#dc2626;--shadow:0 4px 24px rgba(15,23,42,.07);--radius:16px;}
+    body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);}
+    .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:62px;gap:16px;}
+    .brand{display:flex;align-items:center;gap:10px;}
+    .brand-icon{width:36px;height:36px;background:linear-gradient(135deg,#0ea5e9,#0369a1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+    .brand-name{font-size:20px;font-weight:800;color:var(--text);}
+    .brand-tag{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+    .top-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .user-chip{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:6px 12px 6px 8px;}
+    .user-avatar{width:26px;height:26px;background:linear-gradient(135deg,#0ea5e9,#0369a1);border-radius:999px;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
+    .user-name{font-size:13px;font-weight:700;}
+    .btn-dark,.btn-light{border:none;border-radius:12px;cursor:pointer;font-family:inherit;font-weight:700;font-size:13px;transition:.2s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;}
+    .btn-dark{background:#0f172a;color:#fff;padding:10px 16px;} .btn-dark:hover{background:#1e293b;}
+    .btn-light{background:#fff;color:var(--text);border:1px solid var(--border);padding:10px 16px;} .btn-light:hover{background:var(--surface2);}
+    .btn-csv{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;padding:9px 14px;border-radius:12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;white-space:nowrap;}
+    .btn-csv:hover{background:#dcfce7;}
+    .container{max-width:1320px;margin:26px auto;padding:0 20px 60px;}
+    .page-header{margin-bottom:22px;}
+    .page-header h1{font-size:clamp(22px,3vw,30px);font-weight:800;margin-bottom:5px;}
+    .page-header p{color:var(--muted);font-size:14px;line-height:1.6;}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+    .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
+    .stat-icon{font-size:22px;margin-bottom:8px;}
+    .stat-label{color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+    .stat-value{font-size:32px;font-weight:800;}
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow);}
+    .panel-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    .panel-head-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .chips{display:flex;gap:6px;flex-wrap:wrap;}
+    .chip{padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;transition:.2s;}
+    .chip.active{background:#0f172a;color:#fff;border-color:#0f172a;}
+    .search-input{padding:9px 14px;border:1.5px solid var(--border);border-radius:12px;font:inherit;font-size:13px;outline:none;min-width:230px;transition:border-color .2s;background:#fff;color:var(--text);}
+    .search-input:focus{border-color:var(--accent);}
+    .table-wrap{overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;min-width:1100px;}
+    th,td{padding:15px 18px;text-align:left;border-bottom:1px solid #f1f5f9;vertical-align:top;font-size:14px;}
+    th{background:#fafafa;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
+    tr:last-child td{border-bottom:none;} tr:hover td{background:#fafbfc;}
+    .tid{font-size:13px;font-weight:800;margin-bottom:4px;}
+    .tsub{font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px;}
+    .customer-name{font-weight:800;cursor:pointer;text-decoration:underline;text-underline-offset:3px;transition:color .15s;}
+    .customer-name:hover{color:var(--accent);}
+    .pill{display:inline-block;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:800;text-transform:capitalize;}
+    .p-pending{background:#fef3c7;color:#92400e;} .p-review{background:#dbeafe;color:#1d4ed8;}
+    .p-approved{background:#dcfce7;color:#166534;} .p-rejected{background:#fee2e2;color:#b91c1c;}
+    .action-row{display:flex;gap:6px;flex-wrap:wrap;}
+    .abtn{padding:7px 11px;border-radius:9px;border:none;font:inherit;font-size:12px;font-weight:800;cursor:pointer;transition:.15s;}
+    .abtn-approve{background:#dcfce7;color:#166534;} .abtn-approve:hover{background:#bbf7d0;}
+    .abtn-review{background:#dbeafe;color:#1d4ed8;} .abtn-review:hover{background:#bfdbfe;}
+    .abtn-reject{background:#fee2e2;color:#b91c1c;} .abtn-reject:hover{background:#fecaca;}
+    .finalized{font-size:12px;font-weight:700;color:var(--muted);}
+    .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;padding:20px;z-index:200;}
+    .modal-bg.open{display:flex;}
+    .modal{width:100%;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 24px 60px rgba(15,23,42,.2);}
+    .modal-lg{max-width:860px;} .modal-sm{max-width:500px;}
+    .mhead{padding:20px 22px;border-bottom:1px solid var(--border);}
+    .mhead h3{font-size:20px;font-weight:800;margin-bottom:4px;}
+    .mhead p{color:var(--muted);font-size:14px;}
+    .mbody{padding:22px;max-height:72vh;overflow-y:auto;}
+    .mfoot{padding:16px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .field{display:flex;flex-direction:column;gap:7px;}
+    .field.full{grid-column:1/-1;}
+    label{font-size:13px;font-weight:700;color:#334155;}
+    input[type="text"],input[type="email"],select,textarea{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;font:inherit;font-size:14px;outline:none;background:#fff;transition:border-color .2s;}
+    input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+    textarea{min-height:100px;resize:vertical;}
+    .detail-row{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid #f1f5f9;font-size:14px;}
+    .detail-row:last-child{border-bottom:none;}
+    .dl{font-weight:700;min-width:140px;color:#334155;flex-shrink:0;} .dv{color:var(--text);}
+    .form-error{display:none;padding:12px 14px;border-radius:11px;margin-bottom:16px;background:#fef2f2;border:1px solid #fecaca;color:var(--error);font-size:13px;font-weight:600;}
+    .form-error.show{display:flex;align-items:center;gap:8px;}
+    .empty{text-align:center;color:var(--muted);padding:36px 14px;font-size:14px;}
+    @media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr);}.form-grid{grid-template-columns:1fr;}}
+    @media(max-width:550px){.stats{grid-template-columns:1fr;}.container{padding:0 12px 30px;}}
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand">CX Channel</div>
-    <div class="top-actions">
-      <a class="btn-light" href="customer.html">Customer Page</a>
-      
-      <button class="btn-dark" onclick="openModal()">New Request</button>
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">📡</div>
+    <div>
+      <div class="brand-name">CX Channel</div>
+      <div class="brand-tag">Team Dashboard</div>
     </div>
   </div>
-
-  <div class="container">
-    <div class="hero">
-      <div>
-        <h1>Approval Dashboard</h1>
-        <p>Manage support validation requests, review customer details, assign teams, and approve or reject each ticket from one clean dashboard.</p>
-      </div>
+  <div class="top-right">
+    <div class="user-chip">
+      <div class="user-avatar" id="userAvatar">?</div>
+      <div class="user-name" id="userName">Loading…</div>
     </div>
+    <button class="btn-light" onclick="logout()">Sign Out</button>
+    <button class="btn-dark" onclick="openNewModal()">+ New Request</button>
+  </div>
+</div>
 
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-label">Total Tickets</div>
-        <div class="stat-value" id="statTotal">0</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Pending</div>
-        <div class="stat-value" id="statPending">0</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Approved</div>
-        <div class="stat-value" id="statApproved">0</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Under Review</div>
-        <div class="stat-value" id="statReview">0</div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-head">
+<div class="container">
+  <div class="page-header">
+    <h1>Approval Dashboard</h1>
+    <p>Review customer support requests, assign teams, and approve or reject tickets.</p>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-icon">🎫</div><div class="stat-label">Total Tickets</div><div class="stat-value" id="sTot">0</div></div>
+    <div class="stat"><div class="stat-icon">⏳</div><div class="stat-label">Pending</div><div class="stat-value" id="sPen">0</div></div>
+    <div class="stat"><div class="stat-icon">✅</div><div class="stat-label">Approved</div><div class="stat-value" id="sApp">0</div></div>
+    <div class="stat"><div class="stat-icon">🔍</div><div class="stat-label">Under Review</div><div class="stat-value" id="sRev">0</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-head-left">
         <div class="chips">
-          <button class="chip active" onclick="setFilter('all', this)">All</button>
-          <button class="chip" onclick="setFilter('pending', this)">Pending</button>
-          <button class="chip" onclick="setFilter('review', this)">Review</button>
-          <button class="chip" onclick="setFilter('approved', this)">Approved</button>
-          <button class="chip" onclick="setFilter('rejected', this)">Rejected</button>
+          <button class="chip active" onclick="setFilter('all',this)">All</button>
+          <button class="chip" onclick="setFilter('pending',this)">Pending</button>
+          <button class="chip" onclick="setFilter('review',this)">Review</button>
+          <button class="chip" onclick="setFilter('approved',this)">Approved</button>
+          <button class="chip" onclick="setFilter('rejected',this)">Rejected</button>
         </div>
+        <input class="search-input" id="searchInput" type="text" placeholder="Search name, ticket, product…" oninput="renderTable()"/>
       </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Ticket</th>
-              <th>Customer</th>
-              <th>Product</th>
-              <th>Status</th>
-              <th>Operation / Service</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="ticketRows">
-            <tr>
-              <td colspan="6" class="empty-state">Loading tickets...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <button class="btn-csv" onclick="downloadCSV()">⬇ Export CSV</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ticket</th><th>Customer</th><th>Product</th><th>Status</th><th>Teams</th><th>Actions</th></tr></thead>
+        <tbody id="ticketRows"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+      </table>
     </div>
   </div>
+</div>
 
-  <div class="modal-backdrop" id="modal">
-    <div class="modal">
-      <div class="modal-head">
-        <h3>Create New Request</h3>
-        <p>Add a new internal request with customer and product details.</p>
-      </div>
-
-      <div class="modal-body">
-        <div id="formError" class="error-box"></div>
-
-        <div class="form-grid">
-          <div class="field">
-            <label>Customer Name</label>
-            <input id="fName" placeholder="Customer name">
-          </div>
-
-          <div class="field">
-            <label>Phone No</label>
-            <input id="fPhone" placeholder="Phone number">
-          </div>
-
-          <div class="field">
-            <label>Email</label>
-            <input id="fEmail" type="email" placeholder="Email address">
-          </div>
-
-          <div class="field">
-            <label>Product</label>
-            <input id="fProduct" placeholder="Product">
-          </div>
-
-          <div class="field">
-            <label>Product Details</label>
-            <input id="fProductDetails" placeholder="VeEX / NARDA / CUBRO / ATDI etc.">
-          </div>
-
-          <div class="field">
-            <label>Serial Number</label>
-            <input id="fSN" placeholder="S/N">
-          </div>
-
-          <div class="field">
-            <label>Operation Team</label>
-            <input id="fOperation" placeholder="Operation team">
-          </div>
-
-          <div class="field">
-            <label>Service Team</label>
-            <input id="fService" placeholder="Service team">
-          </div>
-
-          <div class="field">
-            <label>Status</label>
-            <select id="fStatus">
-              <option value="pending">Pending</option>
-              <option value="review">Review</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </div>
-
-          <div class="field full">
-            <label>Description</label>
-            <textarea id="fDescription" placeholder="Describe the issue or request"></textarea>
-          </div>
+<!-- NEW REQUEST MODAL -->
+<div class="modal-bg" id="newModal">
+  <div class="modal modal-lg">
+    <div class="mhead"><h3>Create New Request</h3><p>Add an internal ticket with full customer and product details.</p></div>
+    <div class="mbody">
+      <div id="newErr" class="form-error"><span>⚠</span><span id="newErrMsg"></span></div>
+      <div class="form-grid">
+        <div class="field"><label>Customer Name *</label><input type="text" id="fName" placeholder="Full name"/></div>
+        <div class="field"><label>Phone</label><input type="text" id="fPhone" placeholder="Phone number"/></div>
+        <div class="field"><label>Email *</label><input type="email" id="fEmail" placeholder="Email address"/></div>
+        <div class="field"><label>Product *</label><input type="text" id="fProduct" placeholder="Product name"/></div>
+        <div class="field"><label>Product Details</label><input type="text" id="fPD" placeholder="OEM / variant"/></div>
+        <div class="field"><label>Serial Number</label><input type="text" id="fSN" placeholder="S/N"/></div>
+        <div class="field"><label>Operation Team</label><input type="text" id="fOp" placeholder="Operation team"/></div>
+        <div class="field"><label>Service Team</label><input type="text" id="fSvc" placeholder="Service team"/></div>
+        <div class="field"><label>Status</label>
+          <select id="fStatus"><option value="pending">Pending</option><option value="review">Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
         </div>
-      </div>
-
-      <div class="modal-foot">
-        <button class="btn-light" onclick="closeModal()">Cancel</button>
-        <button class="btn-dark" onclick="submitRequest()">Save Request</button>
+        <div class="field full"><label>Description *</label><textarea id="fDesc" placeholder="Describe the issue in detail"></textarea></div>
       </div>
     </div>
+    <div class="mfoot">
+      <button class="btn-light" onclick="closeNewModal()">Cancel</button>
+      <button class="btn-dark" onclick="submitNewRequest()">Save Request</button>
+    </div>
   </div>
+</div>
 
-  <script>
-    const API = window.location.hostname.includes("onrender.com")
-      ? window.location.origin
-      : "http://localhost:3000";
+<!-- CUSTOMER DETAIL MODAL -->
+<div class="modal-bg" id="custModal">
+  <div class="modal modal-sm">
+    <div class="mhead"><h3 id="cName">Customer</h3><p id="cTid" style="font-weight:700;color:#0369a1;"></p></div>
+    <div class="mbody">
+      <div class="detail-row"><div class="dl">Email</div><div class="dv" id="cEmail"></div></div>
+      <div class="detail-row"><div class="dl">Phone</div><div class="dv" id="cPhone"></div></div>
+      <div class="detail-row"><div class="dl">Product</div><div class="dv" id="cProduct"></div></div>
+      <div class="detail-row"><div class="dl">Serial Number</div><div class="dv" id="cSN"></div></div>
+      <div class="detail-row"><div class="dl">Status</div><div class="dv" id="cStatus"></div></div>
+      <div class="detail-row"><div class="dl">Operation Team</div><div class="dv" id="cOp"></div></div>
+      <div class="detail-row"><div class="dl">Service Team</div><div class="dv" id="cSvc"></div></div>
+      <div class="detail-row"><div class="dl">Description</div><div class="dv" id="cDesc"></div></div>
+      <div class="detail-row"><div class="dl">Created At</div><div class="dv" id="cDate"></div></div>
+    </div>
+    <div class="mfoot"><button class="btn-light" onclick="document.getElementById('custModal').classList.remove('open')">Close</button></div>
+  </div>
+</div>
 
-    let activeFilter = "all";
-    let allTickets = [];
+<script>
+  if(sessionStorage.getItem("cx_auth")!=="1") window.location.href="team-login.html";
+  try{
+    const u=JSON.parse(sessionStorage.getItem("cx_user")||"{}");
+    const initials=((u.firstName||"?")[0]+(u.lastName||"")[0]).toUpperCase();
+    document.getElementById("userAvatar").textContent=initials||"?";
+    document.getElementById("userName").textContent=[u.firstName,u.lastName].filter(Boolean).join(" ")||u.username||"Team";
+  }catch{}
 
-    function openModal() {
-      document.getElementById("modal").classList.add("open");
-    }
+  const API=window.location.origin;
+  let activeFilter="all", allTickets=[];
 
-    function closeModal() {
-      document.getElementById("modal").classList.remove("open");
-      document.getElementById("formError").classList.remove("show");
-    }
+  function logout(){sessionStorage.clear();window.location.href="team-login.html";}
+  function openNewModal(){document.getElementById("newModal").classList.add("open");}
+  function closeNewModal(){document.getElementById("newModal").classList.remove("open");document.getElementById("newErr").classList.remove("show");}
+  document.getElementById("newModal").addEventListener("click",e=>{if(e.target===document.getElementById("newModal"))closeNewModal();});
+  document.getElementById("custModal").addEventListener("click",e=>{if(e.target===document.getElementById("custModal"))document.getElementById("custModal").classList.remove("open");});
 
-    function setFilter(status, el) {
-      activeFilter = status;
-      document.querySelectorAll(".chip").forEach(btn => btn.classList.remove("active"));
-      el.classList.add("active");
-      renderTable();
-    }
+  function showCustomer(json){
+    const t=JSON.parse(json);
+    document.getElementById("cName").textContent=t.name||"-";
+    document.getElementById("cTid").textContent="Ticket: "+t.id;
+    document.getElementById("cEmail").textContent=t.email||"-";
+    document.getElementById("cPhone").textContent=t.phone||"-";
+    document.getElementById("cProduct").textContent=[t.product,t.productDetails].filter(Boolean).join(" / ")||"-";
+    document.getElementById("cSN").textContent=t.serialNumber||"-";
+    document.getElementById("cStatus").textContent=t.status||"-";
+    document.getElementById("cOp").textContent=t.operationTeam||"-";
+    document.getElementById("cSvc").textContent=t.serviceTeam||"-";
+    document.getElementById("cDesc").textContent=t.description||"-";
+    document.getElementById("cDate").textContent=t.createdAt||"-";
+    document.getElementById("custModal").classList.add("open");
+  }
 
-    function badgeClass(status) {
-      if (status === "approved") return "approved-pill";
-      if (status === "review") return "review-pill";
-      if (status === "rejected") return "rejected-pill";
-      return "pending-pill";
-    }
-
-    function renderStats() {
-      document.getElementById("statTotal").textContent = allTickets.length;
-      document.getElementById("statPending").textContent = allTickets.filter(t => t.status === "pending").length;
-      document.getElementById("statApproved").textContent = allTickets.filter(t => t.status === "approved").length;
-      document.getElementById("statReview").textContent = allTickets.filter(t => t.status === "review").length;
-    }
-
-    function renderTable() {
-      const rows = document.getElementById("ticketRows");
-      const filtered = activeFilter === "all"
-        ? allTickets
-        : allTickets.filter(t => t.status === activeFilter);
-
-      if (!filtered.length) {
-        rows.innerHTML = `<tr><td colspan="6" class="empty-state">No tickets found.</td></tr>`;
-        return;
-      }
-
-      rows.innerHTML = filtered.map(t => `
-        <tr>
-          <td>
-            <div class="ticket-id">${t.id}</div>
-            <div class="muted">S/N: ${t.serialNumber || "-"}</div>
-            <div class="muted">${t.description || "-"}</div>
-          </td>
-
-          <td>
-            <div>${t.name || "-"}</div>
-            <div class="muted">${t.email || "-"}</div>
-            <div class="muted">${t.phone || "-"}</div>
-          </td>
-
-          <td>
-            <div>${t.product || "-"}</div>
-            <div class="muted">${t.productDetails || "-"}</div>
-          </td>
-
-          <td>
-            <span class="pill ${badgeClass(t.status)}">${t.status}</span>
-          </td>
-
-          <td>
-            <div>${t.operationTeam || "-"}</div>
-            <div class="muted">${t.serviceTeam || "-"}</div>
-          </td>
-
-          <td>
-            ${
-              t.status === "approved" || t.status === "rejected"
-                ? `<div class="finalized-text">Finalized</div>`
-                : `
-                  <div class="action-row">
-                    <button class="btn-mini approve-btn" onclick="changeStatus('${t.id}', 'approved')">Approve</button>
-                    <button class="btn-mini review-btn" onclick="changeStatus('${t.id}', 'review')">Review</button>
-                    <button class="btn-mini reject-btn" onclick="changeStatus('${t.id}', 'rejected')">Reject</button>
-                  </div>
-                `
-            }
-          </td>
-        </tr>
-      `).join("");
-    }
-
-    async function loadTickets() {
-      try {
-        const res = await fetch(`${API}/requests`);
-        const data = await res.json();
-        allTickets = Array.isArray(data) ? data : [];
-        renderStats();
-        renderTable();
-      } catch (err) {
-        document.getElementById("ticketRows").innerHTML =
-          `<tr><td colspan="6" class="empty-state" style="color:#b91c1c;">Could not connect to backend.</td></tr>`;
-      }
-    }
-
-    async function submitRequest() {
-      const payload = {
-        name: document.getElementById("fName").value.trim(),
-        phone: document.getElementById("fPhone").value.trim(),
-        email: document.getElementById("fEmail").value.trim(),
-        product: document.getElementById("fProduct").value.trim(),
-        productDetails: document.getElementById("fProductDetails").value.trim(),
-        serialNumber: document.getElementById("fSN").value.trim(),
-        description: document.getElementById("fDescription").value.trim(),
-        operationTeam: document.getElementById("fOperation").value.trim(),
-        serviceTeam: document.getElementById("fService").value.trim(),
-        status: document.getElementById("fStatus").value
-      };
-
-      const errorBox = document.getElementById("formError");
-      errorBox.classList.remove("show");
-
-      if (!payload.name || !payload.email || !payload.product || !payload.description) {
-        errorBox.textContent = "Please fill in customer name, email, product, and description.";
-        errorBox.classList.add("show");
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API}/requests`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          errorBox.textContent = data.error || "Could not save request.";
-          errorBox.classList.add("show");
-          return;
-        }
-
-        closeModal();
-        clearForm();
-        await loadTickets();
-      } catch (err) {
-        errorBox.textContent = "Could not connect to backend.";
-        errorBox.classList.add("show");
-      }
-    }
-
-    function clearForm() {
-      [
-        "fName","fPhone","fEmail","fProduct","fProductDetails",
-        "fSN","fDescription","fOperation","fService"
-      ].forEach(id => document.getElementById(id).value = "");
-
-      document.getElementById("fStatus").value = "pending";
-    }
-
-    async function changeStatus(id, status) {
-      try {
-        const res = await fetch(`${API}/requests/${id}/status`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status })
-        });
-
-        if (!res.ok) {
-          alert("Could not update status.");
-          return;
-        }
-
-        await loadTickets();
-      } catch (err) {
-        alert("Could not update status.");
-      }
-    }
-
-    loadTickets();
-  </script>
+  function setFilter(f,el){
+    activeFilter=f;
+    document.querySelectorAll(".chip").forEach(b=>b.classList.remove("active"));
+    el.classList.add("active");renderTable();
+  }
+  function pillClass(s){return{approved:"p-approved",review:"p-review",rejected:"p-rejected",pending:"p-pending"}[s]||"p-pending";}
+  function renderStats(){
+    document.getElementById("sTot").textContent=allTickets.length;
+    document.getElementById("sPen").textContent=allTickets.filter(t=>t.status==="pending").length;
+    document.getElementById("sApp").textContent=allTickets.filter(t=>t.status==="approved").length;
+    document.getElementById("sRev").textContent=allTickets.filter(t=>t.status==="review").length;
+  }
+  function renderTable(){
+    const rows=document.getElementById("ticketRows");
+    const search=(document.getElementById("searchInput").value||"").toLowerCase().trim();
+    let filtered=activeFilter==="all"?[...allTickets]:allTickets.filter(t=>t.status===activeFilter);
+    if(search) filtered=filtered.filter(t=>(t.id||"").toLowerCase().includes(search)||(t.name||"").toLowerCase().includes(search)||(t.email||"").toLowerCase().includes(search)||(t.product||"").toLowerCase().includes(search)||(t.serialNumber||"").toLowerCase().includes(search)||(t.description||"").toLowerCase().includes(search));
+    if(!filtered.length){rows.innerHTML=`<tr><td colspan="6" class="empty">No tickets found.</td></tr>`;return;}
+    rows.innerHTML=filtered.map(t=>{
+      const safe=JSON.stringify(t).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;");
+      const fin=t.status==="approved"||t.status==="rejected";
+      return`<tr>
+        <td><div class="tid">${t.id}</div><div class="tsub">${t.createdAt||""}</div><div class="tsub">${(t.description||"").substring(0,60)}${(t.description||"").length>60?"…":""}</div></td>
+        <td><div class="customer-name" onclick='showCustomer("${safe}")'>${t.name||"-"}</div><div class="tsub">${t.email||"-"}</div><div class="tsub">${t.phone||"-"}</div></td>
+        <td><div>${t.product||"-"}</div><div class="tsub">${t.productDetails||""}</div><div class="tsub">S/N: ${t.serialNumber||"-"}</div></td>
+        <td><span class="pill ${pillClass(t.status)}">${t.status}</span></td>
+        <td><div>${t.operationTeam||"-"}</div><div class="tsub">${t.serviceTeam||"-"}</div></td>
+        <td>${fin?`<div class="finalized">Finalized</div>`:`<div class="action-row"><button class="abtn abtn-approve" onclick="chStatus('${t.id}','approved')">Approve</button><button class="abtn abtn-review" onclick="chStatus('${t.id}','review')">Review</button><button class="abtn abtn-reject" onclick="chStatus('${t.id}','rejected')">Reject</button></div>`}</td>
+      </tr>`;
+    }).join("");
+  }
+  async function loadTickets(){
+    try{
+      const res=await fetch(`${API}/requests`);
+      const data=await res.json();
+      allTickets=Array.isArray(data)?data:[];
+      renderStats();renderTable();
+    }catch{document.getElementById("ticketRows").innerHTML=`<tr><td colspan="6" class="empty" style="color:#b91c1c;">Could not connect to backend.</td></tr>`;}
+  }
+  async function submitNewRequest(){
+    const errDiv=document.getElementById("newErr"),errMsg=document.getElementById("newErrMsg");
+    errDiv.classList.remove("show");
+    const payload={name:document.getElementById("fName").value.trim(),phone:document.getElementById("fPhone").value.trim(),email:document.getElementById("fEmail").value.trim(),product:document.getElementById("fProduct").value.trim(),productDetails:document.getElementById("fPD").value.trim(),serialNumber:document.getElementById("fSN").value.trim(),description:document.getElementById("fDesc").value.trim(),operationTeam:document.getElementById("fOp").value.trim(),serviceTeam:document.getElementById("fSvc").value.trim(),status:document.getElementById("fStatus").value};
+    if(!payload.name||!payload.email||!payload.product||!payload.description){errMsg.textContent="Name, email, product and description are required.";errDiv.classList.add("show");return;}
+    try{
+      const res=await fetch(`${API}/requests`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      const data=await res.json();
+      if(!res.ok){errMsg.textContent=data.error||"Could not save.";errDiv.classList.add("show");return;}
+      closeNewModal();
+      ["fName","fPhone","fEmail","fProduct","fPD","fSN","fDesc","fOp","fSvc"].forEach(i=>document.getElementById(i).value="");
+      document.getElementById("fStatus").value="pending";
+      await loadTickets();
+    }catch{errMsg.textContent="Could not connect to backend.";errDiv.classList.add("show");}
+  }
+  async function chStatus(id,status){
+    try{
+      const res=await fetch(`${API}/requests/${id}/status`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status})});
+      if(!res.ok){alert("Could not update status.");return;}
+      await loadTickets();
+    }catch{alert("Could not update status.");}
+  }
+  function downloadCSV(){
+    const search=(document.getElementById("searchInput").value||"").toLowerCase().trim();
+    let filtered=activeFilter==="all"?[...allTickets]:allTickets.filter(t=>t.status===activeFilter);
+    if(search) filtered=filtered.filter(t=>(t.id||"").toLowerCase().includes(search)||(t.name||"").toLowerCase().includes(search)||(t.product||"").toLowerCase().includes(search)||(t.email||"").toLowerCase().includes(search));
+    const h=["Ticket ID","Name","Email","Phone","Product","Product Details","Serial No","Status","Operation Team","Service Team","Description","Created At"];
+    const rows=filtered.map(t=>[t.id,t.name,t.email,t.phone,t.product,t.productDetails,t.serialNumber,t.status,t.operationTeam,t.serviceTeam,t.description,t.createdAt].map(v=>`"${String(v||"").replace(/"/g,'""')}"`));
+    const csv=[h.map(v=>`"${v}"`), ...rows].map(r=>r.join(",")).join("\n");
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+    a.download=`cx-tickets-${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  }
+  loadTickets();
+</script>
 </body>
 </html>

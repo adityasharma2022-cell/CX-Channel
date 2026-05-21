@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CX Channel – Team Signup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:Inter,sans-serif;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f2940 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .wrap{width:100%;max-width:480px;}
+    .logo-row{text-align:center;margin-bottom:28px;}
+    .logo-icon{width:60px;height:60px;background:linear-gradient(135deg,#0ea5e9,#0369a1);border-radius:18px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 8px 24px rgba(14,165,233,.4);}
+    .logo-name{color:#fff;font-size:26px;font-weight:800;}
+    .logo-sub{color:#94a3b8;font-size:13px;margin-top:4px;}
+    .card{background:#1e293b;border:1px solid #334155;border-radius:22px;padding:36px 32px;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+    .card-title{color:#f1f5f9;font-size:22px;font-weight:800;margin-bottom:6px;}
+    .card-sub{color:#64748b;font-size:14px;margin-bottom:20px;line-height:1.5;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .field{display:flex;flex-direction:column;gap:7px;}
+    .field.full{grid-column:1/-1;}
+    label{font-size:13px;font-weight:700;color:#94a3b8;display:block;}
+    .input-wrap{position:relative;}
+    input,select{width:100%;background:#0f172a;border:1.5px solid #334155;color:#f1f5f9;border-radius:12px;padding:13px 14px;font:inherit;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;}
+    input:focus,select:focus{border-color:#0ea5e9;box-shadow:0 0 0 3px rgba(14,165,233,.15);}
+    input::placeholder{color:#475569;}
+    select option{background:#1e293b;}
+    .eye-btn{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#475569;font-size:18px;padding:4px;transition:color .2s;line-height:1;}
+    .eye-btn:hover{color:#94a3b8;}
+    .has-eye input{padding-right:44px;}
+    .strength{height:4px;border-radius:999px;background:#1e3a5f;margin-top:6px;overflow:hidden;}
+    .strength-bar{height:100%;border-radius:999px;transition:width .3s,background .3s;width:0%;}
+    .btn-submit{width:100%;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border:none;border-radius:13px;padding:14px;font:inherit;font-weight:800;font-size:15px;cursor:pointer;margin-top:18px;transition:.2s;box-shadow:0 4px 14px rgba(14,165,233,.35);}
+    .btn-submit:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(14,165,233,.45);}
+    .alert{display:none;padding:12px 14px;border-radius:11px;font-size:13px;font-weight:600;margin-bottom:16px;}
+    .alert.show{display:flex;align-items:center;gap:8px;}
+    .alert-error{background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);color:#fca5a5;}
+    .alert-success{background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.3);color:#86efac;}
+    .divider{border:none;border-top:1px solid #334155;margin:24px 0;}
+    .links{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+    .link-text{color:#64748b;font-size:13px;}
+    .link-btn{color:#38bdf8;font-size:13px;font-weight:700;text-decoration:none;transition:color .2s;}
+    .invite-note{background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.2);border-radius:12px;padding:12px 14px;color:#7dd3fc;font-size:13px;margin-bottom:20px;line-height:1.5;}
+    @media(max-width:480px){.form-grid{grid-template-columns:1fr;}.card{padding:24px 18px;}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo-row">
+    <div class="logo-icon">📡</div>
+    <div class="logo-name">CX Channel</div>
+    <div class="logo-sub">Team Member Registration</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Create Team Account</div>
+    <div class="card-sub">Register as a new team member to access the CX Channel approval dashboard.</div>
+    <div class="invite-note">🔒 Accounts require an <strong>invite code</strong> issued by your manager. Contact your team lead if you don't have one.</div>
+    <div id="errBox" class="alert alert-error"><span>⚠</span><span id="errMsg"></span></div>
+    <div id="okBox"  class="alert alert-success"><span>✅</span><span id="okMsg"></span></div>
+    <div class="form-grid">
+      <div class="field"><label>First Name</label><input id="rFirst" placeholder="First name"/></div>
+      <div class="field"><label>Last Name</label><input id="rLast" placeholder="Last name"/></div>
+      <div class="field full"><label>Username</label><input id="rUser" placeholder="Choose a username (no spaces)"/></div>
+      <div class="field full"><label>Email Address</label><input id="rEmail" type="email" placeholder="Work email address"/></div>
+      <div class="field full">
+        <label>Role / Department</label>
+        <select id="rRole">
+          <option value="">Select role…</option>
+          <option value="operation">Operations Team</option>
+          <option value="service">Service Team</option>
+          <option value="manager">Manager</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>Password</label>
+        <div class="input-wrap has-eye">
+          <input id="rPass" type="password" placeholder="Min 8 characters" oninput="checkStrength()"/>
+          <button class="eye-btn" onclick="togglePass('rPass','eye1')" aria-label="Toggle password"><span id="eye1">👁</span></button>
+        </div>
+        <div class="strength"><div class="strength-bar" id="strengthBar"></div></div>
+      </div>
+      <div class="field full">
+        <label>Confirm Password</label>
+        <div class="input-wrap has-eye">
+          <input id="rPass2" type="password" placeholder="Repeat your password"/>
+          <button class="eye-btn" onclick="togglePass('rPass2','eye2')" aria-label="Toggle password"><span id="eye2">👁</span></button>
+        </div>
+      </div>
+      <div class="field full"><label>Invite Code</label><input id="rInvite" placeholder="Enter your invite code"/></div>
+    </div>
+    <button class="btn-submit" onclick="doSignup()">Create Account →</button>
+    <hr class="divider"/>
+    <div class="links">
+      <span class="link-text">Already have an account?</span>
+      <a class="link-btn" href="team-login.html">← Sign In</a>
+    </div>
+  </div>
+</div>
+<script>
+  const API = window.location.origin;
+  function togglePass(inputId,iconId){
+    const inp=document.getElementById(inputId),ico=document.getElementById(iconId);
+    inp.type=inp.type==="password"?"text":"password";
+    ico.textContent=inp.type==="password"?"👁":"🙈";
+  }
+  function checkStrength(){
+    const val=document.getElementById("rPass").value,bar=document.getElementById("strengthBar");
+    let score=0;
+    if(val.length>=8)score++;if(/[A-Z]/.test(val))score++;if(/[0-9]/.test(val))score++;if(/[^a-zA-Z0-9]/.test(val))score++;
+    bar.style.width=[0,25,50,75,100][score]+"%";
+    bar.style.background=["#334155","#dc2626","#f59e0b","#3b82f6","#16a34a"][score];
+  }
+  async function doSignup(){
+    const errBox=document.getElementById("errBox"),errMsg=document.getElementById("errMsg");
+    const okBox=document.getElementById("okBox"),okMsg=document.getElementById("okMsg");
+    errBox.classList.remove("show");okBox.classList.remove("show");
+    const first=document.getElementById("rFirst").value.trim();
+    const last=document.getElementById("rLast").value.trim();
+    const username=document.getElementById("rUser").value.trim();
+    const email=document.getElementById("rEmail").value.trim();
+    const role=document.getElementById("rRole").value;
+    const pass=document.getElementById("rPass").value;
+    const pass2=document.getElementById("rPass2").value;
+    const invite=document.getElementById("rInvite").value.trim();
+    if(!first||!last||!username||!email||!role||!pass||!invite){errMsg.textContent="All fields are required.";errBox.classList.add("show");return;}
+    if(pass.length<8){errMsg.textContent="Password must be at least 8 characters.";errBox.classList.add("show");return;}
+    if(pass!==pass2){errMsg.textContent="Passwords do not match.";errBox.classList.add("show");return;}
+    try{
+      const res=await fetch(`${API}/auth/signup`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({firstName:first,lastName:last,username,email,role,password:pass,inviteCode:invite})});
+      const data=await res.json();
+      if(!res.ok){errMsg.textContent=data.error||"Registration failed.";errBox.classList.add("show");return;}
+      okMsg.textContent="Account created! Redirecting to login…";okBox.classList.add("show");
+      setTimeout(()=>window.location.href="team-login.html",2000);
+    }catch{errMsg.textContent="Could not connect to server.";errBox.classList.add("show");}
+  }
+</script>
+</body>
+</html>
