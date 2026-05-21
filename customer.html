@@ -15,12 +15,10 @@
       --surface:#ffffff;
       --surface-2:#f8fafc;
       --line:#e2e8f0;
-      --line-soft:#edf2f7;
       --text:#0f172a;
       --muted:#64748b;
       --primary:#0ea5e9;
       --primary-dark:#0284c7;
-      --primary-soft:#e0f2fe;
       --shadow-sm:0 8px 24px rgba(15,23,42,.05);
       --shadow-md:0 18px 50px rgba(15,23,42,.08);
     }
@@ -43,7 +41,6 @@
       border-bottom:1px solid rgba(226,232,240,.9);
       display:flex;
       align-items:center;
-      justify-content:space-between;
       gap:16px;
     }
 
@@ -258,8 +255,6 @@
         <div class="brand-subtitle">Customer Portal</div>
       </div>
     </div>
-
-    <a href="/" class="btn-light">Back to Home</a>
   </header>
 
   <main class="wrap">
@@ -272,11 +267,10 @@
       <div class="panel-title">New Request</div>
 
       <div class="help-strip">
-        Just fill in the key fields and hit submit. If you have extra details like PO number or addresses you can add them under “More details (optional)”.
+        Just fill in the key fields and submit. Add extra details only if needed.
       </div>
 
       <div class="request-grid">
-        <!-- CORE, SIMPLE FIELDS -->
         <div class="field">
           <label for="reqOem">OEM</label>
           <select id="reqOem">
@@ -325,14 +319,12 @@
           <textarea id="reqIssueDescription" rows="5" placeholder="Describe the issue"></textarea>
         </div>
 
-        <!-- TOGGLE FOR OPTIONAL FIELDS -->
         <div class="field span-3">
           <button type="button" class="btn-light advanced-toggle" onclick="toggleAdvanced()" id="advancedToggle">
             More details (optional)
           </button>
         </div>
 
-        <!-- ADVANCED, OPTIONAL FIELDS -->
         <div class="span-3" id="advancedSection" style="display:none; margin-top:4px;">
           <div class="request-grid" style="grid-template-columns:repeat(3,1fr);gap:12px;">
             <div class="field">
@@ -376,13 +368,12 @@
             </div>
 
             <div class="field span-3">
-              <label for="reqAdditionalInfo">Additional Info (accessories, RF cable, antenna, etc.)</label>
-              <textarea id="reqAdditionalInfo" rows="3" placeholder="Accessories, RF cable, antenna, other notes"></textarea>
+              <label for="reqAdditionalInfo">Additional Info</label>
+              <textarea id="reqAdditionalInfo" rows="3" placeholder="Accessories, RF cable, antenna, or other notes"></textarea>
             </div>
           </div>
         </div>
 
-        <!-- ACTIONS -->
         <div class="form-actions">
           <button class="btn-primary" type="button" onclick="submitNewRequest()">Submit Request</button>
           <button class="btn-light" type="button" onclick="resetRequestForm()">Cancel</button>
@@ -434,12 +425,16 @@
         const el = document.getElementById(id);
         if (el) el.value = "";
       });
+
+      const section = document.getElementById("advancedSection");
+      const toggle = document.getElementById("advancedToggle");
+      section.style.display = "none";
+      toggle.textContent = "More details (optional)";
     }
 
     async function submitNewRequest(){
       const payload = collectPayload();
 
-      // Only minimal required fields
       if(!payload.oem || !payload.serviceType || !payload.name || !payload.email || !payload.description){
         alert("Please fill OEM, service type, sender name, email, and issue description.");
         return;
