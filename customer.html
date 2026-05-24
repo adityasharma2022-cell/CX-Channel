@@ -3,457 +3,157 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FASCAL - Customer Request Portal</title>
+  <title>FASCAL — Customer Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-
-    :root{
-      --bg:#f4f7fb;
-      --surface:#ffffff;
-      --surface-2:#f8fafc;
-      --line:#e2e8f0;
-      --text:#0f172a;
-      --muted:#64748b;
-      --primary:#0ea5e9;
-      --primary-dark:#0284c7;
-      --shadow-sm:0 8px 24px rgba(15,23,42,.05);
-      --shadow-md:0 18px 50px rgba(15,23,42,.08);
-    }
-
-    body{
-      font-family:"Inter",sans-serif;
-      background:linear-gradient(180deg,#f8fbff 0%,#f4f7fb 100%);
-      color:var(--text);
-      min-height:100vh;
-    }
-
-    .topbar{
-      position:sticky;
-      top:0;
-      z-index:50;
-      height:72px;
-      padding:0 24px;
-      background:rgba(255,255,255,.9);
-      backdrop-filter:blur(10px);
-      border-bottom:1px solid rgba(226,232,240,.9);
-      display:flex;
-      align-items:center;
-      gap:16px;
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-    }
-
-    .brand-mark{
-      width:42px;
-      height:42px;
-      border-radius:14px;
-      background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:#fff;
-      box-shadow:0 10px 24px rgba(14,165,233,.22);
-      flex-shrink:0;
-    }
-
-    .brand-mark svg{width:18px;height:18px}
-
-    .brand-title{
-      font-size:18px;
-      font-weight:800;
-      letter-spacing:-.03em;
-      line-height:1;
-    }
-
-    .brand-subtitle{
-      font-size:11px;
-      color:var(--muted);
-      font-weight:700;
-      text-transform:uppercase;
-      letter-spacing:.12em;
-      margin-top:4px;
-    }
-
-    .btn-light,.btn-primary{
-      height:44px;
-      border:none;
-      border-radius:14px;
-      padding:0 18px;
-      font:inherit;
-      font-size:14px;
-      font-weight:700;
-      cursor:pointer;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      text-decoration:none;
-      transition:.2s ease;
-      white-space:nowrap;
-    }
-
-    .btn-light{
-      background:#fff;
-      color:var(--text);
-      border:1px solid var(--line);
-      box-shadow:var(--shadow-sm);
-    }
-
-    .btn-light:hover{background:var(--surface-2)}
-
-    .btn-primary{
-      background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-      color:#fff;
-      box-shadow:0 10px 24px rgba(14,165,233,.2);
-    }
-
-    .btn-primary:hover{filter:brightness(.98)}
-
-    .wrap{
-      max-width:1320px;
-      margin:24px auto;
-      padding:0 18px 40px;
-    }
-
-    .page-head{
-      margin-bottom:18px;
-    }
-
-    .page-head h1{
-      font-size:40px;
-      font-weight:800;
-      letter-spacing:-.05em;
-      margin-bottom:8px;
-    }
-
-    .page-head p{
-      color:var(--muted);
-      font-size:14px;
-      line-height:1.7;
-      max-width:760px;
-    }
-
-    .panel{
-      background:rgba(255,255,255,.94);
-      border:1px solid rgba(226,232,240,.92);
-      border-radius:22px;
-      box-shadow:var(--shadow-md);
-      padding:18px;
-    }
-
-    .panel-title{
-      font-size:16px;
-      font-weight:800;
-      margin-bottom:16px;
-    }
-
-    .help-strip{
-      margin-bottom:16px;
-      padding:14px 16px;
-      border-radius:16px;
-      background:#f8fbff;
-      border:1px solid #e0eefc;
-      color:#35506b;
-      font-size:14px;
-      line-height:1.6;
-    }
-
-    .request-grid{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:14px;
-    }
-
-    .field{
-      display:flex;
-      flex-direction:column;
-      gap:7px;
-    }
-
-    .field label{
-      font-size:12px;
-      color:#475569;
-      font-weight:800;
-      text-transform:uppercase;
-      letter-spacing:.08em;
-    }
-
-    .field input,
-    .field select,
-    .field textarea{
-      width:100%;
-      border:1.5px solid var(--line);
-      border-radius:14px;
-      background:#fff;
-      padding:13px 14px;
-      font:inherit;
-      color:var(--text);
-      outline:none;
-    }
-
-    .field input:focus,
-    .field select:focus,
-    .field textarea:focus{
-      border-color:#7dd3fc;
-      box-shadow:0 0 0 4px rgba(14,165,233,.1);
-    }
-
-    .span-3{grid-column:span 3}
-
-    .form-actions{
-      grid-column:span 3;
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      padding-top:6px;
-    }
-
-    .advanced-toggle{
-      height:40px;
-      border-radius:999px;
-      padding-inline:16px;
-      font-size:13px;
-    }
-
-    @media(max-width:1024px){
-      .request-grid{
-        grid-template-columns:repeat(2,1fr);
-      }
-      .span-3,.form-actions{
-        grid-column:span 2;
-      }
-    }
-
-    @media(max-width:760px){
-      .topbar{padding:0 14px}
-      .wrap{padding:0 12px 32px}
-      .page-head h1{font-size:32px}
-      .request-grid{grid-template-columns:1fr}
-      .span-3,.form-actions{grid-column:span 1}
-    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg1:#08121f;--bg2:#0f172a;--border:rgba(255,255,255,.14);--text:#f8fafc;--muted:#cbd5e1;--primary:#38bdf8;--primary2:#0ea5e9;--shadow:0 20px 60px rgba(0,0,0,.35);--r-xl:28px}
+    html{font-family:Inter,sans-serif;-webkit-font-smoothing:antialiased}
+    body{min-height:100vh;background:radial-gradient(circle at top left,rgba(56,189,248,.18),transparent 28%),radial-gradient(circle at right top,rgba(14,165,233,.15),transparent 24%),linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text)}
+    a{color:inherit;text-decoration:none}
+    button,input,select,textarea{font:inherit}
+    .shell{min-height:100vh;display:flex;flex-direction:column}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 24px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(8,18,31,.5);backdrop-filter:blur(14px);position:sticky;top:0;z-index:20}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:46px;height:46px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary2));display:grid;place-items:center;box-shadow:0 12px 28px rgba(14,165,233,.28)}
+    .logo svg{width:22px;height:22px}
+    .brand h1{font-size:18px;font-weight:800;letter-spacing:-.03em;line-height:1}
+    .brand p{font-size:11px;text-transform:uppercase;letter-spacing:.18em;opacity:.7;margin-top:4px}
+    .btn{min-height:42px;padding:0 16px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);color:var(--text);cursor:pointer;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.15s ease}
+    .btn:hover{background:rgba(255,255,255,.12)}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary2));border-color:transparent;color:#fff;box-shadow:0 10px 24px rgba(14,165,233,.28)}
+    .hero{padding:28px 24px 16px}
+    .hero-card{background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,.06));border:1px solid var(--border);border-radius:30px;box-shadow:var(--shadow);padding:24px;display:grid;grid-template-columns:1.2fr .8fr;gap:20px}
+    .hero-copy h2{font-size:34px;line-height:1.1;letter-spacing:-.05em;max-width:14ch}
+    .hero-copy p{color:var(--muted);margin-top:12px;max-width:58ch;line-height:1.75}
+    .hero-badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .badge{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);font-size:12px;font-weight:700}
+    .hero-side{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:18px;display:grid;gap:12px;align-content:start}
+    .mini-stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:14px}
+    .mini-stat span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:6px}
+    .mini-stat strong{font-size:28px;line-height:1}
+    .main{padding:8px 24px 28px;display:grid;gap:18px}
+    .panel{background:rgba(255,255,255,.08);border:1px solid var(--border);border-radius:var(--r-xl);box-shadow:var(--shadow);overflow:hidden}
+    .panel-head{padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:start;gap:16px;flex-wrap:wrap}
+    .panel-head h3{font-size:18px;font-weight:800;letter-spacing:-.03em}
+    .panel-head p{color:var(--muted);margin-top:4px}
+    .panel-body{padding:18px 20px 20px}
+    .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field.full{grid-column:1/-1}
+    label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#e2e8f0}
+    input,select,textarea{width:100%;min-height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(15,23,42,.58);color:var(--text);padding:11px 14px;outline:none;transition:border-color .15s,box-shadow .15s}
+    textarea{min-height:112px;resize:vertical}
+    input:focus,select:focus,textarea:focus{border-color:rgba(56,189,248,.8);box-shadow:0 0 0 4px rgba(56,189,248,.12)}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    .success,.error{display:none;margin-top:16px;padding:14px 16px;border-radius:16px;font-weight:600;border:1px solid transparent}
+    .success{background:rgba(34,197,94,.14);color:#dcfce7;border-color:rgba(34,197,94,.25)}
+    .error{background:rgba(239,68,68,.14);color:#fee2e2;border-color:rgba(239,68,68,.25)}
+    .footer{padding:0 24px 24px;color:rgba(226,232,240,.72);font-size:12px}
+    @media(max-width:980px){.hero-card{grid-template-columns:1fr}}
+    @media(max-width:720px){.topbar,.hero,.main,.footer{padding-left:14px;padding-right:14px}.form-grid{grid-template-columns:1fr}.hero-copy h2{font-size:28px}}
   </style>
 </head>
 <body>
+<div class="shell">
   <header class="topbar">
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 18h16"></path>
-          <path d="M6 14h12"></path>
-          <path d="M8 10h8"></path>
-          <path d="M10 6h4"></path>
-        </svg>
-      </div>
-      <div>
-        <div class="brand-title">FASCAL</div>
-        <div class="brand-subtitle">Customer Portal</div>
-      </div>
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16M6 15h12M8 11h8M10 7h4"/></svg></div>
+      <div><h1>FASCAL</h1><p>Customer Portal</p></div>
     </div>
+    <button class="btn btn-primary" onclick="document.getElementById('requestFormPanel').scrollIntoView({behavior:'smooth'})">New Request</button>
   </header>
 
-  <main class="wrap">
-    <section class="page-head">
-      <h1>Request Assistance</h1>
-      <p>Submit a service request, share product details, and describe the issue so our team can assist you quickly.</p>
-    </section>
-
-    <section class="panel">
-      <div class="panel-title">New Request</div>
-
-      <div class="help-strip">
-        Just fill in the key fields and submit. Add extra details only if needed.
+  <section class="hero">
+    <div class="hero-card">
+      <div class="hero-copy">
+        <h2>Submit your service request in a few simple steps.</h2>
+        <p>Use this portal to raise a new RMA request directly with FASCAL. Fill in your details and submit — our team will follow up with you.</p>
+        <div class="hero-badges">
+          <div class="badge">Customer portal</div>
+          <div class="badge">Fast submission</div>
+          <div class="badge">Secure</div>
+        </div>
       </div>
+      <div class="hero-side">
+        <div class="mini-stat"><span>New Request</span><strong>Fast</strong></div>
+        <div class="mini-stat"><span>Support</span><strong>Clean</strong></div>
+        <div class="mini-stat"><span>Portal</span><strong>Secure</strong></div>
+      </div>
+    </div>
+  </section>
 
-      <div class="request-grid">
-        <div class="field">
-          <label for="reqOem">OEM</label>
-          <select id="reqOem">
-            <option value="">Select OEM</option>
-            <option value="VeEX">VeEX</option>
-            <option value="Narda">Narda</option>
-            <option value="Cubro">Cubro</option>
-            <option value="EXFO">EXFO</option>
-            <option value="Anritsu">Anritsu</option>
-          </select>
+  <main class="main">
+    <section class="panel" id="requestFormPanel">
+      <div class="panel-head"><div><h3>Raise a Request</h3><p>Fill in the details below and submit to the service team.</p></div></div>
+      <div class="panel-body">
+        <div class="form-grid">
+          <div class="field"><label>Full Name</label><input id="name" type="text" placeholder="Your name" /></div>
+          <div class="field"><label>Email</label><input id="email" type="email" placeholder="name@company.com" /></div>
+          <div class="field"><label>Phone</label><input id="phone" type="text" placeholder="Mobile number" /></div>
+          <div class="field"><label>Company</label><input id="company" type="text" placeholder="Company name" /></div>
+          <div class="field"><label>OEM</label><select id="oem"><option value="">Select OEM</option><option>VeEX</option><option>Narda</option><option>Cubro</option></select></div>
+          <div class="field"><label>Service Type</label><select id="serviceType"><option value="">Select service</option><option>Repair</option><option>Calibration</option></select></div>
+          <div class="field"><label>Product Model</label><input id="product" type="text" placeholder="Model name" /></div>
+          <div class="field"><label>Product Details</label><input id="productDetails" type="text" placeholder="Optional details" /></div>
+          <div class="field"><label>Serial Number</label><input id="serialNumber" type="text" placeholder="Serial number" /></div>
+          <div class="field"><label>PO Number</label><input id="poNumber" type="text" placeholder="Purchase order number" /></div>
+          <div class="field"><label>PO Date</label><input id="poDate" type="date" /></div>
+          <div class="field"><label>Other</label><input id="other" type="text" placeholder="Other accessories" /></div>
+          <div class="field full"><label>Billing Address</label><textarea id="billingAddress" placeholder="Billing address"></textarea></div>
+          <div class="field full"><label>Return Address</label><textarea id="returnAddress" placeholder="Return address"></textarea></div>
+          <div class="field full"><label>Description of Issue</label><textarea id="description" placeholder="Describe the issue clearly"></textarea></div>
         </div>
-
-        <div class="field">
-          <label for="reqServiceType">Service Type</label>
-          <select id="reqServiceType">
-            <option value="">Select Service</option>
-            <option value="Repair">Repair</option>
-            <option value="Calibration">Calibration</option>
-            <option value="Technical Assistance">Technical Assistance</option>
-            <option value="General Support">General Support</option>
-          </select>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="submitRequest()">Submit Request</button>
         </div>
-
-        <div class="field">
-          <label for="reqProductModel">Product Model</label>
-          <input id="reqProductModel" type="text" placeholder="Enter product model" />
-        </div>
-
-        <div class="field">
-          <label for="reqCustomerName">Sender Full Name</label>
-          <input id="reqCustomerName" type="text" placeholder="Enter full name" />
-        </div>
-
-        <div class="field">
-          <label for="reqEmail">Email ID</label>
-          <input id="reqEmail" type="email" placeholder="Enter email address" />
-        </div>
-
-        <div class="field">
-          <label for="reqContactNumber">Contact Number</label>
-          <input id="reqContactNumber" type="text" placeholder="Enter contact number" />
-        </div>
-
-        <div class="field span-3">
-          <label for="reqIssueDescription">Description of Issue</label>
-          <textarea id="reqIssueDescription" rows="5" placeholder="Describe the issue"></textarea>
-        </div>
-
-        <div class="field span-3">
-          <button type="button" class="btn-light advanced-toggle" onclick="toggleAdvanced()" id="advancedToggle">
-            More details (optional)
-          </button>
-        </div>
-
-        <div class="span-3" id="advancedSection" style="display:none; margin-top:4px;">
-          <div class="request-grid" style="grid-template-columns:repeat(3,1fr);gap:12px;">
-            <div class="field">
-              <label for="reqCompanyName">Company Name</label>
-              <input id="reqCompanyName" type="text" placeholder="Enter company name" />
-            </div>
-
-            <div class="field">
-              <label for="reqDesignation">Designation</label>
-              <input id="reqDesignation" type="text" placeholder="Enter designation" />
-            </div>
-
-            <div class="field">
-              <label for="reqDepartment">Department</label>
-              <input id="reqDepartment" type="text" placeholder="Enter department" />
-            </div>
-
-            <div class="field">
-              <label for="reqSerialNumber">Product Serial Number</label>
-              <input id="reqSerialNumber" type="text" placeholder="Enter serial number" />
-            </div>
-
-            <div class="field">
-              <label for="reqPoNumber">PO Number</label>
-              <input id="reqPoNumber" type="text" placeholder="Enter PO number" />
-            </div>
-
-            <div class="field">
-              <label for="reqPoDate">PO Date</label>
-              <input id="reqPoDate" type="date" />
-            </div>
-
-            <div class="field span-3">
-              <label for="reqBillingAddress">Billing Address</label>
-              <textarea id="reqBillingAddress" rows="3" placeholder="Enter billing address"></textarea>
-            </div>
-
-            <div class="field span-3">
-              <label for="reqReturnAddress">Return Address</label>
-              <textarea id="reqReturnAddress" rows="3" placeholder="Enter return address"></textarea>
-            </div>
-
-            <div class="field span-3">
-              <label for="reqAdditionalInfo">Additional Info</label>
-              <textarea id="reqAdditionalInfo" rows="3" placeholder="Accessories, RF cable, antenna, or other notes"></textarea>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-actions">
-          <button class="btn-primary" type="button" onclick="submitNewRequest()">Submit Request</button>
-          <button class="btn-light" type="button" onclick="resetRequestForm()">Cancel</button>
-        </div>
+        <div class="success" id="successBox"></div>
+        <div class="error" id="errorBox"></div>
       </div>
     </section>
   </main>
 
-  <script>
-    const API = window.location.origin;
-
-    function toggleAdvanced(){
-      const section = document.getElementById("advancedSection");
-      const toggle = document.getElementById("advancedToggle");
-      const isOpen = section.style.display === "block";
-      section.style.display = isOpen ? "none" : "block";
-      toggle.textContent = isOpen ? "More details (optional)" : "Hide additional details";
+  <div class="footer">This customer portal is separate from the internal team dashboard.</div>
+</div>
+<script>
+  const API = window.location.origin;
+  const $ = id => document.getElementById(id);
+  function show(msg, type='success') {
+    const s = $('successBox'), e = $('errorBox');
+    s.style.display = 'none'; e.style.display = 'none';
+    const box = type === 'success' ? s : e;
+    box.textContent = msg; box.style.display = 'block';
+  }
+  async function submitRequest() {
+    const payload = {
+      name: $('name').value.trim(), email: $('email').value.trim(), phone: $('phone').value.trim(),
+      company: $('company').value.trim(), oem: $('oem').value.trim(), serviceType: $('serviceType').value.trim(),
+      product: $('product').value.trim(), productDetails: $('productDetails').value.trim(),
+      serialNumber: $('serialNumber').value.trim(), poNumber: $('poNumber').value.trim(),
+      poDate: $('poDate').value, other: $('other').value.trim(),
+      billingAddress: $('billingAddress').value.trim(), returnAddress: $('returnAddress').value.trim(),
+      description: $('description').value.trim()
+    };
+    if (!payload.name || !payload.email || !payload.oem || !payload.serviceType || !payload.product || !payload.description) {
+      show('Please fill all required fields: name, email, OEM, service type, product, and description.', 'error');
+      return;
     }
-
-    function collectPayload(){
-      return {
-        oem: document.getElementById("reqOem").value,
-        serviceType: document.getElementById("reqServiceType").value,
-        product: document.getElementById("reqOem").value,
-        productDetails: document.getElementById("reqProductModel").value,
-        name: document.getElementById("reqCustomerName").value,
-        company: document.getElementById("reqCompanyName").value,
-        designation: document.getElementById("reqDesignation").value,
-        department: document.getElementById("reqDepartment").value,
-        phone: document.getElementById("reqContactNumber").value,
-        email: document.getElementById("reqEmail").value,
-        serialNumber: document.getElementById("reqSerialNumber").value,
-        poNumber: document.getElementById("reqPoNumber").value,
-        poDate: document.getElementById("reqPoDate").value,
-        billingAddress: document.getElementById("reqBillingAddress").value,
-        returnAddress: document.getElementById("reqReturnAddress").value,
-        additionalInfo: document.getElementById("reqAdditionalInfo").value,
-        description: document.getElementById("reqIssueDescription").value
-      };
-    }
-
-    function resetRequestForm(){
-      [
-        "reqOem","reqServiceType","reqProductModel","reqCustomerName","reqCompanyName",
-        "reqDesignation","reqDepartment","reqContactNumber","reqEmail","reqSerialNumber",
-        "reqPoNumber","reqPoDate","reqBillingAddress","reqReturnAddress",
-        "reqAdditionalInfo","reqIssueDescription"
-      ].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = "";
+    try {
+      const res = await fetch(`${API}/api/requests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
-
-      const section = document.getElementById("advancedSection");
-      const toggle = document.getElementById("advancedToggle");
-      section.style.display = "none";
-      toggle.textContent = "More details (optional)";
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Submit failed');
+      show(`Request submitted successfully. Your RMA number is ${data.id}.`, 'success');
+      document.getElementById('requestFormPanel').scrollIntoView({ behavior: 'smooth' });
+    } catch (err) {
+      show(err.message || 'Submit failed.', 'error');
     }
-
-    async function submitNewRequest(){
-      const payload = collectPayload();
-
-      if(!payload.oem || !payload.serviceType || !payload.name || !payload.email || !payload.description){
-        alert("Please fill OEM, service type, sender name, email, and issue description.");
-        return;
-      }
-
-      try{
-        const res = await fetch(`${API}/public/request`, {
-          method:"POST",
-          headers:{ "Content-Type":"application/json" },
-          body:JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-        alert(data.message || "Request submitted successfully.");
-        resetRequestForm();
-      }catch(err){
-        alert("Could not submit request.");
-      }
-    }
-  </script>
+  }
+</script>
 </body>
 </html>

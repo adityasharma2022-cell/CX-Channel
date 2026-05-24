@@ -1,152 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CX Channel — Login</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700&display=swap" rel="stylesheet"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FASCAL — Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: #F5F3EF;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .card {
-      background: #fff;
-      border: 1px solid #E2DDD6;
-      border-radius: 16px;
-      padding: 40px;
-      width: 100%;
-      max-width: 400px;
-    }
-    .logo {
-      font-family: 'Syne', sans-serif;
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    .subtitle {
-      font-size: 14px;
-      color: #7A7570;
-      margin-bottom: 32px;
-    }
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      margin-bottom: 6px;
-    }
-    input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #E2DDD6;
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: 'DM Sans', sans-serif;
-      background: #F5F3EF;
-      margin-bottom: 16px;
-      outline: none;
-    }
-    input:focus { border-color: #888; background: #fff; }
-    button {
-      width: 100%;
-      padding: 11px;
-      background: #1A1714;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 500;
-      font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: opacity 0.15s;
-    }
-    button:hover { opacity: 0.85; }
-    .error {
-      background: #FCEBEB;
-      color: #791F1F;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 13px;
-      margin-bottom: 16px;
-      display: none;
-    }
-    .error.show { display: block; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#08111e;--line:rgba(255,255,255,.10);--text:#f8fafc;--muted:#94a3b8;--blue:#1fb6ff;--blue2:#1992d4;--shadow:0 24px 70px rgba(0,0,0,.42)}
+    body{min-height:100vh;font-family:Inter,sans-serif;color:var(--text);background:radial-gradient(circle at top left, rgba(31,182,255,.12), transparent 30%),linear-gradient(180deg,#08111e,#0a1530 55%,#08111e);display:grid;place-items:center;padding:20px}
+    .card{width:min(440px,100%);background:rgba(15,23,42,.92);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);padding:30px}
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+    .logo{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--blue),var(--blue2));display:grid;place-items:center;font-size:24px;box-shadow:0 12px 30px rgba(31,182,255,.25)}
+    .brand h1{font-size:20px;font-weight:800;line-height:1}
+    .brand p{font-size:11px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);margin-top:4px}
+    .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:6px;border-radius:18px;margin-bottom:22px}
+    .tab{border:none;background:transparent;color:var(--muted);height:44px;border-radius:14px;font-weight:700;cursor:pointer}
+    .tab.active{background:#fff;color:#0f172a;box-shadow:0 8px 22px rgba(15,23,42,.18)}
+    h2{font-size:28px;font-weight:800;letter-spacing:-.04em;margin-bottom:6px}
+    .sub{color:var(--muted);margin-bottom:20px;line-height:1.6}
+    .field{margin-bottom:14px}
+    label{display:block;font-size:12px;font-weight:800;letter-spacing:.08em;color:#cbd5e1;margin-bottom:8px;text-transform:uppercase}
+    input{width:100%;height:50px;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:#0b1220;color:#fff;padding:0 14px;outline:none;font:inherit}
+    input:focus{border-color:rgba(31,182,255,.7);box-shadow:0 0 0 4px rgba(31,182,255,.12)}
+    .password-wrap{position:relative}.password-wrap input{padding-right:48px}
+    .toggle{position:absolute;top:50%;right:12px;transform:translateY(-50%);border:none;background:transparent;color:#94a3b8;cursor:pointer;font-size:16px}
+    .alert{display:none;margin-bottom:14px;padding:12px 14px;border-radius:14px;font-weight:700;font-size:14px}
+    .alert.show{display:block}.alert.error{background:rgba(239,68,68,.14);color:#fecaca;border:1px solid rgba(239,68,68,.25)}.alert.success{background:rgba(34,197,94,.14);color:#bbf7d0;border:1px solid rgba(34,197,94,.25)}
+    .btn{width:100%;height:52px;border:none;border-radius:16px;cursor:pointer;font:inherit;font-size:16px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--blue),var(--blue2));box-shadow:0 10px 28px rgba(31,182,255,.28);margin-top:6px}
+    .links{margin-top:18px;padding-top:18px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+    .links a{color:var(--blue);text-decoration:none;font-weight:700}.links a:hover{text-decoration:underline}
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="logo">CX Channel</div>
-    <div class="subtitle">Sign in to access the team dashboard</div>
-
-    <div class="error" id="errorMsg"></div>
-
-    <label>Email</label>
-    <input id="email" type="email" placeholder="you@fastech.com" />
-
-    <label>Password</label>
-    <input id="password" type="password" placeholder="••••••••" />
-
-    <button onclick="login()">Sign In</button>
+    <div class="brand">
+      <div class="logo">🛰️</div>
+      <div><h1>FASCAL</h1><p>Service Portal</p></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" id="teamTab" type="button">Team Login</button>
+      <button class="tab" id="customerTab" type="button">Customer Login</button>
+    </div>
+    <h2 id="title">Welcome back</h2>
+    <p class="sub" id="subtitle">Sign in to your team account to continue.</p>
+    <div id="alertBox" class="alert"></div>
+    <form id="loginForm">
+      <div class="field"><label for="username">Username</label><input id="username" type="text" placeholder="Enter your username" required /></div>
+      <div class="field"><label for="password">Password</label><div class="password-wrap"><input id="password" type="password" placeholder="Enter your password" required /><button class="toggle" type="button" id="toggleBtn">👁</button></div></div>
+      <button class="btn" type="submit">Sign In</button>
+    </form>
+    <div class="links"><span>Track your request? <a href="customer.html">Open customer portal</a></span><a href="team-signup.html">Team signup</a></div>
   </div>
-
-  <script>
-const API = window.location.hostname === 'localhost'
-  ? 'http://localhost:3000'
-  : 'https://cx-channel.onrender.com';
-    // If already logged in, go straight to dashboard
-    fetch(`${API}/auth/me`, { credentials: 'include' })
-      .then(r => r.json())
-      .then(data => { if (data.user) window.location.href = '/index.html'; })
-      .catch(() => {});
-
-    async function login() {
-      const email    = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const errorMsg = document.getElementById('errorMsg');
-
-      errorMsg.classList.remove('show');
-
-      if (!email || !password) {
-        errorMsg.textContent = 'Please enter your email and password.';
-        errorMsg.classList.add('show');
-        return;
-      }
-
-      try {
-        const response = await fetch(`${API}/auth/login`, {
-          method:      'POST',
-          headers:     { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body:        JSON.stringify({ email, password })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          errorMsg.textContent = data.error || 'Login failed.';
-          errorMsg.classList.add('show');
-          return;
-        }
-
-        // Redirect to dashboard on success
-        window.location.href = '/index.html';
-
-      } catch (err) {
-        errorMsg.textContent = 'Cannot connect to server. Is it running?';
-        errorMsg.classList.add('show');
-      }
-    }
-
-    // Allow Enter key to submit
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Enter') login();
-    });
-  </script>
+<script>
+  const API = window.location.origin;
+  let mode = 'team';
+  const title = document.getElementById('title');
+  const subtitle = document.getElementById('subtitle');
+  const alertBox = document.getElementById('alertBox');
+  const form = document.getElementById('loginForm');
+  const teamTab = document.getElementById('teamTab');
+  const customerTab = document.getElementById('customerTab');
+  const toggleBtn = document.getElementById('toggleBtn');
+  function showAlert(msg, type='error'){alertBox.className=`alert show ${type}`;alertBox.textContent=msg}
+  function hideAlert(){alertBox.className='alert';alertBox.textContent=''}
+  function setMode(next){mode=next;teamTab.classList.toggle('active',next==='team');customerTab.classList.toggle('active',next==='customer');title.textContent=next==='team'?'Welcome back':'Customer login';subtitle.textContent=next==='team'?'Sign in to your team account to continue.':'Sign in to view your request portal.'}
+  toggleBtn.addEventListener('click',()=>{const input=document.getElementById('password');input.type=input.type==='password'?'text':'password'})
+  teamTab.addEventListener('click',()=>setMode('team')); customerTab.addEventListener('click',()=>setMode('customer'));
+  form.addEventListener('submit',async(e)=>{e.preventDefault();hideAlert();const username=document.getElementById('username').value.trim();const password=document.getElementById('password').value;if(!username||!password){showAlert('Username and password are required.');return}try{const url=mode==='team'?'/api/auth/login':'/api/auth/customer-login';const res=await fetch(`${API}${url}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});const data=await res.json();if(!res.ok){showAlert(data.message||'Login failed.');return}localStorage.setItem('cxUser',JSON.stringify(data));window.location.href=mode==='team'?'index.html':'customer.html'}catch(err){showAlert('Network error. Please try again.')}})
+</script>
 </body>
 </html>

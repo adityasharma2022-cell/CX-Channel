@@ -368,7 +368,7 @@
           <div class="icon">🔒</div>
           <div>
             <h3>Secure password storage</h3>
-            <p>Passwords are sent to the backend and stored as hashes, not plain text.</p>
+            <p>Passwords are sent to the backend and stored securely on the server.</p>
           </div>
         </div>
 
@@ -448,7 +448,7 @@
 
       <div class="footer-row">
         <p>Already have an account?</p>
-        <a href="team-login.html">Sign In →</a>
+        <a href="login.html">Sign In →</a>
       </div>
     </section>
   </div>
@@ -553,8 +553,6 @@
 
         if (!res.ok) {
           showError(data.error || "Could not create account.");
-          submitBtn.disabled = false;
-          submitBtn.textContent = "Create Account →";
           return;
         }
 
@@ -563,7 +561,7 @@
         updateStrength();
 
         setTimeout(() => {
-          window.location.href = "team-login.html";
+          window.location.href = "login.html";
         }, 1200);
       } catch (err) {
         showError("Network error. Please try again.");
