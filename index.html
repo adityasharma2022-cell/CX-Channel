@@ -103,19 +103,19 @@
         <div class="user-meta"><small>Signed in as</small><strong id="userNameSidebar">admin</strong></div>
       </div>
       <div class="nav-section"><div class="nav-label">Main Menu</div><button class="nav-item active" onclick="window.scrollTo({top:0,behavior:'smooth'})">Dashboard</button></div>
-      <div class="nav-section"><div class="nav-label">Requests</div><button class="nav-item active" onclick="document.getElementById('requestListCard').scrollIntoView({behavior:'smooth'})">View RMA Requests</button></div>
+      <div class="nav-section"><div class="nav-label">Requests</div><button class="nav-item active" onclick="document.getElementById('requestListCard').scrollIntoView({behavior:'smooth'})">View TMI Requests</button></div>
       <div class="sidebar-footer"><button class="btn-logout" onclick="logout()">Logout</button></div>
     </aside>
     <main class="main-wrap">
       <div class="navbar">
         <div>
-          <div class="page-title">View RMA Requests</div>
-          <div class="breadcrumb"><span>Home</span><span>›</span><span>RMA Requests</span></div>
+          <div class="page-title">View TMI Requests</div>
+          <div class="breadcrumb"><span>Home</span><span>›</span><span>TMI Requests</span></div>
         </div>
         <div class="navbar-right"><button class="icon-btn" id="userMenuBtn">A</button></div>
       </div>
       <div class="content">
-        <div class="page-header"><div><h1>View RMA Requests</h1><p>Manage, filter, approve, and export all incoming service requests from one view.</p></div></div>
+        <div class="page-header"><div><h1>View TMI Requests</h1><p>Manage, filter, approve, and export all incoming service requests from one view.</p></div></div>
         <div class="metrics">
           <div class="metric-card"><div class="metric-icon blue">T</div><div class="metric-label">Total Requests</div><div class="metric-value" id="metricTotal">0</div><div class="metric-sub">All requests in the system</div></div>
           <div class="metric-card"><div class="metric-icon yellow">P</div><div class="metric-label">Pending</div><div class="metric-value" id="metricPending">0</div><div class="metric-sub">Awaiting action</div></div>
@@ -123,10 +123,10 @@
           <div class="metric-card"><div class="metric-icon green">F</div><div class="metric-label">Finalized</div><div class="metric-value" id="metricFinalized">0</div><div class="metric-sub">Approved / resolved / closed</div></div>
         </div>
         <div class="card" id="requestListCard">
-          <div class="card-head"><div><h3>List RMA Requests</h3><p>Filter by OEM, Service, Status, or use the keyword search below.</p></div><button class="btn btn-primary" onclick="exportCsv()">Export CSV</button></div>
+          <div class="card-head"><div><h3>List TMI Requests</h3><p>Filter by OEM, Service, Status, or use the keyword search below.</p></div><button class="btn btn-primary" onclick="exportCsv()">Export CSV</button></div>
           <div class="filters">
-            <div class="field"><label>OEM</label><select id="fOem"><option value="">All OEM</option><option>VeEX</option><option>Narda</option><option>Cubro</option></select></div>
-            <div class="field"><label>Service</label><select id="fService"><option value="">All Services</option><option>Repair</option><option>Calibration</option></select></div>
+            <div class="field"><label>OEM</label><input id="fOem" list="fOemList" placeholder="All OEM" /><datalist id="fOemList"><option value="VeEX"></option><option value="Narda"></option><option value="Cubro"></option></datalist></div>
+            <div class="field"><label>Service</label><input id="fService" list="fServiceList" placeholder="All Services" /><datalist id="fServiceList"><option value="Repair"></option><option value="Calibration"></option></datalist></div>
             <div class="field"><label>Keyword</label><input id="fKeyword" placeholder="Search ticket, name, company, etc" /></div>
             <div class="field"><label>Status</label><select id="fStatus"><option value="">All Status</option><option>pending</option><option>review</option><option>forwarded</option><option>approved</option><option>resolved</option><option>closed</option><option>rejected</option></select></div>
             <div class="field"><label>Date</label><input id="fDate" type="date" /></div>
@@ -143,7 +143,7 @@
           </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Sr.</th><th>RMA No</th><th>OEM</th><th>Service Type</th><th>Product Model</th><th>Sender's Name</th><th>Company</th><th>Designation</th><th>Department</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+              <thead><tr><th>Sr.</th><th>TMI No</th><th>OEM</th><th>Service Type</th><th>Product Model</th><th>Sender's Name</th><th>Company</th><th>Designation</th><th>Department</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
               <tbody id="rmaTableBody"></tbody>
             </table>
           </div>

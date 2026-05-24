@@ -70,7 +70,7 @@
     <div class="hero-card">
       <div class="hero-copy">
         <h2>Submit your service request in a few simple steps.</h2>
-        <p>Use this portal to raise a new RMA request directly with FASCAL. Fill in your details and submit — our team will follow up with you.</p>
+        <p>Use this portal to raise a new TMI request directly with FASCAL. Fill in your details and submit — our team will follow up with you.</p>
         <div class="hero-badges">
           <div class="badge">Customer portal</div>
           <div class="badge">Fast submission</div>
@@ -94,8 +94,8 @@
           <div class="field"><label>Email</label><input id="email" type="email" placeholder="name@company.com" /></div>
           <div class="field"><label>Phone</label><input id="phone" type="text" placeholder="Mobile number" /></div>
           <div class="field"><label>Company</label><input id="company" type="text" placeholder="Company name" /></div>
-          <div class="field"><label>OEM</label><select id="oem"><option value="">Select OEM</option><option>VeEX</option><option>Narda</option><option>Cubro</option></select></div>
-          <div class="field"><label>Service Type</label><select id="serviceType"><option value="">Select service</option><option>Repair</option><option>Calibration</option></select></div>
+          <div class="field"><label>OEM</label><input id="oem" list="oemList" placeholder="Type or select OEM" /><datalist id="oemList"><option value="VeEX"></option><option value="Narda"></option><option value="Cubro"></option></datalist></div>
+          <div class="field"><label>Service Type</label><input id="serviceType" list="serviceList" placeholder="Type or select service" /><datalist id="serviceList"><option value="Repair"></option><option value="Calibration"></option></datalist></div>
           <div class="field"><label>Product Model</label><input id="product" type="text" placeholder="Model name" /></div>
           <div class="field"><label>Product Details</label><input id="productDetails" type="text" placeholder="Optional details" /></div>
           <div class="field"><label>Serial Number</label><input id="serialNumber" type="text" placeholder="Serial number" /></div>
@@ -148,7 +148,7 @@
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Submit failed');
-      show(`Request submitted successfully. Your RMA number is ${data.id}.`, 'success');
+      show(`Request submitted successfully. Your TMI number is ${data.id}.`, 'success');
       document.getElementById('requestFormPanel').scrollIntoView({ behavior: 'smooth' });
     } catch (err) {
       show(err.message || 'Submit failed.', 'error');
