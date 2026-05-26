@@ -94,13 +94,12 @@
           <div class="field"><label>Email</label><input id="email" type="email" placeholder="name@company.com" /></div>
           <div class="field"><label>Phone</label><input id="phone" type="text" placeholder="Mobile number" /></div>
           <div class="field"><label>Company</label><input id="company" type="text" placeholder="Company name" /></div>
+          <div class="field"><label>Designation</label><input id="designation" type="text" placeholder="Your designation" /></div>
           <div class="field"><label>OEM</label><input id="oem" list="oemList" placeholder="Type or select OEM" /><datalist id="oemList"><option value="VeEX"></option><option value="Narda"></option><option value="Cubro"></option></datalist></div>
-          <div class="field"><label>Service Type</label><input id="serviceType" list="serviceList" placeholder="Type or select service" /><datalist id="serviceList"><option value="Repair"></option><option value="Calibration"></option></datalist></div>
+          <div class="field"><label>Service Type</label><input id="serviceType" list="serviceList" placeholder="Type or select service" /><datalist id="serviceList"><option value="Repair"></option></datalist></div>
           <div class="field"><label>Product Model</label><input id="product" type="text" placeholder="Model name" /></div>
           <div class="field"><label>Product Details</label><input id="productDetails" type="text" placeholder="Optional details" /></div>
           <div class="field"><label>Serial Number</label><input id="serialNumber" type="text" placeholder="Serial number" /></div>
-          <div class="field"><label>PO Number</label><input id="poNumber" type="text" placeholder="Purchase order number" /></div>
-          <div class="field"><label>PO Date</label><input id="poDate" type="date" /></div>
           <div class="field"><label>Other</label><input id="other" type="text" placeholder="Other accessories" /></div>
           <div class="field full"><label>Billing Address</label><textarea id="billingAddress" placeholder="Billing address"></textarea></div>
           <div class="field full"><label>Return Address</label><textarea id="returnAddress" placeholder="Return address"></textarea></div>
@@ -129,10 +128,10 @@
   async function submitRequest() {
     const payload = {
       name: $('name').value.trim(), email: $('email').value.trim(), phone: $('phone').value.trim(),
-      company: $('company').value.trim(), oem: $('oem').value.trim(), serviceType: $('serviceType').value.trim(),
+      company: $('company').value.trim(), designation: $('designation').value.trim(),
+      oem: $('oem').value.trim(), serviceType: $('serviceType').value.trim(),
       product: $('product').value.trim(), productDetails: $('productDetails').value.trim(),
-      serialNumber: $('serialNumber').value.trim(), poNumber: $('poNumber').value.trim(),
-      poDate: $('poDate').value, other: $('other').value.trim(),
+      serialNumber: $('serialNumber').value.trim(), other: $('other').value.trim(),
       billingAddress: $('billingAddress').value.trim(), returnAddress: $('returnAddress').value.trim(),
       description: $('description').value.trim()
     };
