@@ -161,6 +161,17 @@ app.get("/api/stats", (req, res) => {
   const count = s => db.filter(r => String(r.status || "").toLowerCase() === s).length;
   res.json({ total: db.length, pending: count("pending"), review: count("review") + count("forwarded"), approved: count("approved"), resolved: count("resolved"), closed: count("closed"), rejected: count("rejected") });
 });
+const { sendMail, verifyMailer } = require("./mailer");
 
+(async () => {
+  await verifyMailer();
+  await sendMail({
+    to: process.env.TEAM_EMAIL || process.env.SMTP_USER,
+    subject: "FASCAL test mail",
+    text: "Hello, this is a test mail.",
+    html: "<p>Hello, this is a test mail.</p>",
+  });
+  console.log("Mail sent");
+})().catch(console.error);
 app.use((req, res) => res.status(404).json({ message: "Route not found." }));
 app.listen(PORT, () => { console.log(`FASCAL Server running at http://localhost:${PORT}`); });
