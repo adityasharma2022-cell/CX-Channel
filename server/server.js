@@ -23,7 +23,7 @@ ensureFile(
     [
       { id: "u1", username: "admin", password: "admin123", role: "team", department: "admin" },
       { id: "u2", username: "service", password: "service123", role: "team", department: "service" },
-      { id: "u3", username: "customer1", password: "cust123", role: "customer", email: "customer1@example.com" },
+      { id: "u3", username: "customer1", password: "cust123", role: "customer", email: "customer1@example.com" }
     ],
     null,
     2
@@ -37,7 +37,6 @@ const readJSON = (file, fallback) => {
     return fallback;
   }
 };
-
 const writeJSON = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8");
 const readDB = () => readJSON(DB_FILE, []);
 const writeDB = (data) => writeJSON(DB_FILE, data);
@@ -56,7 +55,7 @@ function nowIST() {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-    hour12: false,
+    hour12: false
   });
 }
 
@@ -85,7 +84,7 @@ app.post("/api/auth/login", (req, res) => {
     token: `fake-jwt-${user.id}`,
     username: user.username,
     role: user.role,
-    department: user.department || "",
+    department: user.department || ""
   });
 });
 
@@ -99,7 +98,7 @@ app.post("/api/auth/customer-login", (req, res) => {
     token: `fake-jwt-${user.id}`,
     username: user.username,
     role: user.role,
-    email: user.email || "",
+    email: user.email || ""
   });
 });
 
@@ -127,9 +126,7 @@ app.get("/api/requests/:id", (req, res) => {
   const db = readDB();
   const request = db.find((r) => r.id === req.params.id);
   if (!request) return res.status(404).json({ message: "Request not found." });
-  const history = db
-    .filter((r) => r.email === request.email && r.id !== request.id)
-    .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  const history = db.filter((r) => r.email === request.email && r.id !== request.id).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
   res.json({ request, history });
 });
 
@@ -172,7 +169,7 @@ app.post("/api/requests", (req, res) => {
     customerFeedback: "",
     internalNote: "",
     createdAt: now,
-    updatedAt: now,
+    updatedAt: now
   };
 
   const db = readDB();
@@ -185,13 +182,11 @@ app.put("/api/requests/:id", (req, res) => {
   const db = readDB();
   const idx = db.findIndex((r) => r.id === req.params.id);
   if (idx === -1) return res.status(404).json({ message: "Request not found." });
-
   const allowed = ["status", "forwardTo", "operationsTeam", "serviceTeam", "customerFeedback", "internalNote", "product", "productDetails", "oem", "serviceType"];
   const body = req.body || {};
   allowed.forEach((k) => {
     if (body[k] !== undefined) db[idx][k] = body[k];
   });
-
   db[idx].updatedAt = nowIST();
   writeDB(db);
   res.json({ message: "Request updated successfully.", request: db[idx] });
@@ -208,40 +203,7 @@ app.delete("/api/requests/:id", (req, res) => {
 app.get("/api/export/csv", (req, res) => {
   const db = readDB();
   if (!db.length) return res.status(404).json({ message: "No data to export." });
-  const cols = [
-    "id",
-    "oem",
-    "serviceType",
-    "product",
-    "productDetails",
-    "description",
-    "name",
-    "email",
-    "phone",
-    "company",
-    "designation",
-    "department",
-    "serialNumber",
-    "poNumber",
-    "poDate",
-    "basicUnit",
-    "antenna",
-    "probe",
-    "rfCable",
-    "other",
-    "billingAddress",
-    "returnAddress",
-    "calAddress",
-    "additionalInfo",
-    "status",
-    "forwardTo",
-    "operationsTeam",
-    "serviceTeam",
-    "customerFeedback",
-    "internalNote",
-    "createdAt",
-    "updatedAt",
-  ];
+  const cols = ["id","oem","serviceType","product","productDetails","description","name","email","phone","company","designation","department","serialNumber","poNumber","poDate","basicUnit","antenna","probe","rfCable","other","billingAddress","returnAddress","calAddress","additionalInfo","status","forwardTo","operationsTeam","serviceTeam","customerFeedback","internalNote","createdAt","updatedAt"];
   const escape = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const csv = [cols.join(","), ...db.map((r) => cols.map((c) => escape(r[c])).join(","))].join("\r\n");
   res.setHeader("Content-Type", "text/csv");
@@ -259,19 +221,39 @@ app.get("/api/stats", (req, res) => {
     approved: count("approved"),
     resolved: count("resolved"),
     closed: count("closed"),
-    rejected: count("rejected"),
+    rejected: count("rejected")
   });
+});
+
+app.get("/api/test-smtp", async (req, res) => {
+  try {
+    await Promise.race([
+      verifyMailer(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("SMTP verify timeout")), 10000))
+    ]);
+    res.json({ message: "SMTP verified" });
+  } catch (err) {
+    res.status(500).json({ message: err.message || "SMTP verify failed" });
+  }
 });
 
 app.get("/api/test-mail", async (req, res) => {
   try {
-    await verifyMailer();
-    const info = await sendMail({
-      to: process.env.TEAM_EMAIL || process.env.SMTP_USER,
-      subject: "FASCAL test mail",
-      text: "Hello, this is a test mail.",
-      html: "<p>Hello, this is a test mail.</p>",
-    });
+    await Promise.race([
+      verifyMailer(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("SMTP verify timeout")), 10000))
+    ]);
+
+    const info = await Promise.race([
+      sendMail({
+        to: process.env.TEAM_EMAIL || process.env.SMTP_USER,
+        subject: "FASCAL test mail",
+        text: "Hello, this is a test mail.",
+        html: "<p>Hello, this is a test mail.</p>"
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("SMTP send timeout")), 10000))
+    ]);
+
     res.json({ message: "Mail sent successfully.", messageId: info.messageId || null });
   } catch (err) {
     res.status(500).json({ message: err.message || "Mail test failed." });
