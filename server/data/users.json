@@ -30,5 +30,16 @@
     "department": "admin",
     "password": "Mt.9^fBXQem\"G7Y",
     "createdAt": "24/05/2026, 19:40:35"
+  },
+  {
+    "id": "u1780664094011",
+    "firstName": "Admin123",
+    "lastName": "User",
+    "username": "admin321",
+    "email": "admin321@cx.com",
+    "role": "team",
+    "department": "admin",
+    "password": "Mt.9^fBXQem\"G7Y",
+    "createdAt": "05/06/2026, 18:24:54"
   }
 ]

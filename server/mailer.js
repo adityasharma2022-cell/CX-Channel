@@ -2,7 +2,7 @@ require("dotenv").config();
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_SERVER || "smtp.gmail.com",
+  host: process.env.SMTP_SERVER || "smtp.office365.com",
   port: Number(process.env.SMTP_PORT || 587),
   secure: false,
   requireTLS: true,
@@ -20,16 +20,18 @@ const transporter = nodemailer.createTransport({
 });
 
 async function verifyMailer() {
-  return true;
+  return transporter.verify();
 }
 
-async function sendMail({ to, subject, text, html }) {
+async function sendMail({ to, subject, text, html, replyTo, attachments = [] }) {
   return transporter.sendMail({
     from: process.env.SENDER_EMAIL,
     to,
     subject,
     text,
-    html: html || text
+    html: html || text,
+    replyTo: replyTo || undefined,
+    attachments
   });
 }
 
