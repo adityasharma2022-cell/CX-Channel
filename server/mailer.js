@@ -2,13 +2,13 @@ require("dotenv").config();
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_SERVER || "smtp.office365.com",
-  port: Number(process.env.SMTP_PORT || 587),
+  host: "smtp.office365.com",
+  port: 587,
   secure: false,
   requireTLS: true,
   auth: {
-    user: process.env.SENDER_EMAIL,
-    pass: process.env.SENDER_PASSWORD
+    user: 'demo@fastech-india.com',
+    pass: 'Test#1@2026!'
   },
   connectionTimeout: 10000,
   greetingTimeout: 10000,
@@ -21,12 +21,14 @@ const transporter = nodemailer.createTransport({
 
 async function verifyMailer() {
   return transporter.verify();
+  print(transporter)
+  debugger;
 }
 
 async function sendMail({ to, subject, text, html, replyTo, attachments = [] }) {
   return transporter.sendMail({
-    from: process.env.SENDER_EMAIL,
-    to,
+    from: 'demo@fastech-india.com',
+    to : 'demo@fastech-india.com',
     subject,
     text,
     html: html || text,
