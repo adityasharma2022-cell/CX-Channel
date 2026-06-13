@@ -70,7 +70,7 @@
 </div>
 <script>
   const API = window.location.origin;
-  if(sessionStorage.getItem("cx_auth")==="1") window.location.href="index.html";
+  if(localStorage.getItem('cxUser')) window.location.href="index.html";
   function togglePass(inputId,iconId){
     const inp=document.getElementById(inputId),ico=document.getElementById(iconId);
     inp.type=inp.type==="password"?"text":"password";
@@ -83,11 +83,10 @@
     const password=document.getElementById("uPass").value.trim();
     if(!username||!password){errMsg.textContent="Please enter your username and password.";errBox.classList.add("show");return;}
     try{
-      const res=await fetch(`${API}/auth/login`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})});
+      const res=await fetch(`${API}/api/auth/login`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})});
       const data=await res.json();
-      if(!res.ok){errMsg.textContent=data.error||"Invalid username or password.";errBox.classList.add("show");return;}
-      sessionStorage.setItem("cx_auth","1");
-      sessionStorage.setItem("cx_user",JSON.stringify(data.user));
+      if(!res.ok){errMsg.textContent=data.message||"Invalid username or password.";errBox.classList.add("show");return;}
+      localStorage.setItem('cxUser',JSON.stringify(data));
       window.location.href="index.html";
     }catch{errMsg.textContent="Could not connect to server. Please try again.";errBox.classList.add("show");}
   }

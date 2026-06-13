@@ -329,7 +329,18 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Submit failed');
 
-      show(`Request submitted successfully. Your TMI number is ${data.id}.`, 'success');
+      let msg = `Request submitted successfully. Your TMI number is ${data.id}.`;
+      if (data.emails?.team?.sent && data.emails?.customer?.sent) {
+        msg += ' Confirmation emails were sent to you and the service team.';
+      } else if (data.emails?.team?.sent) {
+        msg += ' The service team has been notified by email.';
+      } else if (data.emails?.customer?.sent) {
+        msg += ' A confirmation email was sent to you.';
+      } else if (data.emails?.team?.error || data.emails?.customer?.error) {
+        msg += ' Note: email delivery had an issue, but your request was saved.';
+      }
+
+      show(msg, 'success');
       document.getElementById('requestFormPanel').scrollIntoView({ behavior: 'smooth' });
     } catch (err) {
       show(err.message || 'Submit failed.', 'error');
