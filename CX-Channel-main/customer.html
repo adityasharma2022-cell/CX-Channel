@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FASCAL — Customer Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg1:#08121f;--bg2:#0f172a;--border:rgba(255,255,255,.14);--text:#f8fafc;--muted:#cbd5e1;--primary:#38bdf8;--primary2:#0ea5e9;--shadow:0 20px 60px rgba(0,0,0,.35);--r-xl:28px}
+    html{font-family:Inter,sans-serif;-webkit-font-smoothing:antialiased}
+    body{min-height:100vh;background:radial-gradient(circle at top left,rgba(56,189,248,.18),transparent 28%),radial-gradient(circle at right top,rgba(14,165,233,.15),transparent 24%),linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text)}
+    a{color:inherit;text-decoration:none}
+    button,input,select,textarea{font:inherit}
+    .shell{min-height:100vh;display:flex;flex-direction:column}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 24px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(8,18,31,.5);backdrop-filter:blur(14px);position:sticky;top:0;z-index:20}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:46px;height:46px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary2));display:grid;place-items:center;box-shadow:0 12px 28px rgba(14,165,233,.28)}
+    .logo svg{width:22px;height:22px}
+    .brand h1{font-size:18px;font-weight:800;letter-spacing:-.03em;line-height:1}
+    .brand p{font-size:11px;text-transform:uppercase;letter-spacing:.18em;opacity:.7;margin-top:4px}
+    .topbar-right{display:flex;align-items:center;gap:10px}
+    .user-chip{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08)}
+    .user-chip-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#0284c7);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+    .user-chip-name{font-size:13px;font-weight:700;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .btn{min-height:42px;padding:0 16px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);color:var(--text);cursor:pointer;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.15s ease}
+    .btn:hover{background:rgba(255,255,255,.12)}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary2));border-color:transparent;color:#fff;box-shadow:0 10px 24px rgba(14,165,233,.28)}
+    .btn-ghost{background:rgba(239,68,68,.14);border-color:rgba(239,68,68,.25);color:#fca5a5}
+    .btn-ghost:hover{background:rgba(239,68,68,.22)}
+    .hero{padding:28px 24px 16px}
+    .hero-card{background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,.06));border:1px solid var(--border);border-radius:30px;box-shadow:var(--shadow);padding:24px;display:grid;grid-template-columns:1.2fr .8fr;gap:20px}
+    .hero-copy h2{font-size:34px;line-height:1.1;letter-spacing:-.05em;max-width:14ch}
+    .hero-copy p{color:var(--muted);margin-top:12px;max-width:58ch;line-height:1.75}
+    .hero-badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .badge{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);font-size:12px;font-weight:700}
+    .hero-side{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:18px;display:grid;gap:12px;align-content:start}
+    .mini-stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:14px}
+    .mini-stat span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:6px}
+    .mini-stat strong{font-size:28px;line-height:1}
+    .main{padding:8px 24px 28px;display:grid;gap:18px}
+    .panel{background:rgba(255,255,255,.08);border:1px solid var(--border);border-radius:var(--r-xl);box-shadow:var(--shadow);overflow:hidden}
+    .panel-head{padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:start;gap:16px;flex-wrap:wrap}
+    .panel-head h3{font-size:18px;font-weight:800;letter-spacing:-.03em}
+    .panel-head p{color:var(--muted);margin-top:4px}
+    .panel-body{padding:18px 20px 20px}
+    .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field.full{grid-column:1/-1}
+    label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#e2e8f0}
+    input,select,textarea{width:100%;min-height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(15,23,42,.58);color:var(--text);padding:11px 14px;outline:none;transition:border-color .15s,box-shadow .15s}
+    textarea{min-height:112px;resize:vertical}
+    input:focus,select:focus,textarea:focus{border-color:rgba(56,189,248,.8);box-shadow:0 0 0 4px rgba(56,189,248,.12)}
+    input[type="file"]{padding:10px 14px;cursor:pointer;min-height:44px}
+    input[type="file"]::-webkit-file-upload-button{background:linear-gradient(135deg,var(--primary),var(--primary2));border:none;border-radius:8px;color:#fff;cursor:pointer;font-weight:700;font-size:12px;padding:6px 12px;margin-right:10px}
+    select option{background:#0f172a;color:#f8fafc}
+    .serial-group{grid-column:1/-1;display:none;gap:14px;grid-template-columns:repeat(2,1fr)}
+    .serial-group.active{display:grid}
+    .section-divider{grid-column:1/-1;border:none;border-top:1px solid rgba(255,255,255,.08);margin:4px 0}
+    .section-label{grid-column:1/-1;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);padding-bottom:2px}
+    .note{font-size:12px;color:var(--muted);margin-top:8px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    .success,.error{display:none;margin-top:16px;padding:14px 16px;border-radius:16px;font-weight:600;border:1px solid transparent}
+    .success{background:rgba(34,197,94,.14);color:#dcfce7;border-color:rgba(34,197,94,.25)}
+    .error{background:rgba(239,68,68,.14);color:#fee2e2;border-color:rgba(239,68,68,.25)}
+    .hist-wrap{overflow:auto}
+    .hist-wrap table{width:100%;border-collapse:collapse}
+    .hist-wrap thead th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08);white-space:nowrap;background:rgba(255,255,255,.04)}
+    .hist-wrap tbody td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:top;font-size:13px}
+    .td-empty{padding:28px 14px;text-align:center;color:var(--muted);font-size:13px}
+    .pill{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800}
+    .pill-pending{background:rgba(251,191,36,.18);color:#fde68a}
+    .pill-review{background:rgba(99,102,241,.18);color:#c7d2fe}
+    .pill-approved{background:rgba(34,197,94,.18);color:#bbf7d0}
+    .pill-rejected{background:rgba(239,68,68,.18);color:#fecaca}
+    .footer{padding:0 24px 24px;color:rgba(226,232,240,.72);font-size:12px}
+    @media(max-width:980px){.hero-card{grid-template-columns:1fr}}
+    @media(max-width:720px){
+      .topbar,.hero,.main,.footer{padding-left:14px;padding-right:14px}
+      .form-grid,.serial-group{grid-template-columns:1fr}
+      .hero-copy h2{font-size:28px}
+      .user-chip-name{display:none}
+    }
+  </style>
+</head>
+<body>
+
+<script>
+  (function () {
+    try {
+      var user = JSON.parse(localStorage.getItem('cxUser') || 'null');
+      if (!user || !user.token || user.role !== 'customer') {
+        window.location.replace('/login.html');
+      }
+    } catch (e) {
+      window.location.replace('/login.html');
+    }
+  })();
+</script>
+
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19h16M6 15h12M8 11h8M10 7h4"/>
+        </svg>
+      </div>
+      <div><h1>FASCAL</h1><p>Customer Portal</p></div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-chip">
+        <div class="user-chip-avatar" id="userAvatarChip">C</div>
+        <span class="user-chip-name" id="userNameChip">Customer</span>
+      </div>
+      <button class="btn btn-primary" onclick="document.getElementById('requestFormPanel').scrollIntoView({behavior:'smooth'})">New Request</button>
+      <button class="btn btn-ghost" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-card">
+      <div class="hero-copy">
+        <h2>Submit your service request in a few simple steps.</h2>
+        <p>Use this portal to raise a new RMA/TMI request directly with FASCAL. Fill in your details and submit — our team will follow up with you shortly.</p>
+        <div class="hero-badges">
+          <div class="badge">Customer portal</div>
+          <div class="badge">Fast submission</div>
+          <div class="badge">Secure</div>
+        </div>
+      </div>
+      <div class="hero-side">
+        <div class="mini-stat"><span>Your Requests</span><strong id="statTotal">—</strong></div>
+        <div class="mini-stat"><span>Pending</span><strong id="statPending">—</strong></div>
+        <div class="mini-stat"><span>Resolved</span><strong id="statResolved">—</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <main class="main">
+
+    <!-- Request Form -->
+    <section class="panel" id="requestFormPanel">
+      <div class="panel-head">
+        <div><h3>Raise a New Request</h3><p>Fill in the details below and submit to the service team.</p></div>
+      </div>
+      <div class="panel-body">
+        <div class="form-grid">
+          <div class="section-label">Customer Information</div>
+
+          <div class="field">
+            <label>Customer Name <span style="color:#f87171">*</span></label>
+            <input id="name" type="text" placeholder="Customer name" />
+          </div>
+          <div class="field">
+            <label>E-MAIL <span style="color:#f87171">*</span></label>
+            <input id="email" type="email" placeholder="name@company.com" />
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            <input id="phone" type="text" placeholder="Mobile number" />
+          </div>
+          <div class="field">
+            <label>Company</label>
+            <input id="company" type="text" placeholder="Company name" />
+          </div>
+          <div class="field">
+            <label>Designation</label>
+            <input id="designation" type="text" placeholder="Your designation" />
+          </div>
+
+          <hr class="section-divider" />
+          <div class="section-label">Service Details</div>
+
+          <div class="field">
+            <label>OEM <span style="color:#f87171">*</span></label>
+            <select id="oem">
+              <option value="">Select OEM</option>
+              <option value="VeEX">VeEX</option>
+              <option value="Narda">Narda</option>
+              <option value="Cubro">Cubro</option>
+              <option value="ADTI">ADTI</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Service Type <span style="color:#f87171">*</span></label>
+            <select id="serviceType">
+              <option value="">Select service type</option>
+              <option value="Repair">Repair</option>
+              <option value="Calibration">Calibration</option>
+              <option value="Others">Others</option>
+            </select>
+          </div>
+
+          <div class="field full">
+            <label>Product Model <span style="color:#f87171">*</span></label>
+            <input id="product" type="text" placeholder="Type product model" />
+          </div>
+
+          <hr class="section-divider" />
+
+          <div class="serial-group" id="serialGroup">
+            <div class="section-label" style="grid-column:1/-1">Serial Numbers</div>
+            <div class="field" id="fieldSingleSerial">
+              <label>Serial Number</label>
+              <input id="serialSingle" type="text" placeholder="Serial number" />
+            </div>
+            <div class="field" id="fieldBaseUnit">
+              <label>Base Unit Serial Number</label>
+              <input id="serialBaseUnit" type="text" placeholder="Base unit serial number" />
+            </div>
+            <div class="field" id="fieldRfCable">
+              <label>RF Cable Serial Number</label>
+              <input id="serialRfCable" type="text" placeholder="RF cable serial number" />
+            </div>
+            <div class="field" id="fieldAntenna">
+              <label>Antenna Serial Number</label>
+              <input id="serialAntenna" type="text" placeholder="Antenna serial number" />
+            </div>
+          </div>
+
+          <hr class="section-divider" />
+          <div class="section-label">Addresses</div>
+
+          <div class="field full">
+            <label>Billing Address</label>
+            <textarea id="billingAddress" placeholder="Billing address"></textarea>
+          </div>
+          <div class="field full">
+            <label>Return Address</label>
+            <textarea id="returnAddress" placeholder="Return address"></textarea>
+          </div>
+          <div class="field full">
+            <label>Calibration Certificate Address</label>
+            <textarea id="calCertificateAddress" placeholder="Calibration certificate address"></textarea>
+          </div>
+
+          <hr class="section-divider" />
+          <div class="section-label">Issue Details</div>
+
+          <div class="field full">
+            <label>Description of Issue <span style="color:#f87171">*</span></label>
+            <textarea id="description" placeholder="Describe the issue clearly"></textarea>
+          </div>
+
+          <div class="field full">
+            <label>Upload Files <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7">(optional — jpg, png, pdf)</span></label>
+            <input id="imageUpload" type="file" accept="image/*,.pdf" multiple />
+            <div class="note">You may attach photos of the unit or relevant documents.</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="submitBtn" onclick="submitRequest()">Submit Request</button>
+        </div>
+        <div class="success" id="successBox"></div>
+        <div class="error" id="errorBox"></div>
+      </div>
+    </section>
+
+    <!-- My Requests History -->
+    <section class="panel" id="myRequestsPanel">
+      <div class="panel-head">
+        <div><h3>My Requests</h3><p>All requests submitted by your account.</p></div>
+        <button class="btn" onclick="loadHistory()" style="min-height:36px;font-size:13px;">Refresh</button>
+      </div>
+      <div class="hist-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>RMA No</th>
+              <th>OEM</th>
+              <th>Service Type</th>
+              <th>Product</th>
+              <th>Status</th>
+              <th>Submitted</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="6" class="td-empty">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="footer">This customer portal is separate from the internal team dashboard.</div>
+</div>
+
+<script>
+  const API = window.location.origin;
+  const $ = id => document.getElementById(id);
+
+  let currentUser = null;
+  try { currentUser = JSON.parse(localStorage.getItem('cxUser') || 'null'); } catch {}
+
+  function setupUser() {
+    const n = currentUser?.username || 'Customer';
+    const i = n.charAt(0).toUpperCase();
+    $('userAvatarChip').textContent = i;
+    $('userNameChip').textContent = n;
+    if (currentUser?.email) $('email').value = currentUser.email;
+  }
+
+  function logout() {
+    localStorage.removeItem('cxUser');
+    window.location.replace('/login.html');
+  }
+
+  const esc = s => String(s ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  const shortId = id => {
+    const s = String(id || '');
+    return 'T-' + s.replace(/^TMI-/, '').slice(-6).toUpperCase();
+  };
+
+  function pillClass(s) {
+    const v = String(s || '').toLowerCase();
+    if (['approved','resolved','closed'].includes(v)) return 'pill pill-approved';
+    if (['review','forwarded'].includes(v)) return 'pill pill-review';
+    if (v === 'rejected') return 'pill pill-rejected';
+    return 'pill pill-pending';
+  }
+
+  function fmtStatus(s) {
+    const v = String(s || 'pending').toLowerCase();
+    return v.charAt(0).toUpperCase() + v.slice(1);
+  }
+
+  async function loadHistory() {
+    const tb = $('historyBody');
+    tb.innerHTML = '<tr><td colspan="6" class="td-empty">Loading…</td></tr>';
+    try {
+      const email = currentUser?.email || '';
+      const url = email
+        ? `${API}/api/requests?email=${encodeURIComponent(email)}`
+        : `${API}/api/requests`;
+      const r = await fetch(url);
+      const data = await r.json();
+      if (!r.ok || !Array.isArray(data)) throw new Error('Failed');
+
+      $('statTotal').textContent   = data.length;
+      $('statPending').textContent  = data.filter(x => String(x.status||'').toLowerCase() === 'pending').length;
+      $('statResolved').textContent = data.filter(x => ['resolved','closed','approved'].includes(String(x.status||'').toLowerCase())).length;
+
+      if (!data.length) {
+        tb.innerHTML = '<tr><td colspan="6" class="td-empty">No requests found.</td></tr>';
+        return;
+      }
+
+      tb.innerHTML = data.map(r => `
+        <tr>
+          <td><strong>${esc(shortId(r.id||'-'))}</strong></td>
+          <td>${esc(r.oem||'-')}</td>
+          <td>${esc(r.serviceType||'-')}</td>
+          <td>${esc(r.product||'-')}</td>
+          <td><span class="${pillClass(r.status)}">${esc(fmtStatus(r.status))}</span></td>
+          <td style="color:var(--muted);font-size:12px;white-space:nowrap;">${esc(r.createdAt||'-')}</td>
+        </tr>
+      `).join('');
+    } catch(e) {
+      tb.innerHTML = '<tr><td colspan="6" class="td-empty">Could not load request history.</td></tr>';
+    }
+  }
+
+  function updateSerialFields(oem) {
+    const group  = $('serialGroup');
+    const single = $('fieldSingleSerial');
+    const base   = $('fieldBaseUnit');
+    const rf     = $('fieldRfCable');
+    const ant    = $('fieldAntenna');
+    if (!oem) { group.classList.remove('active'); return; }
+    group.classList.add('active');
+    if (['VeEX','Cubro','ADTI'].includes(oem)) {
+      single.style.display = '';
+      base.style.display = rf.style.display = ant.style.display = 'none';
+    } else if (oem === 'Narda') {
+      single.style.display = 'none';
+      base.style.display = rf.style.display = ant.style.display = '';
+    } else {
+      single.style.display = '';
+      base.style.display = rf.style.display = ant.style.display = 'none';
+    }
+  }
+
+  $('oem').addEventListener('change', e => {
+    updateSerialFields(e.target.value);
+    $('serialSingle').value = $('serialBaseUnit').value = $('serialRfCable').value = $('serialAntenna').value = '';
+  });
+
+  function show(msg, type = 'success') {
+    $('successBox').style.display = 'none';
+    $('errorBox').style.display = 'none';
+    const box = type === 'success' ? $('successBox') : $('errorBox');
+    box.textContent = msg;
+    box.style.display = 'block';
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function resetForm() {
+    ['name','phone','company','designation','oem','serviceType','product',
+     'serialSingle','serialBaseUnit','serialRfCable','serialAntenna',
+     'billingAddress','returnAddress','calCertificateAddress','description']
+      .forEach(id => { const el = $(id); if (el) el.value = ''; });
+    if (currentUser?.email) $('email').value = currentUser.email;
+    $('imageUpload').value = '';
+    $('serialGroup').classList.remove('active');
+  }
+
+  async function submitRequest() {
+    const oem = $('oem').value.trim();
+    const payload = {
+      name:                  $('name').value.trim(),
+      email:                 $('email').value.trim(),
+      phone:                 $('phone').value.trim(),
+      company:               $('company').value.trim(),
+      designation:           $('designation').value.trim(),
+      oem,
+      serviceType:           $('serviceType').value.trim(),
+      product:               $('product').value.trim(),
+      serialSingle:          $('serialSingle').value.trim(),
+      serialBaseUnit:        $('serialBaseUnit').value.trim(),
+      serialRfCable:         $('serialRfCable').value.trim(),
+      serialAntenna:         $('serialAntenna').value.trim(),
+      billingAddress:        $('billingAddress').value.trim(),
+      returnAddress:         $('returnAddress').value.trim(),
+      calCertificateAddress: $('calCertificateAddress').value.trim(),
+      description:           $('description').value.trim()
+    };
+
+    if (!payload.name || !payload.email || !payload.oem || !payload.serviceType || !payload.product || !payload.description) {
+      show('Please fill all required fields: Customer Name, E-MAIL, OEM, Service Type, Product Model, and Description.', 'error');
+      return;
+    }
+
+    const btn = $('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    try {
+      const formData = new FormData();
+      Object.entries(payload).forEach(([k, v]) => formData.append(k, v));
+      const files = $('imageUpload').files;
+      for (let i = 0; i < files.length; i++) formData.append('images', files[i]);
+
+      const res  = await fetch(`${API}/api/requests`, { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Submit failed');
+
+      let msg = `Request submitted! Your RMA/TMI number is ${data.id}.`;
+      if (data.emails?.team?.sent && data.emails?.customer?.sent) {
+        msg += ' Confirmation emails sent to you and the service team.';
+      } else if (data.emails?.team?.sent) {
+        msg += ' The service team has been notified by email.';
+      } else if (data.emails?.customer?.sent) {
+        msg += ' A confirmation email was sent to you.';
+      } else if (data.emails?.team?.error || data.emails?.customer?.error) {
+        msg += ' Note: email delivery had an issue, but your request was saved.';
+      }
+
+      show(msg, 'success');
+      resetForm();
+      loadHistory();
+    } catch (err) {
+      show(err.message || 'Submit failed.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Submit Request';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setupUser();
+    loadHistory();
+  });
+</script>
+</body>
+</html>

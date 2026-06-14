@@ -1,0 +1,17 @@
+{
+  "name": "cx-channel",
+  "version": "1.0.0",
+  "description": "FASCAL customer and team request portal",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^4.22.2",
+    "multer": "^2.1.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
