@@ -282,7 +282,7 @@ app.get("/signup.html",    sendPage("signup.html"));
 app.get("/team-signup.html", sendPage("team-signup.html"));
 
 // ── Static files (AFTER explicit routes) ────────────────────────────────────
-app.use(express.static(ROOT));
+app.use(express.static(ROOT, { index: false }));
 app.use("/uploads", express.static(UPLOAD_DIR));
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
