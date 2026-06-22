@@ -45,6 +45,7 @@
     .field{display:flex;flex-direction:column;gap:6px}
     .field.full{grid-column:1/-1}
     label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#e2e8f0}
+    label .req{color:#f87171;margin-left:3px;font-size:13px}
     input,select,textarea{width:100%;min-height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(15,23,42,.58);color:var(--text);padding:11px 14px;outline:none;transition:border-color .15s,box-shadow .15s}
     textarea{min-height:112px;resize:vertical}
     input:focus,select:focus,textarea:focus{border-color:rgba(56,189,248,.8);box-shadow:0 0 0 4px rgba(56,189,248,.12)}
@@ -109,18 +110,18 @@
   <main class="main">
     <section class="panel" id="requestFormPanel">
       <div class="panel-head">
-        <div><h3>Raise a Request</h3><p>Fill in the details below and submit to the service team.</p></div>
+        <div><h3>Raise a Request</h3><p>Fill in the details below and submit to the service team. Fields marked <span class="req">*</span> are mandatory.</p></div>
       </div>
       <div class="panel-body">
         <div class="form-grid">
           <div class="section-label">Customer Information</div>
 
           <div class="field">
-            <label>Customer Name</label>
+            <label>Customer Name <span class="req">*</span></label>
             <input id="name" type="text" placeholder="Customer name" />
           </div>
           <div class="field">
-            <label>E-MAIL</label>
+            <label>E-MAIL <span class="req">*</span></label>
             <input id="email" type="email" placeholder="name@company.com" />
           </div>
           <div class="field">
@@ -141,18 +142,24 @@
           <div class="section-label">Service Details</div>
 
           <div class="field">
-            <label>OEM</label>
+            <label>Types of OEM <span class="req">*</span></label>
             <select id="oem">
               <option value="">Select OEM</option>
               <option value="VeEX">VeEX</option>
               <option value="Narda">Narda</option>
               <option value="Cubro">Cubro</option>
               <option value="ATDI">ATDI</option>
+              <option value="Others">Others</option>
             </select>
           </div>
 
+          <div class="field" id="fieldOemOther" style="display:none">
+            <label>Specify OEM <span class="req">*</span></label>
+            <input id="oemOther" type="text" placeholder="Type OEM name" />
+          </div>
+
           <div class="field">
-            <label>Service Type</label>
+            <label>Service Type <span class="req">*</span></label>
             <select id="serviceType">
               <option value="">Select service type</option>
               <option value="Support">Support</option>
@@ -162,7 +169,7 @@
           </div>
 
           <div class="field">
-            <label>Product Model</label>
+            <label>Product Model <span class="req">*</span></label>
             <input id="product" type="text" placeholder="Type product model" />
           </div>
 
@@ -202,7 +209,7 @@
           <div class="section-label">Issue Details</div>
 
           <div class="field full">
-            <label>Description of Problem</label>
+            <label>Description of Problem <span class="req">*</span></label>
             <textarea id="description" placeholder="Describe the problem clearly"></textarea>
           </div>
 
@@ -262,7 +269,7 @@
 
     group.classList.add('active');
 
-    if (['VeEX', 'Cubro', 'ATDI'].includes(oem)) {
+    if (['VeEX', 'Cubro', 'ATDI', 'Others'].includes(oem)) {
       single.style.display = '';
       base.style.display = 'none';
       rf.style.display = 'none';
@@ -320,6 +327,15 @@
     $('serialBaseUnit').value = '';
     $('serialRfCable').value = '';
     $('serialAntenna').value = '';
+
+    const fieldOemOther = $('fieldOemOther');
+    if (e.target.value === 'Others') {
+      fieldOemOther.style.display = '';
+    } else {
+      fieldOemOther.style.display = 'none';
+      $('oemOther').value = '';
+    }
+
     if ($('serviceType').value !== 'Support') {
       updateSerialFields(e.target.value);
     }
@@ -346,7 +362,9 @@
   }
 
   async function submitRequest() {
-    const oem = $('oem').value.trim();
+    const oemSelected = $('oem').value.trim();
+    const oemOther = $('oemOther').value.trim();
+    const oem = oemSelected === 'Others' ? oemOther : oemSelected;
     const serviceType = $('serviceType').value.trim();
 
     const payload = {
@@ -369,7 +387,7 @@
       description: $('description').value.trim()
     };
 
-    if (!payload.name || !payload.email || !payload.oem || !payload.serviceType || !payload.product || !payload.description) {
+    if (!payload.name || !payload.email || !oemSelected || (oemSelected === 'Others' && !oemOther) || !payload.serviceType || !payload.product || !payload.description) {
       show('Please fill all required fields: Customer Name, E-MAIL, OEM, Service Type, Product Model, and Description.', 'error');
       return;
     }
