@@ -355,6 +355,15 @@
   </div>
 
 <script>
+  // Auth guard: redirect to login if no valid team session exists
+  (function requireTeamLogin(){
+    let u = null;
+    try { u = JSON.parse(localStorage.getItem('cxUser') || 'null'); } catch {}
+    if (!u || !u.token || u.role !== 'team') {
+      window.location.replace('login.html');
+    }
+  })();
+
   const API = window.location.origin;
   let allRequests = [], filtered = [], currentRequest = null, currentHistory = [], statusFilter = 'all', sortKey = 'createdAt', sortDir = -1, page = 1;
   const PAGE_SIZE = 20;
