@@ -44,6 +44,7 @@
     .field{display:flex;flex-direction:column;gap:6px}
     .field.full{grid-column:1/-1}
     label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#e2e8f0}
+    label .req{color:#f87171;margin-left:3px;font-size:13px}
     input,select,textarea{width:100%;min-height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(15,23,42,.58);color:var(--text);padding:11px 14px;outline:none;transition:border-color .15s,box-shadow .15s}
     textarea{min-height:112px;resize:vertical}
     input:focus,select:focus,textarea:focus{border-color:rgba(56,189,248,.8);box-shadow:0 0 0 4px rgba(56,189,248,.12)}
@@ -51,7 +52,10 @@
     input[type="file"]::-webkit-file-upload-button{background:linear-gradient(135deg,var(--primary),var(--primary2));border:none;border-radius:8px;color:#fff;cursor:pointer;font-weight:700;font-size:12px;padding:6px 12px;margin-right:10px}
     .serial-group{grid-column:1/-1;display:none;gap:14px;grid-template-columns:repeat(2,1fr)}
     .serial-group.active{display:grid}
+    .addr-group{grid-column:1/-1;display:none;gap:14px;grid-template-columns:repeat(2,1fr)}
+    .addr-group.active{display:grid}
     .section-divider{grid-column:1/-1;border:none;border-top:1px solid rgba(255,255,255,.08);margin:4px 0}
+    .section-divider.hidden{display:none}
     .section-label{grid-column:1/-1;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);padding-bottom:2px}
     .note{font-size:12px;color:var(--muted);margin-top:8px}
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
@@ -64,6 +68,7 @@
       .topbar,.hero,.main,.footer{padding-left:14px;padding-right:14px}
       .form-grid{grid-template-columns:1fr}
       .serial-group{grid-template-columns:1fr}
+      .addr-group{grid-template-columns:1fr}
       .hero-copy h2{font-size:28px}
     }
   </style>
@@ -104,18 +109,18 @@
   <main class="main">
     <section class="panel" id="requestFormPanel">
       <div class="panel-head">
-        <div><h3>Raise a Request</h3><p>Fill in the details below and submit to the service team.</p></div>
+        <div><h3>Raise a Request</h3><p>Fill in the details below and submit to the service team. Fields marked <span class="req">*</span> are mandatory.</p></div>
       </div>
       <div class="panel-body">
         <div class="form-grid">
           <div class="section-label">Customer Information</div>
 
           <div class="field">
-            <label>Customer Name</label>
+            <label>Customer Name <span class="req">*</span></label>
             <input id="name" type="text" placeholder="Customer name" />
           </div>
           <div class="field">
-            <label>E-MAIL</label>
+            <label>E-MAIL <span class="req">*</span></label>
             <input id="email" type="email" placeholder="name@company.com" />
           </div>
           <div class="field">
@@ -136,87 +141,100 @@
           <div class="section-label">Service Details</div>
 
           <div class="field">
-            <label>OEM</label>
+            <label>OEM <span class="req">*</span></label>
             <select id="oem">
               <option value="">Select OEM</option>
               <option value="VeEX">VeEX</option>
               <option value="Narda">Narda</option>
               <option value="Cubro">Cubro</option>
-              <option value="ADTI">ADTI</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>Service Type</label>
-            <select id="serviceType">
-              <option value="">Select service type</option>
-              <option value="Repair">Repair</option>
-              <option value="Calibration">Calibration</option>
+              <option value="ATDI">ATDI</option>
               <option value="Others">Others</option>
             </select>
           </div>
 
-          <div class="field full">
-            <label>Product Model</label>
+          <div class="field" id="fieldOemOther" style="display:none">
+            <label>Specify OEM <span class="req">*</span></label>
+            <input id="oemOther" type="text" placeholder="Type OEM name" />
+          </div>
+
+          <div class="field">
+            <label>Service Type <span class="req">*</span></label>
+            <select id="serviceType">
+              <option value="">Select service type</option>
+              <option value="Support">Support</option>
+              <option value="Calibration">Calibration</option>
+              <option value="Repair">Repair</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Product Model <span class="req">*</span></label>
             <input id="product" type="text" placeholder="Type product model" />
           </div>
 
-          <hr class="section-divider" />
+          <div class="field">
+            <label>Software Version</label>
+            <input id="softwareVersion" type="text" placeholder="Software version" />
+          </div>
+
+          <hr class="section-divider" id="dividerSerial" />
 
           <div class="serial-group" id="serialGroup">
-            <div class="section-label" style="grid-column:1/-1">Serial Numbers</div>
+            <div class="section-label" style="grid-column:1/-1">Serial Number</div>
 
             <div class="field" id="fieldSingleSerial">
-              <label>Serial Number</label>
+              <label>S/N</label>
               <input id="serialSingle" type="text" placeholder="Serial number" />
             </div>
 
             <div class="field" id="fieldBaseUnit">
-              <label>Base Unit Serial Number</label>
+              <label>Base Unit S/N</label>
               <input id="serialBaseUnit" type="text" placeholder="Base unit serial number" />
             </div>
 
             <div class="field" id="fieldRfCable">
-              <label>RF Cable Serial Number</label>
+              <label>RF Cable S/N</label>
               <input id="serialRfCable" type="text" placeholder="RF cable serial number" />
             </div>
 
             <div class="field" id="fieldAntenna">
-              <label>Antenna Serial Number</label>
-              <input id="serialAntenna" type="text" placeholder="Antenna serial number" />
+              <label>Probe/Antenna S/N</label>
+              <input id="serialAntenna" type="text" placeholder="Probe/antenna serial number" />
             </div>
           </div>
 
-          <hr class="section-divider" />
-
-          <div class="section-label">Addresses</div>
-
-          <div class="field full">
-            <label>Billing Address</label>
-            <textarea id="billingAddress" placeholder="Billing address"></textarea>
-          </div>
-          <div class="field full">
-            <label>Return Address</label>
-            <textarea id="returnAddress" placeholder="Return address"></textarea>
-          </div>
-          <div class="field full">
-            <label>Calibration Certificate Address</label>
-            <textarea id="calCertificateAddress" placeholder="Calibration certificate address"></textarea>
-          </div>
-
-          <hr class="section-divider" />
+          <hr class="section-divider" id="dividerIssue" />
 
           <div class="section-label">Issue Details</div>
 
           <div class="field full">
-            <label>Description of Issue</label>
-            <textarea id="description" placeholder="Describe the issue clearly"></textarea>
+            <label>Description of Problem <span class="req">*</span></label>
+            <textarea id="description" placeholder="Describe the problem clearly"></textarea>
           </div>
 
           <div class="field full">
             <label>Upload Image <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7">(optional — jpg, png, pdf)</span></label>
             <input id="imageUpload" type="file" accept="image/*,.pdf" multiple />
             <div class="note">You may attach photos of the unit or relevant documents.</div>
+          </div>
+
+          <hr class="section-divider" id="dividerAddress" />
+
+          <div class="section-label" id="addressSectionLabel">Addresses</div>
+
+          <div class="addr-group" id="addressGroup">
+            <div class="field full">
+              <label>Billing Address</label>
+              <textarea id="billingAddress" placeholder="Billing address"></textarea>
+            </div>
+            <div class="field full">
+              <label>Return Address</label>
+              <textarea id="returnAddress" placeholder="Return address"></textarea>
+            </div>
+            <div class="field full" id="fieldCalCert">
+              <label>Address to be Printed on Calibration Certificate</label>
+              <textarea id="calCertificateAddress" placeholder="Address to be printed on calibration certificate"></textarea>
+            </div>
           </div>
         </div>
 
@@ -250,7 +268,7 @@
 
     group.classList.add('active');
 
-    if (['VeEX', 'Cubro', 'ADTI'].includes(oem)) {
+    if (['VeEX', 'Cubro', 'ATDI', 'Others'].includes(oem)) {
       single.style.display = '';
       base.style.display = 'none';
       rf.style.display = 'none';
@@ -268,13 +286,70 @@
     }
   }
 
+  function updateVisibilityForServiceType(serviceType) {
+    const addressGroup = $('addressGroup');
+    const addressLabel = $('addressSectionLabel');
+    const dividerAddress = $('dividerAddress');
+    const fieldCalCert = $('fieldCalCert');
+    const serialGroup = $('serialGroup');
+    const dividerSerial = $('dividerSerial');
+
+    if (serviceType === 'Support') {
+      // Support: hide all extra fields, show only Description + Upload Image
+      addressGroup.classList.remove('active');
+      addressLabel.style.display = 'none';
+      dividerAddress.classList.add('hidden');
+      serialGroup.classList.remove('active');
+      dividerSerial.classList.add('hidden');
+      return;
+    }
+
+    // Not Support: restore serial number visibility based on OEM selection
+    dividerSerial.classList.remove('hidden');
+    updateSerialFields($('oem').value);
+
+    // Addresses: Billing + Return always shown (for Calibration/Repair); Cal Cert only for Calibration
+    addressGroup.classList.add('active');
+    addressLabel.style.display = '';
+    dividerAddress.classList.remove('hidden');
+
+    if (serviceType === 'Calibration') {
+      fieldCalCert.style.display = '';
+    } else {
+      fieldCalCert.style.display = 'none';
+      $('calCertificateAddress').value = '';
+    }
+  }
+
   $('oem').addEventListener('change', e => {
-    updateSerialFields(e.target.value);
     $('serialSingle').value = '';
     $('serialBaseUnit').value = '';
     $('serialRfCable').value = '';
     $('serialAntenna').value = '';
+
+    const fieldOemOther = $('fieldOemOther');
+    if (e.target.value === 'Others') {
+      fieldOemOther.style.display = '';
+    } else {
+      fieldOemOther.style.display = 'none';
+      $('oemOther').value = '';
+    }
+
+    if ($('serviceType').value !== 'Support') {
+      updateSerialFields(e.target.value);
+    }
   });
+
+  $('serviceType').addEventListener('change', e => {
+    updateVisibilityForServiceType(e.target.value);
+  });
+
+  // Initialize on load: nothing selected yet, so hide everything dynamic
+  updateVisibilityForServiceType('');
+  $('addressGroup').classList.remove('active');
+  $('dividerSerial').classList.add('hidden');
+  $('dividerAddress').classList.add('hidden');
+  $('addressSectionLabel').style.display = 'none';
 
   function show(msg, type = 'success') {
     const s = $('successBox'), e = $('errorBox');
@@ -286,7 +361,10 @@
   }
 
   async function submitRequest() {
-    const oem = $('oem').value.trim();
+    const oemSelected = $('oem').value.trim();
+    const oemOther = $('oemOther').value.trim();
+    const oem = oemSelected === 'Others' ? oemOther : oemSelected;
+    const serviceType = $('serviceType').value.trim();
 
     const payload = {
       name: $('name').value.trim(),
@@ -295,8 +373,9 @@
       company: $('company').value.trim(),
       designation: $('designation').value.trim(),
       oem,
-      serviceType: $('serviceType').value.trim(),
+      serviceType,
       product: $('product').value.trim(),
+      softwareVersion: $('softwareVersion').value.trim(),
       serialSingle: $('serialSingle').value.trim(),
       serialBaseUnit: $('serialBaseUnit').value.trim(),
       serialRfCable: $('serialRfCable').value.trim(),
@@ -307,7 +386,7 @@
       description: $('description').value.trim()
     };
 
-    if (!payload.name || !payload.email || !payload.oem || !payload.serviceType || !payload.product || !payload.description) {
+    if (!payload.name || !payload.email || !oemSelected || (oemSelected === 'Others' && !oemOther) || !payload.serviceType || !payload.product || !payload.description) {
       show('Please fill all required fields: Customer Name, E-MAIL, OEM, Service Type, Product Model, and Description.', 'error');
       return;
     }

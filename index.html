@@ -96,13 +96,11 @@
     .pagination{display:flex;justify-content:flex-end;gap:6px;padding:12px 18px 18px;flex-wrap:wrap}
     .page-btn{height:34px;min-width:34px;border-radius:8px;border:1px solid var(--line);background:#fff;padding:0 10px;font-weight:700}
     .page-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-    .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:100}
-    .modal-overlay.open{display:flex}
-    .modal{width:min(980px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(15,23,42,.25)}
-    .modal-head{padding:16px 18px;border-bottom:1px solid #eef3f9;display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .modal-head h3{font-size:18px;font-weight:800}
-    .modal-body{padding:18px;display:grid;gap:16px}
-    .detail-section{border:1px solid #eef3f9;border-radius:14px;padding:16px}
+    .row-expanded{background:#f8fbfe}
+    .update-row td{padding:0;border-bottom:1px solid #eef3f9}
+    .update-row.hidden{display:none}
+    .update-panel{padding:18px;background:#f8fbfe;border-top:1px dashed #dbe5f0}
+    .detail-section{border:1px solid #eef3f9;border-radius:14px;padding:16px;background:#fff}
     .detail-section-title{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;font-weight:800;margin-bottom:12px}
     .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
     .detail-item.full{grid-column:1/-1}
@@ -193,15 +191,15 @@
           </div>
           <div class="metric-card">
             <div class="metric-icon indigo">R</div>
-            <div class="metric-label">In Review</div>
+            <div class="metric-label">Forwarded</div>
             <div class="metric-value" id="metricReview">0</div>
-            <div class="metric-sub">Under active review</div>
+            <div class="metric-sub">Forwarded for action</div>
           </div>
           <div class="metric-card">
             <div class="metric-icon green">F</div>
             <div class="metric-label">Finalized</div>
             <div class="metric-value" id="metricFinalized">0</div>
-            <div class="metric-sub">Approved / resolved / closed</div>
+            <div class="metric-sub">Closed requests</div>
           </div>
         </div>
 
@@ -209,7 +207,7 @@
           <div class="card-head">
             <div>
               <h3>View RMA Requests</h3>
-              <p>Filter by OEM, service type, status, team, or keyword and open any request for full details.</p>
+              <p>Filter by OEM, service type, status, team, or keyword. Click any row to view full details and update the request inline.</p>
             </div>
             <button class="btn btn-primary" onclick="exportCsv()">Export CSV</button>
           </div>
@@ -245,10 +243,7 @@
               <select id="fStatus">
                 <option value="">All Status</option>
                 <option>pending</option>
-                <option>review</option>
                 <option>forwarded</option>
-                <option>approved</option>
-                <option>resolved</option>
                 <option>closed</option>
                 <option>rejected</option>
               </select>
@@ -273,9 +268,8 @@
           <div class="tabs">
             <button class="tab-btn active" data-sf="all" onclick="setStatusFilter('all')">All</button>
             <button class="tab-btn" data-sf="pending" onclick="setStatusFilter('pending')">Pending</button>
-            <button class="tab-btn" data-sf="review" onclick="setStatusFilter('review')">Review</button>
             <button class="tab-btn" data-sf="forwarded" onclick="setStatusFilter('forwarded')">Forwarded</button>
-            <button class="tab-btn" data-sf="approved" onclick="setStatusFilter('approved')">Approved</button>
+            <button class="tab-btn" data-sf="closed" onclick="setStatusFilter('closed')">Closed</button>
             <button class="tab-btn" data-sf="rejected" onclick="setStatusFilter('rejected')">Rejected</button>
           </div>
 
@@ -307,69 +301,10 @@
     </main>
   </div>
 
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-      <div class="modal-head">
-        <h3 id="modalTitle">Request</h3>
-        <button class="btn btn-ghost" onclick="closeModal()">Close</button>
-      </div>
-
-      <div class="modal-body">
-        <div id="modalDetailsWrap"></div>
-
-        <div class="detail-section">
-          <div class="detail-section-title">Update Request</div>
-          <div class="detail-grid">
-            <div class="field">
-              <label>Status</label>
-              <select id="uStatus">
-                <option>pending</option>
-                <option>review</option>
-                <option>forwarded</option>
-                <option>approved</option>
-                <option>resolved</option>
-                <option>closed</option>
-                <option>rejected</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label>Forward To</label>
-              <input id="uForwardTo" placeholder="Team or person" />
-            </div>
-
-            <div class="field">
-              <label>Operations Team</label>
-              <input id="uOpsTeam" placeholder="Operations team" />
-            </div>
-
-            <div class="field">
-              <label>Service Team</label>
-              <input id="uSvcTeam" placeholder="Service team" />
-            </div>
-
-            <div class="field full">
-              <label>Internal Note</label>
-              <textarea id="uNote"></textarea>
-            </div>
-
-            <div class="field full">
-              <label>Customer Feedback</label>
-              <textarea id="uFeedback"></textarea>
-            </div>
-          </div>
-
-          <div class="modal-actions">
-            <button class="btn btn-primary" onclick="saveUpdate()">Save Update</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
 <script>
   const API = window.location.origin;
   let allRequests = [], filtered = [], currentRequest = null, currentHistory = [], statusFilter = 'all', sortKey = 'createdAt', sortDir = -1, page = 1;
+  let expandedId = null;
   const PAGE_SIZE = 20;
 
   const af = { keyword:'', oem:'', service:'', status:'', date:'', team:'' };
@@ -393,8 +328,8 @@
 
   function pillClass(s){
     const v = String(s || '').toLowerCase();
-    if (['approved','resolved','closed'].includes(v)) return 'pill pill-approved';
-    if (['review','forwarded'].includes(v)) return 'pill pill-review';
+    if (v === 'closed') return 'pill pill-approved';
+    if (v === 'forwarded') return 'pill pill-review';
     if (v === 'rejected') return 'pill pill-rejected';
     return 'pill pill-pending';
   }
@@ -419,8 +354,8 @@
       allRequests = d;
       document.getElementById('metricTotal').textContent = allRequests.length;
       document.getElementById('metricPending').textContent = allRequests.filter(x => String(x.status || '').toLowerCase() === 'pending').length;
-      document.getElementById('metricReview').textContent = allRequests.filter(x => ['review','forwarded'].includes(String(x.status || '').toLowerCase())).length;
-      document.getElementById('metricFinalized').textContent = allRequests.filter(x => ['approved','resolved','closed'].includes(String(x.status || '').toLowerCase())).length;
+      document.getElementById('metricReview').textContent = allRequests.filter(x => String(x.status || '').toLowerCase() === 'forwarded').length;
+      document.getElementById('metricFinalized').textContent = allRequests.filter(x => String(x.status || '').toLowerCase() === 'closed').length;
       applyFilters();
     } catch(e){
       tb.innerHTML = '<tr><td colspan="11" class="td-empty">Could not load requests.</td></tr>';
@@ -507,8 +442,12 @@
       return;
     }
 
-    tb.innerHTML = pageRows.map((r,i)=>`
-      <tr>
+    tb.innerHTML = pageRows.map((r,i)=>{
+      const id = String(r.id||'');
+      const safeId = id.replace(/'/g,"\\'");
+      const isExpanded = expandedId === id;
+      const rowHtml = `
+      <tr class="${isExpanded ? 'row-expanded' : ''}">
         <td style="color:var(--muted);font-size:12px;">${start+i+1}</td>
         <td><strong>${esc(shortId(r.id||'-'))}</strong></td>
         <td>${esc(r.oem||'-')}</td>
@@ -517,7 +456,7 @@
           <div style="font-weight:700;">${esc(r.product||'-')}</div>
         </td>
         <td>
-          <button class="link-btn" onclick="openModal('${String(r.id||'').replace(/'/g,"\\'")}')">
+          <button class="link-btn" onclick="toggleRow('${safeId}')">
             <div style="font-weight:700;">${esc(r.name||'-')}</div>
             <div class="td-sub">${esc(r.email||'')}</div>
           </button>
@@ -526,9 +465,23 @@
         <td>${esc(r.designation||'-')}</td>
         <td><span class="${pillClass(r.status)}">${esc(fmtStatus(r.status))}</span></td>
         <td style="font-size:12px;color:var(--muted);white-space:nowrap;">${esc(r.createdAt||'-')}</td>
-        <td><button class="btn btn-primary btn-sm" onclick="openModal('${String(r.id||'').replace(/'/g,"\\'")}')">View</button></td>
-      </tr>
-    `).join('');
+        <td><button class="btn btn-primary btn-sm" onclick="toggleRow('${safeId}')">${isExpanded ? 'Hide' : 'View'}</button></td>
+      </tr>`;
+
+      const detailHtml = `
+      <tr class="update-row${isExpanded ? '' : ' hidden'}" id="detailRow-${esc(safeId)}">
+        <td colspan="11">
+          <div class="update-panel" id="detailPanel-${esc(safeId)}"></div>
+        </td>
+      </tr>`;
+
+      return rowHtml + detailHtml;
+    }).join('');
+
+    if(expandedId){
+      const stillVisible = pageRows.some(r => String(r.id||'') === expandedId);
+      if(stillVisible) renderInlineDetail(expandedId);
+    }
 
     renderPagination();
   }
@@ -558,19 +511,35 @@
     renderTable();
   }
 
-  async function openModal(id){
+  function toggleRow(id){
+    expandedId = (expandedId === id) ? null : id;
+    renderTable();
+    if(expandedId){
+      setTimeout(()=>{
+        const el = document.getElementById(`detailRow-${id}`);
+        if(el) el.scrollIntoView({behavior:'smooth', block:'nearest'});
+      }, 50);
+    }
+  }
+
+  async function renderInlineDetail(id){
+    const panel = document.getElementById(`detailPanel-${id}`);
+    if(!panel) return;
+    panel.innerHTML = '<div class="td-empty">Loading request details…</div>';
+
     const r = await fetch(`${API}/api/requests/${encodeURIComponent(id)}`);
     const d = await r.json();
-    if(!r.ok || !d.request) return;
+    if(!r.ok || !d.request){
+      panel.innerHTML = '<div class="td-empty">Could not load this request.</div>';
+      return;
+    }
 
     currentRequest = d.request;
     currentHistory = d.history || [];
     const cr = currentRequest;
 
-    document.getElementById('modalTitle').textContent = `Request — ${shortId(cr.id || '')}`;
-
-    document.getElementById('modalDetailsWrap').innerHTML = `
-      <div class="detail-section">
+    panel.innerHTML = `
+      <div class="detail-section" style="margin-bottom:14px;">
         <div class="detail-section-title">Product & Service</div>
         <div class="detail-grid">
           <div class="detail-item">
@@ -600,7 +569,7 @@
         </div>
       </div>
 
-      <div class="detail-section">
+      <div class="detail-section" style="margin-bottom:14px;">
         <div class="detail-section-title">Customer Information</div>
         <div class="detail-grid">
           <div class="detail-item">
@@ -638,7 +607,7 @@
         </div>
       </div>
 
-      <div class="detail-section">
+      <div class="detail-section" style="margin-bottom:14px;">
         <div class="detail-section-title">Serial Numbers</div>
         <div class="detail-grid">
           <div class="detail-item">
@@ -656,7 +625,7 @@
         </div>
       </div>
 
-      <div class="detail-section">
+      <div class="detail-section" style="margin-bottom:14px;">
         <div class="detail-section-title">Uploaded Files</div>
         ${
           Array.isArray(cr.images) && cr.images.length
@@ -676,7 +645,7 @@
         }
       </div>
 
-      <div class="detail-section">
+      <div class="detail-section" style="margin-bottom:14px;">
         <div class="detail-section-title">Customer History</div>
         ${
           currentHistory.length
@@ -709,42 +678,65 @@
             : `<div class="td-empty">No previous requests found for this customer.</div>`
         }
       </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">Update Request</div>
+        <div class="detail-grid">
+          <div class="field">
+            <label>Status</label>
+            <select id="uStatus-${esc(id)}">
+              <option value="pending" ${cr.status==='pending'?'selected':''}>pending</option>
+              <option value="forwarded" ${cr.status==='forwarded'?'selected':''}>forwarded</option>
+              <option value="closed" ${cr.status==='closed'?'selected':''}>closed</option>
+              <option value="rejected" ${cr.status==='rejected'?'selected':''}>rejected</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Forward To</label>
+            <input id="uForwardTo-${esc(id)}" placeholder="Team or person" value="${esc(cr.forwardTo||'')}" />
+          </div>
+
+          <div class="field full">
+            <label>Internal Note</label>
+            <textarea id="uNote-${esc(id)}">${esc(cr.internalNote||'')}</textarea>
+          </div>
+
+          <div class="field full">
+            <label>Customer Feedback</label>
+            <textarea id="uFeedback-${esc(id)}">${esc(cr.customerFeedback||'')}</textarea>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="toggleRow('${esc(id)}')">Close</button>
+          <button class="btn btn-primary" onclick="saveUpdate('${esc(id)}')">Save Update</button>
+        </div>
+      </div>
     `;
-
-    document.getElementById('uStatus').value = cr.status || 'pending';
-    document.getElementById('uForwardTo').value = cr.forwardTo || '';
-    document.getElementById('uOpsTeam').value = cr.operationsTeam || '';
-    document.getElementById('uSvcTeam').value = cr.serviceTeam || '';
-    document.getElementById('uNote').value = cr.internalNote || '';
-    document.getElementById('uFeedback').value = cr.customerFeedback || '';
-
-    document.getElementById('modalOverlay').classList.add('open');
   }
 
-  function closeModal(){
-    document.getElementById('modalOverlay').classList.remove('open');
-    currentRequest = null;
-  }
-
-  async function saveUpdate(){
-    if(!currentRequest) return;
+  async function saveUpdate(id){
+    const statusEl = document.getElementById(`uStatus-${id}`);
+    const forwardEl = document.getElementById(`uForwardTo-${id}`);
+    const noteEl = document.getElementById(`uNote-${id}`);
+    const feedbackEl = document.getElementById(`uFeedback-${id}`);
+    if(!statusEl) return;
 
     const payload = {
-      status: document.getElementById('uStatus').value,
-      forwardTo: document.getElementById('uForwardTo').value,
-      operationsTeam: document.getElementById('uOpsTeam').value,
-      serviceTeam: document.getElementById('uSvcTeam').value,
-      internalNote: document.getElementById('uNote').value,
-      customerFeedback: document.getElementById('uFeedback').value
+      status: statusEl.value,
+      forwardTo: forwardEl ? forwardEl.value : '',
+      internalNote: noteEl ? noteEl.value : '',
+      customerFeedback: feedbackEl ? feedbackEl.value : ''
     };
 
-    await fetch(`${API}/api/requests/${encodeURIComponent(currentRequest.id)}`,{
+    await fetch(`${API}/api/requests/${encodeURIComponent(id)}`,{
       method:'PUT',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(payload)
     });
 
-    closeModal();
+    expandedId = null;
     loadRequests();
   }
 
@@ -756,10 +748,6 @@
     localStorage.removeItem('cxUser');
     window.location.href='login.html';
   }
-
-  document.addEventListener('keydown',e=>{
-    if(e.key==='Escape') closeModal();
-  });
 
   document.addEventListener('DOMContentLoaded',()=>{
     setupUser();
