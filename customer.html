@@ -44,7 +44,7 @@
     .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
     .field{display:flex;flex-direction:column;gap:6px}
     .field.full{grid-column:1/-1}
-    label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#e2e8f0}
+    label{font-size:12px;font-weight:700;letter-spacing:.02em;color:#e2e8f0}
     label .req{color:#f87171;margin-left:3px;font-size:13px}
     input,select,textarea{width:100%;min-height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(15,23,42,.58);color:var(--text);padding:11px 14px;outline:none;transition:border-color .15s,box-shadow .15s}
     textarea{min-height:112px;resize:vertical}
@@ -115,14 +115,14 @@
       </div>
       <div class="panel-body">
         <div class="form-grid">
-          <div class="section-label">Customer information</div>
+          <div class="section-label">Customer Information</div>
 
           <div class="field">
             <label>Customer Name <span class="req">*</span></label>
             <input id="name" type="text" placeholder="Customer name" />
           </div>
           <div class="field">
-            <label>E-MAIL <span class="req">*</span></label>
+            <label>Email <span class="req">*</span></label>
             <input id="email" type="email" placeholder="name@company.com" />
           </div>
           <div class="field">
@@ -140,7 +140,7 @@
 
           <hr class="section-divider" />
 
-          <div class="section-label">Service details</div>
+          <div class="section-label">Service Details</div>
 
           <div class="field">
             <label>Types of OEM <span class="req">*</span></label>
@@ -182,7 +182,7 @@
           <hr class="section-divider" id="dividerSerial" />
 
           <div class="serial-group" id="serialGroup">
-            <div class="section-label" style="grid-column:1/-1">Serial number</div>
+            <div class="section-label" style="grid-column:1/-1">Serial Number</div>
 
             <div class="field" id="fieldSingleSerial">
               <label>S/N</label>
@@ -239,7 +239,7 @@
             </div>
 
             <div class="field full">
-              <label>Material to be sent to</label>
+              <label>Material to be Sent to</label>
               <div class="static-box">Fastech Telecommunications (India) Pvt. Ltd.,
 FASTECH PARAM,
 EL- 44, Electronic Zone, TTC Industrial Area,
@@ -251,10 +251,9 @@ Our GST No. 27AAACF4021B1ZE</div>
 
           <hr class="section-divider" />
 
-          <div class="section-label">Additional information</div>
+          <div class="section-label">Additional Information</div>
 
           <div class="field full">
-            <label>Additional information</label>
             <textarea id="additionalInfo" placeholder="Anything else you'd like the service team to know (optional)"></textarea>
           </div>
         </div>
@@ -418,7 +417,7 @@ Our GST No. 27AAACF4021B1ZE</div>
     };
 
     if (!payload.name || !payload.email || !oemSelected || (oemSelected === 'Others' && !oemOther) || !payload.serviceType || !payload.product || !payload.description) {
-      show('Please fill all required fields: Customer Name, E-MAIL, OEM, Service Type, Product Model, and Description.', 'error');
+      show('Please fill all required fields: Customer Name, Email, OEM, Service Type, Product Model, and Description.', 'error');
       return;
     }
 
