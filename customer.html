@@ -57,8 +57,9 @@
     .addr-group.active{display:grid}
     .section-divider{grid-column:1/-1;border:none;border-top:1px solid rgba(255,255,255,.08);margin:4px 0}
     .section-divider.hidden{display:none}
-    .section-label{grid-column:1/-1;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);padding-bottom:2px}
+    .section-label{grid-column:1/-1;font-size:12px;font-weight:800;letter-spacing:.02em;color:var(--muted);padding-bottom:2px}
     .note{font-size:12px;color:var(--muted);margin-top:8px}
+    .static-box{width:100%;max-height:140px;overflow-y:auto;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(15,23,42,.58);color:var(--muted);padding:12px 14px;font-size:13.5px;line-height:1.6;white-space:pre-line}
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
     .success,.error{display:none;margin-top:16px;padding:14px 16px;border-radius:16px;font-weight:600;border:1px solid transparent}
     .success{background:rgba(34,197,94,.14);color:#dcfce7;border-color:rgba(34,197,94,.25)}
@@ -114,7 +115,7 @@
       </div>
       <div class="panel-body">
         <div class="form-grid">
-          <div class="section-label">Customer Information</div>
+          <div class="section-label">Customer information</div>
 
           <div class="field">
             <label>Customer Name <span class="req">*</span></label>
@@ -139,7 +140,7 @@
 
           <hr class="section-divider" />
 
-          <div class="section-label">Service Details</div>
+          <div class="section-label">Service details</div>
 
           <div class="field">
             <label>Types of OEM <span class="req">*</span></label>
@@ -181,7 +182,7 @@
           <hr class="section-divider" id="dividerSerial" />
 
           <div class="serial-group" id="serialGroup">
-            <div class="section-label" style="grid-column:1/-1">Serial Number</div>
+            <div class="section-label" style="grid-column:1/-1">Serial number</div>
 
             <div class="field" id="fieldSingleSerial">
               <label>S/N</label>
@@ -189,7 +190,7 @@
             </div>
 
             <div class="field" id="fieldBaseUnit">
-              <label>Base Unit S/N</label>
+              <label>Base Unit S/N <span class="req" id="reqBaseUnit" style="display:none">*</span></label>
               <input id="serialBaseUnit" type="text" placeholder="Base unit serial number" />
             </div>
 
@@ -199,14 +200,14 @@
             </div>
 
             <div class="field" id="fieldAntenna">
-              <label>Probe/Antenna S/N</label>
+              <label>Probe/Antenna S/N <span class="req" id="reqAntenna" style="display:none">*</span></label>
               <input id="serialAntenna" type="text" placeholder="Probe/antenna serial number" />
             </div>
           </div>
 
           <hr class="section-divider" id="dividerIssue" />
 
-          <div class="section-label">Issue Details</div>
+          <div class="section-label">Details</div>
 
           <div class="field full">
             <label>Description of Problem <span class="req">*</span></label>
@@ -236,6 +237,25 @@
               <label>Address to be Printed on Calibration Certificate</label>
               <textarea id="calCertificateAddress" placeholder="Address to be printed on calibration certificate"></textarea>
             </div>
+
+            <div class="field full">
+              <label>Material to be sent to</label>
+              <div class="static-box">Fastech Telecommunications (India) Pvt. Ltd.,
+FASTECH PARAM,
+EL- 44, Electronic Zone, TTC Industrial Area,
+MIDC, Mahape, Navi Mumbai-400710.
+Tel. No. 022-28353636 Ext. 112
+Our GST No. 27AAACF4021B1ZE</div>
+            </div>
+          </div>
+
+          <hr class="section-divider" />
+
+          <div class="section-label">Additional information</div>
+
+          <div class="field full">
+            <label>Additional information</label>
+            <textarea id="additionalInfo" placeholder="Anything else you'd like the service team to know (optional)"></textarea>
           </div>
         </div>
 
@@ -285,6 +305,12 @@
       rf.style.display = 'none';
       ant.style.display = 'none';
     }
+  }
+
+  function updateNardaCalibrationRequirement() {
+    const isNardaCalibration = $('oem').value === 'Narda' && $('serviceType').value === 'Calibration';
+    $('reqBaseUnit').style.display = isNardaCalibration ? '' : 'none';
+    $('reqAntenna').style.display = isNardaCalibration ? '' : 'none';
   }
 
   function updateVisibilityForServiceType(serviceType) {
@@ -339,10 +365,12 @@
     if ($('serviceType').value !== 'Support') {
       updateSerialFields(e.target.value);
     }
+    updateNardaCalibrationRequirement();
   });
 
   $('serviceType').addEventListener('change', e => {
     updateVisibilityForServiceType(e.target.value);
+    updateNardaCalibrationRequirement();
   });
 
   // Initialize on load: nothing selected yet, so hide everything dynamic
@@ -351,6 +379,7 @@
   $('dividerSerial').classList.add('hidden');
   $('dividerAddress').classList.add('hidden');
   $('addressSectionLabel').style.display = 'none';
+  updateNardaCalibrationRequirement();
 
   function show(msg, type = 'success') {
     const s = $('successBox'), e = $('errorBox');
@@ -384,11 +413,17 @@
       billingAddress: $('billingAddress').value.trim(),
       returnAddress: $('returnAddress').value.trim(),
       calCertificateAddress: $('calCertificateAddress').value.trim(),
-      description: $('description').value.trim()
+      description: $('description').value.trim(),
+      additionalInfo: $('additionalInfo').value.trim()
     };
 
     if (!payload.name || !payload.email || !oemSelected || (oemSelected === 'Others' && !oemOther) || !payload.serviceType || !payload.product || !payload.description) {
       show('Please fill all required fields: Customer Name, E-MAIL, OEM, Service Type, Product Model, and Description.', 'error');
+      return;
+    }
+
+    if (oemSelected === 'Narda' && serviceType === 'Calibration' && (!payload.serialBaseUnit || !payload.serialAntenna)) {
+      show('For Narda calibration requests, Base Unit S/N and Probe/Antenna S/N are required.', 'error');
       return;
     }
 

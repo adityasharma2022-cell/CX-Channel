@@ -181,6 +181,7 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
       billingAddress: body.billingAddress || "",
       returnAddress: body.returnAddress || "",
       calCertificateAddress: body.calCertificateAddress || "",
+      additionalInfo: body.additionalInfo || "",
       images: uploadedImages,
       status: "pending",
       forwardTo: "",
@@ -195,6 +196,8 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
     const db = readDB();
     db.push(record);
     writeDB(db);
+
+    const emails = { team: { sent: false }, customer: { sent: false } };
 
     try {
       await sendMail({
@@ -213,35 +216,46 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
         `,
         replyTo: record.email
       });
+      emails.team.sent = true;
     } catch (mailErr) {
       console.error("Team mail failed:", mailErr.message);
+      emails.team.error = mailErr.message;
     }
 
-    try {
-      await sendMail({
-        to: record.email,
-        subject: `FASCAL request received: ${record.id}`,
-        text: `Hi ${record.name}, your request has been received. RMA number: ${record.id}`,
-        html: `<p>Hi ${record.name},</p><p>Your request has been received successfully.</p><p><strong>RMA number:</strong> ${record.id}</p>`
-      });
-    } catch (mailErr) {
-      console.error("Customer mail failed:", mailErr.message);
+    // Customer confirmation email on submit: only for Support.
+    // Calibration/Repair customers are notified later, once the team updates the status on the dashboard.
+    if (record.serviceType === "Support") {
+      try {
+        await sendMail({
+          to: record.email,
+          subject: `FASCAL request received: ${record.id}`,
+          text: `Hi ${record.name}, your request has been received. RMA number: ${record.id}`,
+          html: `<p>Hi ${record.name},</p><p>Your request has been received successfully.</p><p><strong>RMA number:</strong> ${record.id}</p>`
+        });
+        emails.customer.sent = true;
+      } catch (mailErr) {
+        console.error("Customer mail failed:", mailErr.message);
+        emails.customer.error = mailErr.message;
+      }
     }
 
     res.status(201).json({
       message: "Request submitted successfully.",
       id: record.id,
-      request: record
+      request: record,
+      emails
     });
   } catch (err) {
     res.status(500).json({ message: err.message || "Request submit failed." });
   }
 });
 
-app.put("/api/requests/:id", (req, res) => {
+app.put("/api/requests/:id", async (req, res) => {
   const db = readDB();
   const idx = db.findIndex((r) => r.id === req.params.id);
   if (idx === -1) return res.status(404).json({ message: "Request not found." });
+
+  const previousStatus = db[idx].status;
   const allowed = ["status", "forwardTo", "operationsTeam", "serviceTeam", "customerFeedback", "internalNote", "product", "oem", "serviceType"];
   const body = req.body || {};
   allowed.forEach((k) => {
@@ -249,7 +263,33 @@ app.put("/api/requests/:id", (req, res) => {
   });
   db[idx].updatedAt = nowIST();
   writeDB(db);
-  res.json({ message: "Request updated successfully.", request: db[idx] });
+
+  const record = db[idx];
+  const statusChanged = body.status !== undefined && body.status !== previousStatus;
+  const isCalibrationOrRepair = ["Calibration", "Repair"].includes(record.serviceType);
+  let customerMail = { sent: false };
+
+  // For Calibration/Repair requests, notify the customer by email whenever the team changes the status.
+  if (statusChanged && isCalibrationOrRepair && record.email) {
+    try {
+      await sendMail({
+        to: record.email,
+        subject: `Update on your FASCAL request ${record.id}`,
+        text: `Hi ${record.name}, your request (RMA: ${record.id}) status has been updated to: ${record.status}.${record.customerFeedback ? ` Note from our team: ${record.customerFeedback}` : ""}`,
+        html: `
+          <p>Hi ${record.name},</p>
+          <p>Your request (RMA: <strong>${record.id}</strong>) status has been updated to: <strong>${record.status}</strong>.</p>
+          ${record.customerFeedback ? `<p><strong>Note from our team:</strong> ${record.customerFeedback}</p>` : ""}
+        `
+      });
+      customerMail.sent = true;
+    } catch (mailErr) {
+      console.error("Status update mail failed:", mailErr.message);
+      customerMail.error = mailErr.message;
+    }
+  }
+
+  res.json({ message: "Request updated successfully.", request: record, emails: { customer: customerMail } });
 });
 
 app.delete("/api/requests/:id", (req, res) => {
@@ -263,7 +303,7 @@ app.delete("/api/requests/:id", (req, res) => {
 app.get("/api/export/csv", (req, res) => {
   const db = readDB();
   if (!db.length) return res.status(404).json({ message: "No data to export." });
-  const cols = ["id","oem","serviceType","product","description","name","email","phone","company","designation","serialSingle","serialBaseUnit","serialRfCable","serialAntenna","billingAddress","returnAddress","calCertificateAddress","status","forwardTo","operationsTeam","serviceTeam","customerFeedback","internalNote","createdAt","updatedAt"];
+  const cols = ["id","oem","serviceType","product","description","name","email","phone","company","designation","serialSingle","serialBaseUnit","serialRfCable","serialAntenna","billingAddress","returnAddress","calCertificateAddress","additionalInfo","status","forwardTo","operationsTeam","serviceTeam","customerFeedback","internalNote","createdAt","updatedAt"];
   const escape = (v) => `\"${String(v ?? "").replace(/\"/g, '\"\"')}\"`;
   const csv = [cols.join(","), ...db.map((r) => cols.map((c) => escape(r[c])).join(","))].join("\r\n");
   res.setHeader("Content-Type", "text/csv");
