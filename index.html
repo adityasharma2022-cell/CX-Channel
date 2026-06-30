@@ -338,11 +338,12 @@
         <div class="approval-section" id="approvalSection">
           <div class="detail-section-title">Approval</div>
           <p class="approval-hint">This is a Calibration/Repair request. The customer is not emailed on submission — approving or rejecting here will email them automatically.</p>
-          <div class="approval-actions">
+          <div class="approval-actions" id="approvalActions">
             <button class="btn btn-approve" onclick="approveRequest()">✓ Approve Request</button>
             <button class="btn btn-reject" onclick="rejectRequest()">✕ Reject Request</button>
           </div>
           <div class="approval-status-note" id="approvalStatusNote" style="display:none"></div>
+          <button class="btn btn-ghost btn-sm" id="approvalUndoBtn" style="display:none;margin-top:10px" onclick="undoApprovalDecision()">Undo decision</button>
         </div>
 
         <div class="detail-section">
@@ -766,17 +767,26 @@
 
   function updateApprovalStatusNote(status){
     const note = document.getElementById('approvalStatusNote');
+    const actions = document.getElementById('approvalActions');
+    const undoBtn = document.getElementById('approvalUndoBtn');
     const s = String(status || '').toLowerCase();
+
     if(s === 'approved'){
       note.className = 'approval-status-note is-approved';
       note.textContent = 'This request has been approved. The customer was notified by email.';
       note.style.display = '';
+      actions.style.display = 'none';
+      undoBtn.style.display = '';
     } else if(s === 'rejected'){
       note.className = 'approval-status-note is-rejected';
       note.textContent = 'This request has been rejected. The customer was notified by email.';
       note.style.display = '';
+      actions.style.display = 'none';
+      undoBtn.style.display = '';
     } else {
       note.style.display = 'none';
+      actions.style.display = '';
+      undoBtn.style.display = 'none';
     }
   }
 
@@ -826,6 +836,12 @@
     } catch(err){
       alert(err.message || 'Could not update this request.');
     }
+  }
+
+  async function undoApprovalDecision(){
+    if(!currentRequest) return;
+    if(!confirm(`Undo the approval/rejection decision for ${shortId(currentRequest.id)} and set it back to pending? This will not email the customer.`)) return;
+    await applyApprovalDecision('pending');
   }
 
   async function saveUpdate(){
