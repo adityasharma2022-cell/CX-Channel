@@ -92,7 +92,8 @@
     .pill{display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:800}
     .pill-pending{background:#fef3c7;color:#92400e}
     .pill-review{background:#dbeafe;color:#1d4ed8}
-    .pill-approved{background:#dcfce7;color:#166534}
+    .pill-success{background:#dcfce7;color:#166534}
+    .pill-closed{background:#e2e8f0;color:#334155}
     .pill-rejected{background:#fee2e2;color:#b91c1c}
     .pagination{display:flex;justify-content:flex-end;gap:6px;padding:12px 18px 18px;flex-wrap:wrap}
     .page-btn{height:34px;min-width:34px;border-radius:8px;border:1px solid var(--line);background:#fff;padding:0 10px;font-weight:700}
@@ -117,6 +118,16 @@
     .d-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;font-weight:800;margin-bottom:4px}
     .d-value{font-size:14px;color:#0f172a;word-break:break-word}
     .modal-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+    .approval-section{display:none;border:1px solid #eef3f9;border-radius:14px;padding:16px;background:#fafcff;margin-bottom:16px}
+    .approval-section.active{display:block}
+    .approval-section .detail-section-title{margin-bottom:6px}
+    .approval-hint{color:var(--muted);font-size:13px;margin-bottom:14px;line-height:1.5}
+    .approval-actions{display:flex;gap:10px;flex-wrap:wrap}
+    .btn-approve{background:linear-gradient(135deg,#22c55e,#16a34a);border-color:transparent;color:#fff}
+    .btn-reject{background:linear-gradient(135deg,#ef4444,#dc2626);border-color:transparent;color:#fff}
+    .approval-status-note{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700}
+    .approval-status-note.is-approved{background:#dcfce7;color:#166534}
+    .approval-status-note.is-rejected{background:#fee2e2;color:#b91c1c}
     .link-btn{background:none;border:none;padding:0;text-align:left;cursor:pointer;color:var(--primary-dark)}
     .link-btn:hover{text-decoration:underline}
     .file-list{display:grid;gap:10px}
@@ -209,7 +220,7 @@
             <div class="metric-icon green">F</div>
             <div class="metric-label">Finalized</div>
             <div class="metric-value" id="metricFinalized">0</div>
-            <div class="metric-sub">Closed requests</div>
+            <div class="metric-sub">Approved or closed requests</div>
           </div>
         </div>
 
@@ -254,6 +265,7 @@
                 <option value="">All Status</option>
                 <option>pending</option>
                 <option>forwarded</option>
+                <option>approved</option>
                 <option>closed</option>
                 <option>rejected</option>
               </select>
@@ -279,6 +291,7 @@
             <button class="tab-btn active" data-sf="all" onclick="setStatusFilter('all')">All</button>
             <button class="tab-btn" data-sf="pending" onclick="setStatusFilter('pending')">Pending</button>
             <button class="tab-btn" data-sf="forwarded" onclick="setStatusFilter('forwarded')">Forwarded</button>
+            <button class="tab-btn" data-sf="approved" onclick="setStatusFilter('approved')">Approved</button>
             <button class="tab-btn" data-sf="closed" onclick="setStatusFilter('closed')">Closed</button>
             <button class="tab-btn" data-sf="rejected" onclick="setStatusFilter('rejected')">Rejected</button>
           </div>
@@ -322,6 +335,16 @@
       <div class="modal-body">
         <div id="modalDetailsWrap"></div>
 
+        <div class="approval-section" id="approvalSection">
+          <div class="detail-section-title">Approval</div>
+          <p class="approval-hint">This is a Calibration/Repair request. The customer is not emailed on submission — approving or rejecting here will email them automatically.</p>
+          <div class="approval-actions">
+            <button class="btn btn-approve" onclick="approveRequest()">✓ Approve Request</button>
+            <button class="btn btn-reject" onclick="rejectRequest()">✕ Reject Request</button>
+          </div>
+          <div class="approval-status-note" id="approvalStatusNote" style="display:none"></div>
+        </div>
+
         <div class="detail-section">
           <div class="detail-section-title">Update Request</div>
           <div class="detail-grid">
@@ -330,6 +353,7 @@
               <select id="uStatus">
                 <option value="pending">pending</option>
                 <option value="forwarded">forwarded</option>
+                <option value="approved">approved</option>
                 <option value="closed">closed</option>
                 <option value="rejected">rejected</option>
               </select>
@@ -394,7 +418,8 @@
 
   function pillClass(s){
     const v = String(s || '').toLowerCase();
-    if (v === 'closed') return 'pill pill-approved';
+    if (v === 'approved') return 'pill pill-success';
+    if (v === 'closed') return 'pill pill-closed';
     if (v === 'forwarded') return 'pill pill-review';
     if (v === 'rejected') return 'pill pill-rejected';
     return 'pill pill-pending';
@@ -421,7 +446,7 @@
       document.getElementById('metricTotal').textContent = allRequests.length;
       document.getElementById('metricPending').textContent = allRequests.filter(x => String(x.status || '').toLowerCase() === 'pending').length;
       document.getElementById('metricReview').textContent = allRequests.filter(x => String(x.status || '').toLowerCase() === 'forwarded').length;
-      document.getElementById('metricFinalized').textContent = allRequests.filter(x => String(x.status || '').toLowerCase() === 'closed').length;
+      document.getElementById('metricFinalized').textContent = allRequests.filter(x => ['approved','closed'].includes(String(x.status || '').toLowerCase())).length;
       applyFilters();
     } catch(e){
       tb.innerHTML = '<tr><td colspan="12" class="td-empty">Could not load requests.</td></tr>';
@@ -731,12 +756,76 @@
     document.getElementById('uNote').value = cr.internalNote || '';
     document.getElementById('uFeedback').value = cr.customerFeedback || '';
 
+    const isCalibrationOrRepair = ['Calibration', 'Repair'].includes(cr.serviceType);
+    const approvalSection = document.getElementById('approvalSection');
+    approvalSection.classList.toggle('active', isCalibrationOrRepair);
+    updateApprovalStatusNote(cr.status);
+
     document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function updateApprovalStatusNote(status){
+    const note = document.getElementById('approvalStatusNote');
+    const s = String(status || '').toLowerCase();
+    if(s === 'approved'){
+      note.className = 'approval-status-note is-approved';
+      note.textContent = 'This request has been approved. The customer was notified by email.';
+      note.style.display = '';
+    } else if(s === 'rejected'){
+      note.className = 'approval-status-note is-rejected';
+      note.textContent = 'This request has been rejected. The customer was notified by email.';
+      note.style.display = '';
+    } else {
+      note.style.display = 'none';
+    }
   }
 
   function closeModal(){
     document.getElementById('modalOverlay').classList.remove('open');
     currentRequest = null;
+  }
+
+  async function approveRequest(){
+    if(!currentRequest) return;
+    if(!confirm(`Approve request ${shortId(currentRequest.id)}? The customer will be emailed automatically.`)) return;
+    await applyApprovalDecision('approved');
+  }
+
+  async function rejectRequest(){
+    if(!currentRequest) return;
+    if(!confirm(`Reject request ${shortId(currentRequest.id)}? The customer will be emailed automatically.`)) return;
+    await applyApprovalDecision('rejected');
+  }
+
+  async function applyApprovalDecision(status){
+    const payload = {
+      status,
+      forwardTo: document.getElementById('uForwardTo').value,
+      internalNote: document.getElementById('uNote').value,
+      customerFeedback: document.getElementById('uFeedback').value
+    };
+
+    try {
+      const res = await fetch(`${API}/api/requests/${encodeURIComponent(currentRequest.id)}`,{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.message || 'Update failed.');
+
+      document.getElementById('uStatus').value = status;
+      updateApprovalStatusNote(status);
+
+      const emailNote = data.emails?.customer?.sent
+        ? 'The customer has been emailed.'
+        : (data.emails?.customer?.error ? 'Note: the customer email failed to send, but the status was updated.' : '');
+      if(emailNote) alert(emailNote);
+
+      loadRequests();
+    } catch(err){
+      alert(err.message || 'Could not update this request.');
+    }
   }
 
   async function saveUpdate(){

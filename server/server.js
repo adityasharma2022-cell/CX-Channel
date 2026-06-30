@@ -269,22 +269,31 @@ app.put("/api/requests/:id", async (req, res) => {
   const isCalibrationOrRepair = ["Calibration", "Repair"].includes(record.serviceType);
   let customerMail = { sent: false };
 
-  // For Calibration/Repair requests, notify the customer by email whenever the team changes the status.
-  if (statusChanged && isCalibrationOrRepair && record.email) {
+  // For Calibration/Repair requests, the customer is notified by email ONLY when the team
+  // explicitly approves or rejects the request — not on any other status change (e.g. forwarded).
+  if (statusChanged && isCalibrationOrRepair && record.email && (record.status === "approved" || record.status === "rejected")) {
+    const isApproved = record.status === "approved";
+    const subject = isApproved
+      ? `Your FASCAL request ${record.id} has been approved`
+      : `Your FASCAL request ${record.id} has been rejected`;
+    const introLine = isApproved
+      ? `Good news — your request (RMA: ${record.id}) has been approved.`
+      : `Your request (RMA: ${record.id}) has been rejected.`;
+
     try {
       await sendMail({
         to: record.email,
-        subject: `Update on your FASCAL request ${record.id}`,
-        text: `Hi ${record.name}, your request (RMA: ${record.id}) status has been updated to: ${record.status}.${record.customerFeedback ? ` Note from our team: ${record.customerFeedback}` : ""}`,
+        subject,
+        text: `Hi ${record.name}, ${introLine}${record.customerFeedback ? ` Note from our team: ${record.customerFeedback}` : ""}`,
         html: `
           <p>Hi ${record.name},</p>
-          <p>Your request (RMA: <strong>${record.id}</strong>) status has been updated to: <strong>${record.status}</strong>.</p>
+          <p>${introLine}</p>
           ${record.customerFeedback ? `<p><strong>Note from our team:</strong> ${record.customerFeedback}</p>` : ""}
         `
       });
       customerMail.sent = true;
     } catch (mailErr) {
-      console.error("Status update mail failed:", mailErr.message);
+      console.error("Approval/rejection mail failed:", mailErr.message);
       customerMail.error = mailErr.message;
     }
   }
