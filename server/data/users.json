@@ -41,5 +41,16 @@
     "department": "admin",
     "password": "Mt.9^fBXQem\"G7Y",
     "createdAt": "05/06/2026, 18:24:54"
+  },
+  {
+    "id": "u1782922395493",
+    "firstName": "raj",
+    "lastName": "gupta",
+    "username": "rajj",
+    "email": "rajgupta25092004@gmail.com",
+    "role": "team",
+    "department": "service",
+    "password": "raj@1234",
+    "createdAt": "01/07/2026, 21:43:15"
   }
 ]

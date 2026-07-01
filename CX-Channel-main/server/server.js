@@ -15,7 +15,8 @@ const DB_FILE = path.join(DATA_DIR, "requests.json");
 const USERS_FILE = path.join(DATA_DIR, "users.json");
 
 function ensureFile(filePath, defaultContent) {
-  if (!fs.existsSync(filePath)) fs.writeFileSync(filePath, defaultContent, "utf8");
+  if (!fs.existsSync(filePath))
+    fs.writeFileSync(filePath, defaultContent, "utf8");
 }
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -138,7 +139,10 @@ const REQUEST_FORM_SECTIONS = [
     fields: [
       { label: "Billing Address", key: "billingAddress" },
       { label: "Return Address", key: "returnAddress" },
-      { label: "Calibration Certificate Address", key: "calCertificateAddress" },
+      {
+        label: "Calibration Certificate Address",
+        key: "calCertificateAddress",
+      },
     ],
   },
   {
@@ -345,13 +349,13 @@ app.use("/uploads", express.static(UPLOAD_DIR));
 app.post("/api/auth/login", (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password)
-    return res.status(400).json({ message: "Username and password are required." });
+    return res
+      .status(400)
+      .json({ message: "Username and password are required." });
 
   const user = readUsers().find(
     (u) =>
-      u.username === username &&
-      u.password === password &&
-      u.role === "team",
+      u.username === username && u.password === password && u.role === "team",
   );
 
   if (!user)
@@ -369,7 +373,9 @@ app.post("/api/auth/login", (req, res) => {
 app.post("/api/auth/customer-login", (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password)
-    return res.status(400).json({ message: "Username and password are required." });
+    return res
+      .status(400)
+      .json({ message: "Username and password are required." });
 
   const user = readUsers().find(
     (u) =>
@@ -391,12 +397,15 @@ app.post("/api/auth/customer-login", (req, res) => {
 });
 
 app.post("/auth/signup", (req, res) => {
-  const { firstName, lastName, username, email, role, password } = req.body || {};
+  const { firstName, lastName, username, email, role, password } =
+    req.body || {};
   if (!firstName || !lastName || !username || !email || !role || !password)
     return res.status(400).json({ error: "All fields are required." });
 
   if (String(password).length < 8)
-    return res.status(400).json({ error: "Password must be at least 8 characters." });
+    return res
+      .status(400)
+      .json({ error: "Password must be at least 8 characters." });
 
   const users = readUsers();
   if (users.some((u) => u.username === username))
@@ -426,7 +435,9 @@ app.get("/api/requests", (req, res) => {
   const db = readDB();
   const email = req.query.email;
   const rows = email ? db.filter((r) => r.email === email) : db;
-  res.json(rows.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")));
+  res.json(
+    rows.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")),
+  );
 });
 
 app.get("/api/requests/:id", (req, res) => {
@@ -444,10 +455,19 @@ app.get("/api/requests/:id", (req, res) => {
 app.post("/api/requests", upload.array("images", 10), async (req, res) => {
   try {
     const body = req.body || {};
-    const required = ["name", "email", "oem", "serviceType", "product", "description"];
+    const required = [
+      "name",
+      "email",
+      "oem",
+      "serviceType",
+      "product",
+      "description",
+    ];
     const missing = required.filter((k) => !body[k]);
     if (missing.length)
-      return res.status(400).json({ message: `Missing required fields: ${missing.join(", ")}.` });
+      return res
+        .status(400)
+        .json({ message: `Missing required fields: ${missing.join(", ")}.` });
 
     const now = nowIST();
     const uploadedImages = Array.isArray(req.files)
@@ -493,7 +513,10 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
     db.push(record);
     writeDB(db);
 
-    const emails = await sendRequestEmails(record, Array.isArray(req.files) ? req.files : []);
+    const emails = await sendRequestEmails(
+      record,
+      Array.isArray(req.files) ? req.files : [],
+    );
     res.status(201).json({
       message: "Request submitted successfully.",
       id: record.id,
@@ -508,7 +531,8 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
 app.put("/api/requests/:id", (req, res) => {
   const db = readDB();
   const idx = db.findIndex((r) => r.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ message: "Request not found." });
+  if (idx === -1)
+    return res.status(404).json({ message: "Request not found." });
 
   const allowed = [
     "status",
@@ -545,7 +569,8 @@ app.delete("/api/requests/:id", (req, res) => {
 // Export & stats
 app.get("/api/export/csv", (req, res) => {
   const db = readDB();
-  if (!db.length) return res.status(404).json({ message: "No data to export." });
+  if (!db.length)
+    return res.status(404).json({ message: "No data to export." });
 
   const cols = [
     "id",

@@ -36,7 +36,9 @@ async function sendMail({
   replyTo,
   attachments = [],
 }) {
-  if (!to) throw new Error("Recipient email (to) is required.");
+  if (!to) {
+    throw new Error("Recipient email (to) is required. Set TEAM_EMAIL in server/.env.");
+  }
 
   return transporter.sendMail({
     from: `"FASCAL Service Portal" <${SENDER_EMAIL}>`,
