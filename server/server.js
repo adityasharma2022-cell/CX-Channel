@@ -11,6 +11,7 @@ const ROOT = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(__dirname, "data");
 const UPLOAD_DIR = path.join(__dirname, "uploads");
 const DB_FILE = path.join(DATA_DIR, "requests.json");
+const SUPPORT_FILE = path.join(DATA_DIR, "support.json");
 const USERS_FILE = path.join(DATA_DIR, "users.json");
 
 function ensureFile(filePath, defaultContent) {
@@ -21,6 +22,7 @@ function ensureFile(filePath, defaultContent) {
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 ensureFile(DB_FILE, "[]");
+ensureFile(SUPPORT_FILE, "[]");
 ensureFile(
   USERS_FILE,
   JSON.stringify(
@@ -63,6 +65,8 @@ const writeJSON = (file, data) =>
   fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8");
 const readDB = () => readJSON(DB_FILE, []);
 const writeDB = (data) => writeJSON(DB_FILE, data);
+const readSupport = () => readJSON(SUPPORT_FILE, []);
+const writeSupport = (data) => writeJSON(SUPPORT_FILE, data);
 const readUsers = () => readJSON(USERS_FILE, []);
 
 function generateId() {
@@ -465,6 +469,222 @@ app.get("/api/stats", (req, res) => {
     closed: count("closed"),
     rejected: count("rejected"),
   });
+});
+
+app.get("/api/support", (req, res) => {
+  const support = readSupport();
+  const email = req.query.email;
+  const rows = email ? support.filter((r) => r.email === email) : support;
+  res.json(
+    rows.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")),
+  );
+});
+
+app.get("/api/support/stats", (req, res) => {
+  const support = readSupport();
+  const norm = (s) =>
+    String(s || "").toLowerCase().replace(/\s+/g, "");
+  const count = (s) => support.filter((r) => norm(r.status) === s).length;
+  res.json({
+    total: support.length,
+    open: count("open"),
+    inProgress: count("inprogress"),
+    approved: count("approved"),
+    rejected: count("rejected"),
+    closed: count("closed"),
+  });
+});
+
+app.get("/api/support/:id", (req, res) => {
+  const support = readSupport();
+  const request = support.find((r) => r.id === req.params.id);
+  if (!request)
+    return res.status(404).json({ message: "Support request not found." });
+  res.json({ request });
+});
+
+app.post("/api/support", upload.array("images", 10), async (req, res) => {
+  try {
+    const body = req.body || {};
+    const required = [
+      "name",
+      "email",
+      "oem",
+      "product",
+      "description",
+      "subject",
+    ];
+    const missing = required.filter((k) => !body[k]);
+    if (missing.length)
+      return res
+        .status(400)
+        .json({ message: `Missing required fields: ${missing.join(", ")}.` });
+
+    const now = nowIST();
+    const uploadedImages = Array.isArray(req.files)
+      ? req.files.map((f) => ({
+          originalName: f.originalname,
+          fileName: f.filename,
+          path: `/uploads/${f.filename}`,
+          mimeType: f.mimetype,
+          size: f.size,
+        }))
+      : [];
+
+    const record = {
+      id: generateId(),
+      subject: body.subject || "",
+      priority: body.priority || "Medium",
+      oem: body.oem || "",
+      serviceType: "Support",
+      product: body.product || "",
+      description: body.description || "",
+      name: body.name || "",
+      email: body.email || "",
+      phone: body.phone || "",
+      company: body.company || "",
+      designation: body.designation || "",
+      softwareVersion: body.softwareVersion || "",
+      serialSingle: body.serialSingle || "",
+      serialBaseUnit: body.serialBaseUnit || "",
+      serialRfCable: body.serialRfCable || "",
+      serialAntenna: body.serialAntenna || "",
+      billingAddress: body.billingAddress || "",
+      returnAddress: body.returnAddress || "",
+      calCertificateAddress: body.calCertificateAddress || "",
+      additionalInfo: body.additionalInfo || "",
+      images: uploadedImages,
+      status: "Open",
+      assignedTeam: "",
+      internalNote: "",
+      customerFeedback: "",
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const support = readSupport();
+    support.push(record);
+    writeSupport(support);
+
+    const emails = { team: { sent: false } };
+
+    if (!process.env.TEAM_EMAIL) {
+      console.warn("TEAM_EMAIL is not set — falling back to hardcoded default.");
+    }
+    const teamEmail = process.env.TEAM_EMAIL;
+
+    try {
+      await sendMail({
+        to: teamEmail,
+        subject: `New FASCAL Support Request ${record.id}: ${record.subject}`,
+        text: `New support request from ${record.name} (${record.email}). Subject: ${record.subject}. Priority: ${record.priority}.`,
+        html: `
+          <h3>New FASCAL Support Request</h3>
+          <p><strong>Ticket:</strong> ${record.id}</p>
+          <p><strong>Subject:</strong> ${record.subject}</p>
+          <p><strong>Priority:</strong> ${record.priority}</p>
+          <p><strong>Name:</strong> ${record.name}</p>
+          <p><strong>Email:</strong> ${record.email}</p>
+          <p><strong>Phone:</strong> ${record.phone || "—"}</p>
+          <p><strong>Company:</strong> ${record.company || "—"}</p>
+          <p><strong>OEM:</strong> ${record.oem}</p>
+          <p><strong>Product:</strong> ${record.product}</p>
+          <p><strong>Software Version:</strong> ${record.softwareVersion || "—"}</p>
+          <p><strong>Description:</strong> ${record.description}</p>
+        `,
+        replyTo: record.email,
+      });
+      emails.team.sent = true;
+    } catch (mailErr) {
+      console.error("Support team mail failed:", mailErr.message);
+      emails.team.error = mailErr.message;
+    }
+
+    res.status(201).json({
+      message: "Support request submitted successfully.",
+      id: record.id,
+      request: record,
+      emails,
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: err.message || "Support submit failed." });
+  }
+});
+
+app.put("/api/support/:id", async (req, res) => {
+  const support = readSupport();
+  const idx = support.findIndex((r) => r.id === req.params.id);
+  if (idx === -1)
+    return res.status(404).json({ message: "Support request not found." });
+
+  const previousStatus = support[idx].status;
+  const allowed = [
+    "status",
+    "priority",
+    "assignedTeam",
+    "internalNote",
+    "customerFeedback",
+    "subject",
+  ];
+  const body = req.body || {};
+  allowed.forEach((k) => {
+    if (body[k] !== undefined) support[idx][k] = body[k];
+  });
+  support[idx].updatedAt = nowIST();
+  writeSupport(support);
+
+  const record = support[idx];
+  const statusChanged =
+    body.status !== undefined && body.status !== previousStatus;
+  let customerMail = { sent: false };
+
+  if (
+    statusChanged &&
+    record.email &&
+    (record.status === "Approved" || record.status === "Rejected")
+  ) {
+    const isApproved = record.status === "Approved";
+    const subject = isApproved
+      ? `Your FASCAL support request ${record.id} has been approved`
+      : `Your FASCAL support request ${record.id} has been rejected`;
+    const introLine = isApproved
+      ? `Good news — your support request (Ticket: ${record.id}) has been approved.`
+      : `Your support request (Ticket: ${record.id}) has been rejected.`;
+
+    try {
+      await sendMail({
+        to: record.email,
+        subject,
+        text: `Hi ${record.name}, ${introLine}${record.customerFeedback ? ` Note from our team: ${record.customerFeedback}` : ""}`,
+        html: `
+          <p>Hi ${record.name},</p>
+          <p>${introLine}</p>
+          ${record.customerFeedback ? `<p><strong>Note from our team:</strong> ${record.customerFeedback}</p>` : ""}
+        `,
+      });
+      customerMail.sent = true;
+    } catch (mailErr) {
+      console.error("Support approval/rejection mail failed:", mailErr.message);
+      customerMail.error = mailErr.message;
+    }
+  }
+
+  res.json({
+    message: "Support request updated successfully.",
+    request: record,
+    emails: { customer: customerMail },
+  });
+});
+
+app.delete("/api/support/:id", (req, res) => {
+  const support = readSupport();
+  const rest = support.filter((r) => r.id !== req.params.id);
+  if (rest.length === support.length)
+    return res.status(404).json({ message: "Support request not found." });
+  writeSupport(rest);
+  res.json({ message: "Support request deleted." });
 });
 
 app.get("/api/test-smtp", async (req, res) => {
