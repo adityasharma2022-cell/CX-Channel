@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -41,6 +40,14 @@
     .panel-head h3{font-size:18px;font-weight:800;letter-spacing:-.03em}
     .panel-head p{color:var(--muted);margin-top:4px}
     .panel-body{padding:18px 20px 20px}
+
+    .tabs{display:flex;gap:6px;padding:8px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:18px;width:fit-content}
+    .tab-btn{min-height:38px;padding:0 18px;border-radius:12px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;font-weight:700;font-size:13px;letter-spacing:.02em;transition:.15s ease;display:inline-flex;align-items:center;gap:8px}
+    .tab-btn:hover{color:var(--text);background:rgba(255,255,255,.06)}
+    .tab-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-color:transparent;box-shadow:0 8px 18px rgba(14,165,233,.28)}
+    .tab-pane{display:none}
+    .tab-pane.active{display:block}
+
     .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
     .field{display:flex;flex-direction:column;gap:6px}
     .field.full{grid-column:1/-1}
@@ -86,7 +93,7 @@
       </div>
       <div><h1>FASCAL</h1><p>Customer Portal</p></div>
     </div>
-    <button class="btn btn-primary" onclick="document.getElementById('requestFormPanel').scrollIntoView({behavior:'smooth'})">New Request</button>
+    <button class="btn btn-primary" onclick="scrollToActiveForm()">New Request</button>
   </header>
 
   <section class="hero">
@@ -109,177 +116,205 @@
   </section>
 
   <main class="main">
-    <section class="panel" id="requestFormPanel">
-      <div class="panel-head">
-        <div><h3>Raise a Request</h3><p>Fill in the details below and submit to the service team. Fields marked <span class="req">*</span> are mandatory.</p></div>
-      </div>
-      <div class="panel-body">
-        <div class="form-grid">
-          <div class="section-label">Customer Information</div>
+    <div class="tabs" role="tablist" aria-label="Portal sections">
+      <button class="tab-btn active" role="tab" aria-selected="true" data-tab="service">Service Request</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-tab="support">Support</button>
+    </div>
 
-          <div class="field">
-            <label>Customer Name <span class="req">*</span></label>
-            <input id="name" type="text" placeholder="Customer name" />
-          </div>
-          <div class="field">
-            <label>Email <span class="req">*</span></label>
-            <input id="email" type="email" placeholder="name@company.com" />
-          </div>
-          <div class="field">
-            <label>Phone</label>
-            <input id="phone" type="text" placeholder="Mobile number" />
-          </div>
-          <div class="field">
-            <label>Company</label>
-            <input id="company" type="text" placeholder="Company name" />
-          </div>
-          <div class="field">
-            <label>Designation</label>
-            <input id="designation" type="text" placeholder="Your designation" />
-          </div>
-
-          <hr class="section-divider" />
-
-          <div class="section-label">Service Details</div>
-
-          <div class="field">
-            <label>Types of OEM <span class="req">*</span></label>
-            <select id="oem">
-              <option value="">Select OEM</option>
-              <option value="VeEX">VeEX</option>
-              <option value="Narda">Narda</option>
-              <option value="Cubro">Cubro</option>
-              <option value="ATDI">ATDI</option>
-              <option value="Others">Others</option>
-            </select>
-          </div>
-
-          <div class="field" id="fieldOemOther" style="display:none">
-            <label>Specify OEM <span class="req">*</span></label>
-            <input id="oemOther" type="text" placeholder="Type OEM name" />
-          </div>
-
-          <div class="field">
-            <label>Service Type <span class="req">*</span></label>
-            <select id="serviceType">
-              <option value="">Select service type</option>
-              <option value="Support">Support</option>
-              <option value="Calibration">Calibration</option>
-              <option value="Repair">Repair</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>Product Model <span class="req">*</span></label>
-            <input id="product" type="text" placeholder="Type product model" />
-          </div>
-
-          <div class="field">
-            <label>Software Version</label>
-            <input id="softwareVersion" type="text" placeholder="Software version" />
-          </div>
-
-          <hr class="section-divider" id="dividerSerial" />
-
-          <div class="serial-group" id="serialGroup">
-            <div class="section-label" style="grid-column:1/-1">Serial Number</div>
-
-            <div class="field" id="fieldSingleSerial">
-              <label>S/N</label>
-              <input id="serialSingle" type="text" placeholder="Serial number" />
-            </div>
-
-            <div class="field" id="fieldBaseUnit">
-              <label>Base Unit S/N <span class="req" id="reqBaseUnit" style="display:none">*</span></label>
-              <input id="serialBaseUnit" type="text" placeholder="Base unit serial number" />
-            </div>
-
-            <div class="field" id="fieldRfCable">
-              <label>RF Cable S/N</label>
-              <input id="serialRfCable" type="text" placeholder="RF cable serial number" />
-            </div>
-
-            <div class="field" id="fieldAntenna">
-              <label>Probe/Antenna S/N <span class="req" id="reqAntenna" style="display:none">*</span></label>
-              <input id="serialAntenna" type="text" placeholder="Probe/antenna serial number" />
-            </div>
-          </div>
-
-          <hr class="section-divider" id="dividerIssue" />
-
-          <div class="section-label">Details</div>
-
-          <div class="field full">
-            <label>Description of Problem <span class="req">*</span></label>
-            <textarea id="description" placeholder="Describe the problem clearly"></textarea>
-          </div>
-
-          <div class="field full">
-            <label>Upload Image <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7">(optional — jpg, png, pdf)</span></label>
-            <input id="imageUpload" type="file" accept="image/*,.pdf" multiple />
-            <div class="note">You may attach photos of the unit or relevant documents.</div>
-          </div>
-
-          <hr class="section-divider" id="dividerAddress" />
-
-          <div class="section-label" id="addressSectionLabel">Addresses</div>
-
-          <div class="addr-group" id="addressGroup">
-            <div class="field full">
-              <label>Billing Address</label>
-              <textarea id="billingAddress" placeholder="Billing address"></textarea>
-            </div>
-            <div class="field full">
-              <label>Return Address</label>
-              <textarea id="returnAddress" placeholder="Return address"></textarea>
-            </div>
-            <div class="field full" id="fieldCalCert">
-              <label>Address to be Printed on Calibration Certificate</label>
-              <textarea id="calCertificateAddress" placeholder="Address to be printed on calibration certificate"></textarea>
-            </div>
-
-            <div class="field full">
-              <label>Material to be Sent to</label>
-              <div class="static-box">Fastech Telecommunications (India) Pvt. Ltd.,
-FASTECH PARAM,
-EL- 44, Electronic Zone, TTC Industrial Area,
-MIDC, Mahape, Navi Mumbai-400710.
-Tel. No. 022-28353636 Ext. 112
-Our GST No. 27AAACF4021B1ZE</div>
-            </div>
-          </div>
-
-          <hr class="section-divider" />
-
-          <div class="section-label">Additional Information</div>
-
-          <div class="field full">
-            <textarea id="additionalInfo" placeholder="Anything else you'd like the service team to know (optional)"></textarea>
-          </div>
+    <div class="tab-pane active" data-pane="service">
+      <section class="panel" id="serviceFormPanel">
+        <div class="panel-head">
+          <div><h3>Raise a Request</h3><p>Fill in the details below and submit to the service team. Fields marked <span class="req">*</span> are mandatory.</p></div>
         </div>
-
-        <div class="actions">
-          <button class="btn btn-primary" onclick="submitRequest()">Submit Request</button>
+        <div class="panel-body">
+          <div class="form-grid" id="serviceFormGrid"></div>
+          <div class="actions">
+            <button class="btn btn-primary" id="serviceSubmit">Submit Request</button>
+          </div>
+          <div class="success" id="serviceSuccess"></div>
+          <div class="error" id="serviceError"></div>
         </div>
-        <div class="success" id="successBox"></div>
-        <div class="error" id="errorBox"></div>
-      </div>
-    </section>
+      </section>
+    </div>
+
+    <div class="tab-pane" data-pane="support">
+      <section class="panel" id="supportFormPanel">
+        <div class="panel-head">
+          <div><h3>Raise a Support Request</h3><p>Fill in the details below and submit to the support team. Fields marked <span class="req">*</span> are mandatory.</p></div>
+        </div>
+        <div class="panel-body">
+          <div class="form-grid" id="supportFormGrid"></div>
+          <div class="actions">
+            <button class="btn btn-primary" id="supportSubmit">Submit Support Request</button>
+          </div>
+          <div class="success" id="supportSuccess"></div>
+          <div class="error" id="supportError"></div>
+        </div>
+      </section>
+    </div>
   </main>
 
   <div class="footer">This customer portal is separate from the internal team dashboard.</div>
 </div>
 
+<template id="requestFormTemplate">
+  <div class="section-label">Customer Information</div>
+
+  <div class="field">
+    <label>Customer Name <span class="req">*</span></label>
+    <input data-field="name" type="text" placeholder="Customer name" />
+  </div>
+  <div class="field">
+    <label>Email <span class="req">*</span></label>
+    <input data-field="email" type="email" placeholder="name@company.com" />
+  </div>
+  <div class="field">
+    <label>Phone</label>
+    <input data-field="phone" type="text" placeholder="Mobile number" />
+  </div>
+  <div class="field">
+    <label>Company</label>
+    <input data-field="company" type="text" placeholder="Company name" />
+  </div>
+  <div class="field">
+    <label>Designation</label>
+    <input data-field="designation" type="text" placeholder="Your designation" />
+  </div>
+
+  <hr class="section-divider" />
+
+  <div class="section-label">Service Details</div>
+
+  <div class="field">
+    <label>Types of OEM <span class="req">*</span></label>
+    <select data-field="oem">
+      <option value="">Select OEM</option>
+      <option value="VeEX">VeEX</option>
+      <option value="Narda">Narda</option>
+      <option value="Cubro">Cubro</option>
+      <option value="ATDI">ATDI</option>
+      <option value="Others">Others</option>
+    </select>
+  </div>
+
+  <div class="field" data-field="oemOtherWrap" style="display:none">
+    <label>Specify OEM <span class="req">*</span></label>
+    <input data-field="oemOther" type="text" placeholder="Type OEM name" />
+  </div>
+
+  <div class="field">
+    <label>Service Type <span class="req">*</span></label>
+    <select data-field="serviceType">
+      <option value="">Select service type</option>
+      <option value="Support">Support</option>
+      <option value="Calibration">Calibration</option>
+      <option value="Repair">Repair</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Product Model <span class="req">*</span></label>
+    <input data-field="product" type="text" placeholder="Type product model" />
+  </div>
+
+  <div class="field">
+    <label>Software Version</label>
+    <input data-field="softwareVersion" type="text" placeholder="Software version" />
+  </div>
+
+  <hr class="section-divider" data-field="dividerSerial" />
+
+  <div class="serial-group" data-field="serialGroup">
+    <div class="section-label" style="grid-column:1/-1">Serial Number</div>
+
+    <div class="field" data-field="fieldSingleSerial">
+      <label>S/N</label>
+      <input data-field="serialSingle" type="text" placeholder="Serial number" />
+    </div>
+
+    <div class="field" data-field="fieldBaseUnit">
+      <label>Base Unit S/N <span class="req" data-field="reqBaseUnit" style="display:none">*</span></label>
+      <input data-field="serialBaseUnit" type="text" placeholder="Base unit serial number" />
+    </div>
+
+    <div class="field" data-field="fieldRfCable">
+      <label>RF Cable S/N</label>
+      <input data-field="serialRfCable" type="text" placeholder="RF cable serial number" />
+    </div>
+
+    <div class="field" data-field="fieldAntenna">
+      <label>Probe/Antenna S/N <span class="req" data-field="reqAntenna" style="display:none">*</span></label>
+      <input data-field="serialAntenna" type="text" placeholder="Probe/antenna serial number" />
+    </div>
+  </div>
+
+  <hr class="section-divider" data-field="dividerIssue" />
+
+  <div class="section-label">Details</div>
+
+  <div class="field full">
+    <label>Description of Problem <span class="req">*</span></label>
+    <textarea data-field="description" placeholder="Describe the problem clearly"></textarea>
+  </div>
+
+  <div class="field full">
+    <label>Upload Image <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7">(optional — jpg, png, pdf)</span></label>
+    <input data-field="imageUpload" type="file" accept="image/*,.pdf" multiple />
+    <div class="note">You may attach photos of the unit or relevant documents.</div>
+  </div>
+
+  <hr class="section-divider" data-field="dividerAddress" />
+
+  <div class="section-label" data-field="addressSectionLabel">Addresses</div>
+
+  <div class="addr-group" data-field="addressGroup">
+    <div class="field full">
+      <label>Billing Address</label>
+      <textarea data-field="billingAddress" placeholder="Billing address"></textarea>
+    </div>
+    <div class="field full">
+      <label>Return Address</label>
+      <textarea data-field="returnAddress" placeholder="Return address"></textarea>
+    </div>
+    <div class="field full" data-field="fieldCalCert">
+      <label>Address to be Printed on Calibration Certificate</label>
+      <textarea data-field="calCertificateAddress" placeholder="Address to be printed on calibration certificate"></textarea>
+    </div>
+
+    <div class="field full">
+      <label>Material to be Sent to</label>
+      <div class="static-box">Fastech Telecommunications (India) Pvt. Ltd.,
+FASTECH PARAM,
+EL- 44, Electronic Zone, TTC Industrial Area,
+MIDC, Mahape, Navi Mumbai-400710.
+Tel. No. 022-28353636 Ext. 112
+Our GST No. 27AAACF4021B1ZE</div>
+    </div>
+  </div>
+
+  <hr class="section-divider" />
+
+  <div class="section-label">Additional Information</div>
+
+  <div class="field full">
+    <textarea data-field="additionalInfo" placeholder="Anything else you'd like the service team to know (optional)"></textarea>
+  </div>
+</template>
+
 <script>
   const API = window.location.origin;
-  const $ = id => document.getElementById(id);
 
-  function updateSerialFields(oem) {
-    const group = $('serialGroup');
-    const single = $('fieldSingleSerial');
-    const base = $('fieldBaseUnit');
-    const rf = $('fieldRfCable');
-    const ant = $('fieldAntenna');
+  function getField(scope, name) {
+    return scope.querySelector('[data-field="' + name + '"]');
+  }
+
+  function updateSerialFields(scope) {
+    const group = getField(scope, 'serialGroup');
+    const single = getField(scope, 'fieldSingleSerial');
+    const base = getField(scope, 'fieldBaseUnit');
+    const rf = getField(scope, 'fieldRfCable');
+    const ant = getField(scope, 'fieldAntenna');
+    const oem = getField(scope, 'oem').value;
 
     if (!oem) {
       group.classList.remove('active');
@@ -306,22 +341,21 @@ Our GST No. 27AAACF4021B1ZE</div>
     }
   }
 
-  function updateNardaCalibrationRequirement() {
-    const isNardaCalibration = $('oem').value === 'Narda' && $('serviceType').value === 'Calibration';
-    $('reqBaseUnit').style.display = isNardaCalibration ? '' : 'none';
-    $('reqAntenna').style.display = isNardaCalibration ? '' : 'none';
+  function updateNardaCalibrationRequirement(scope) {
+    const isNardaCalibration = getField(scope, 'oem').value === 'Narda' && getField(scope, 'serviceType').value === 'Calibration';
+    getField(scope, 'reqBaseUnit').style.display = isNardaCalibration ? '' : 'none';
+    getField(scope, 'reqAntenna').style.display = isNardaCalibration ? '' : 'none';
   }
 
-  function updateVisibilityForServiceType(serviceType) {
-    const addressGroup = $('addressGroup');
-    const addressLabel = $('addressSectionLabel');
-    const dividerAddress = $('dividerAddress');
-    const fieldCalCert = $('fieldCalCert');
-    const serialGroup = $('serialGroup');
-    const dividerSerial = $('dividerSerial');
+  function updateVisibilityForServiceType(scope, serviceType) {
+    const addressGroup = getField(scope, 'addressGroup');
+    const addressLabel = getField(scope, 'addressSectionLabel');
+    const dividerAddress = getField(scope, 'dividerAddress');
+    const fieldCalCert = getField(scope, 'fieldCalCert');
+    const serialGroup = getField(scope, 'serialGroup');
+    const dividerSerial = getField(scope, 'dividerSerial');
 
     if (serviceType === 'Support') {
-      // Support: hide all extra fields, show only Description + Upload Image
       addressGroup.classList.remove('active');
       addressLabel.style.display = 'none';
       dividerAddress.classList.add('hidden');
@@ -330,11 +364,9 @@ Our GST No. 27AAACF4021B1ZE</div>
       return;
     }
 
-    // Not Support: restore serial number visibility based on OEM selection
     dividerSerial.classList.remove('hidden');
-    updateSerialFields($('oem').value);
+    updateSerialFields(scope);
 
-    // Addresses: Billing + Return always shown (for Calibration/Repair); Cal Cert only for Calibration
     addressGroup.classList.add('active');
     addressLabel.style.display = '';
     dividerAddress.classList.remove('hidden');
@@ -343,122 +375,178 @@ Our GST No. 27AAACF4021B1ZE</div>
       fieldCalCert.style.display = '';
     } else {
       fieldCalCert.style.display = 'none';
-      $('calCertificateAddress').value = '';
+      getField(scope, 'calCertificateAddress').value = '';
     }
   }
 
-  $('oem').addEventListener('change', e => {
-    $('serialSingle').value = '';
-    $('serialBaseUnit').value = '';
-    $('serialRfCable').value = '';
-    $('serialAntenna').value = '';
+  function initForm(scope, formType) {
+    const oemSel = getField(scope, 'oem');
+    const serviceTypeSel = getField(scope, 'serviceType');
 
-    const fieldOemOther = $('fieldOemOther');
-    if (e.target.value === 'Others') {
-      fieldOemOther.style.display = '';
-    } else {
-      fieldOemOther.style.display = 'none';
-      $('oemOther').value = '';
-    }
+    oemSel.addEventListener('change', () => {
+      getField(scope, 'serialSingle').value = '';
+      getField(scope, 'serialBaseUnit').value = '';
+      getField(scope, 'serialRfCable').value = '';
+      getField(scope, 'serialAntenna').value = '';
 
-    if ($('serviceType').value !== 'Support') {
-      updateSerialFields(e.target.value);
-    }
-    updateNardaCalibrationRequirement();
-  });
-
-  $('serviceType').addEventListener('change', e => {
-    updateVisibilityForServiceType(e.target.value);
-    updateNardaCalibrationRequirement();
-  });
-
-  // Initialize on load: nothing selected yet, so hide everything dynamic
-  updateVisibilityForServiceType('');
-  $('addressGroup').classList.remove('active');
-  $('dividerSerial').classList.add('hidden');
-  $('dividerAddress').classList.add('hidden');
-  $('addressSectionLabel').style.display = 'none';
-  updateNardaCalibrationRequirement();
-
-  function show(msg, type = 'success') {
-    const s = $('successBox'), e = $('errorBox');
-    s.style.display = 'none';
-    e.style.display = 'none';
-    const box = type === 'success' ? s : e;
-    box.textContent = msg;
-    box.style.display = 'block';
-  }
-
-  async function submitRequest() {
-    const oemSelected = $('oem').value.trim();
-    const oemOther = $('oemOther').value.trim();
-    const oem = oemSelected === 'Others' ? oemOther : oemSelected;
-    const serviceType = $('serviceType').value.trim();
-
-    const payload = {
-      name: $('name').value.trim(),
-      email: $('email').value.trim(),
-      phone: $('phone').value.trim(),
-      company: $('company').value.trim(),
-      designation: $('designation').value.trim(),
-      oem,
-      serviceType,
-      product: $('product').value.trim(),
-      softwareVersion: $('softwareVersion').value.trim(),
-      serialSingle: $('serialSingle').value.trim(),
-      serialBaseUnit: $('serialBaseUnit').value.trim(),
-      serialRfCable: $('serialRfCable').value.trim(),
-      serialAntenna: $('serialAntenna').value.trim(),
-      billingAddress: $('billingAddress').value.trim(),
-      returnAddress: $('returnAddress').value.trim(),
-      calCertificateAddress: $('calCertificateAddress').value.trim(),
-      description: $('description').value.trim(),
-      additionalInfo: $('additionalInfo').value.trim()
-    };
-
-    if (!payload.name || !payload.email || !oemSelected || (oemSelected === 'Others' && !oemOther) || !payload.serviceType || !payload.product || !payload.description) {
-      show('Please fill all required fields: Customer Name, Email, OEM, Service Type, Product Model, and Description.', 'error');
-      return;
-    }
-
-    if (oemSelected === 'Narda' && serviceType === 'Calibration' && (!payload.serialBaseUnit || !payload.serialAntenna)) {
-      show('For Narda calibration requests, Base Unit S/N and Probe/Antenna S/N are required.', 'error');
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      Object.entries(payload).forEach(([k, v]) => formData.append(k, v));
-
-      const files = $('imageUpload').files;
-      for (let i = 0; i < files.length; i++) {
-        formData.append('images', files[i]);
+      const fieldOemOther = getField(scope, 'oemOtherWrap');
+      if (oemSel.value === 'Others') {
+        fieldOemOther.style.display = '';
+      } else {
+        fieldOemOther.style.display = 'none';
+        getField(scope, 'oemOther').value = '';
       }
 
-      const res = await fetch(`${API}/api/requests`, {
-        method: 'POST',
-        body: formData
+      if (serviceTypeSel.value !== 'Support') {
+        updateSerialFields(scope);
+      }
+      updateNardaCalibrationRequirement(scope);
+    });
+
+    serviceTypeSel.addEventListener('change', () => {
+      updateVisibilityForServiceType(scope, serviceTypeSel.value);
+      updateNardaCalibrationRequirement(scope);
+    });
+
+    updateVisibilityForServiceType(scope, '');
+    getField(scope, 'addressGroup').classList.remove('active');
+    getField(scope, 'dividerSerial').classList.add('hidden');
+    getField(scope, 'dividerAddress').classList.add('hidden');
+    getField(scope, 'addressSectionLabel').style.display = 'none';
+    updateNardaCalibrationRequirement(scope);
+
+    const successBox = getField(scope, '__success');
+    const errorBox = getField(scope, '__error');
+    const submitBtn = getField(scope, '__submit');
+
+    function show(msg, type) {
+      const box = type === 'success' ? successBox : errorBox;
+      successBox.style.display = 'none';
+      errorBox.style.display = 'none';
+      box.textContent = msg;
+      box.style.display = 'block';
+    }
+
+    async function submit() {
+      const oemSelected = oemSel.value.trim();
+      const oemOther = getField(scope, 'oemOther').value.trim();
+      const oem = oemSelected === 'Others' ? oemOther : oemSelected;
+      const serviceType = serviceTypeSel.value.trim();
+
+      const payload = {
+        name: getField(scope, 'name').value.trim(),
+        email: getField(scope, 'email').value.trim(),
+        phone: getField(scope, 'phone').value.trim(),
+        company: getField(scope, 'company').value.trim(),
+        designation: getField(scope, 'designation').value.trim(),
+        oem,
+        serviceType,
+        product: getField(scope, 'product').value.trim(),
+        softwareVersion: getField(scope, 'softwareVersion').value.trim(),
+        serialSingle: getField(scope, 'serialSingle').value.trim(),
+        serialBaseUnit: getField(scope, 'serialBaseUnit').value.trim(),
+        serialRfCable: getField(scope, 'serialRfCable').value.trim(),
+        serialAntenna: getField(scope, 'serialAntenna').value.trim(),
+        billingAddress: getField(scope, 'billingAddress').value.trim(),
+        returnAddress: getField(scope, 'returnAddress').value.trim(),
+        calCertificateAddress: getField(scope, 'calCertificateAddress').value.trim(),
+        description: getField(scope, 'description').value.trim(),
+        additionalInfo: getField(scope, 'additionalInfo').value.trim()
+      };
+
+      if (!payload.name || !payload.email || !oemSelected || (oemSelected === 'Others' && !oemOther) || !payload.serviceType || !payload.product || !payload.description) {
+        show('Please fill all required fields: Customer Name, Email, OEM, Service Type, Product Model, and Description.', 'error');
+        return;
+      }
+
+      if (oemSelected === 'Narda' && serviceType === 'Calibration' && (!payload.serialBaseUnit || !payload.serialAntenna)) {
+        show('For Narda calibration requests, Base Unit S/N and Probe/Antenna S/N are required.', 'error');
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+        Object.entries(payload).forEach(([k, v]) => formData.append(k, v));
+        formData.append('type', formType);
+
+        const files = getField(scope, 'imageUpload').files;
+        for (let i = 0; i < files.length; i++) {
+          formData.append('images', files[i]);
+        }
+
+        const res = await fetch(`${API}/api/requests`, {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Submit failed');
+
+        let msg = `Request submitted successfully. Your TMI number is ${data.id}.`;
+        if (data.emails?.team?.sent && data.emails?.customer?.sent) {
+          msg += ' Confirmation emails were sent to you and the service team.';
+        } else if (data.emails?.team?.sent) {
+          msg += ' The service team has been notified by email.';
+        } else if (data.emails?.customer?.sent) {
+          msg += ' A confirmation email was sent to you.';
+        } else if (data.emails?.team?.error || data.emails?.customer?.error) {
+          msg += ' Note: email delivery had an issue, but your request was saved.';
+        }
+
+        show(msg, 'success');
+        const panel = scope.closest('.panel');
+        if (panel) panel.scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {
+        show(err.message || 'Submit failed.', 'error');
+      }
+    }
+
+    submitBtn.addEventListener('click', submit);
+  }
+
+  // Render the form template into both tab scopes and initialize each.
+  (function bootstrap() {
+    const tpl = document.getElementById('requestFormTemplate');
+    const scopes = [
+      { pane: 'service', grid: 'serviceFormGrid', submit: 'serviceSubmit', success: 'serviceSuccess', error: 'serviceError', formType: 'service_request' },
+      { pane: 'support', grid: 'supportFormGrid', submit: 'supportSubmit', success: 'supportSuccess', error: 'supportError', formType: 'support' }
+    ];
+
+    for (const cfg of scopes) {
+      const grid = document.getElementById(cfg.grid);
+      const frag = tpl.content.cloneNode(true);
+      grid.appendChild(frag);
+
+      const pane = document.querySelector(`.tab-pane[data-pane="${cfg.pane}"]`);
+      const scope = pane.querySelector('.panel-body');
+      pane.querySelector(`#${cfg.submit}`).dataset.field = '__submit';
+      pane.querySelector(`#${cfg.success}`).dataset.field = '__success';
+      pane.querySelector(`#${cfg.error}`).dataset.field = '__error';
+
+      initForm(scope, cfg.formType);
+    }
+
+    // Tab switching
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.tab;
+        tabButtons.forEach(b => {
+          const isActive = b === btn;
+          b.classList.toggle('active', isActive);
+          b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        tabPanes.forEach(p => {
+          p.classList.toggle('active', p.dataset.pane === target);
+        });
       });
+    });
+  })();
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Submit failed');
-
-      let msg = `Request submitted successfully. Your TMI number is ${data.id}.`;
-      if (data.emails?.team?.sent && data.emails?.customer?.sent) {
-        msg += ' Confirmation emails were sent to you and the service team.';
-      } else if (data.emails?.team?.sent) {
-        msg += ' The service team has been notified by email.';
-      } else if (data.emails?.customer?.sent) {
-        msg += ' A confirmation email was sent to you.';
-      } else if (data.emails?.team?.error || data.emails?.customer?.error) {
-        msg += ' Note: email delivery had an issue, but your request was saved.';
-      }
-
-      show(msg, 'success');
-      document.getElementById('requestFormPanel').scrollIntoView({ behavior: 'smooth' });
-    } catch (err) {
-      show(err.message || 'Submit failed.', 'error');
-    }
+  function scrollToActiveForm() {
+    const active = document.querySelector('.tab-pane.active .panel');
+    if (active) active.scrollIntoView({ behavior: 'smooth' });
   }
 </script>
 </body>
