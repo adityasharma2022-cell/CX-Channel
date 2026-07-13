@@ -54,7 +54,7 @@
     .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
     .page-header h1{font-size:24px;font-weight:800;letter-spacing:-.04em;line-height:1.2}
     .page-header p{color:var(--muted);font-size:13px;margin-top:5px}
-    .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
     .metric-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow)}
     .metric-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
     .metric-icon.blue{background:#e0f2fe;color:var(--primary-dark)}
@@ -206,10 +206,16 @@
             <div class="metric-sub">All requests in the system</div>
           </div>
           <div class="metric-card">
-            <div class="metric-icon yellow">P</div>
-            <div class="metric-label">Pending</div>
-            <div class="metric-value" id="metricPending">0</div>
-            <div class="metric-sub">Awaiting action</div>
+            <div class="metric-icon yellow">PC</div>
+            <div class="metric-label">Pending For Customer</div>
+            <div class="metric-value" id="metricPendingCustomer">0</div>
+            <div class="metric-sub">Awaiting customer action</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon yellow">PF</div>
+            <div class="metric-label">Pending For Fastech</div>
+            <div class="metric-value" id="metricPendingFastech">0</div>
+            <div class="metric-sub">Awaiting Fastech action</div>
           </div>
           <div class="metric-card">
             <div class="metric-icon indigo">R</div>
@@ -338,7 +344,7 @@
 
         <div class="approval-section" id="approvalSection">
           <div class="detail-section-title">Approval</div>
-          <p class="approval-hint">This is a Calibration/Repair request. The customer is not emailed on submission — approving or rejecting here will email them automatically.</p>
+          <p class="approval-hint">The customer is not emailed on submission. Approving generates an RMA number and emails the customer automatically.</p>
           <div class="approval-actions" id="approvalActions">
             <button class="btn btn-approve" onclick="approveRequest()">✓ Approve Request</button>
             <button class="btn btn-reject" onclick="rejectRequest()">✕ Reject Request</button>
@@ -351,29 +357,26 @@
           <div class="detail-section-title">Update Request</div>
           <div class="detail-grid">
             <div class="field">
-              <label>Status</label>
-              <select id="uStatus">
-                <option value="pending">pending</option>
-                <option value="forwarded">forwarded</option>
-                <option value="approved">approved</option>
-                <option value="closed">closed</option>
-                <option value="rejected">rejected</option>
+              <label>Pending For Customer</label>
+              <select id="uPendingCustomer">
+                <option value="">— None —</option>
+                <option value="Pending For Customer">Pending For Customer</option>
+                <option value="Resolved">Resolved</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Pending For Fastech</label>
+              <select id="uPendingFastech">
+                <option value="">— None —</option>
+                <option value="Pending For Fastech">Pending For Fastech</option>
+                <option value="Resolved">Resolved</option>
               </select>
             </div>
 
             <div class="field">
               <label>Forward To</label>
               <input id="uForwardTo" placeholder="Team or person" />
-            </div>
-
-            <div class="field full">
-              <label>Internal Note</label>
-              <textarea id="uNote"></textarea>
-            </div>
-
-            <div class="field full">
-              <label>Customer Feedback</label>
-              <textarea id="uFeedback"></textarea>
             </div>
           </div>
 
@@ -396,7 +399,7 @@
   })();
 
   const API = window.location.origin;
-  let allRequests = [], filtered = [], currentRequest = null, currentHistory = [], statusFilter = 'all', sortKey = 'createdAt', sortDir = -1, page = 1;
+  let allRequests = [], filtered = [], currentRequest = null, statusFilter = 'all', sortKey = 'createdAt', sortDir = -1, page = 1;
   const PAGE_SIZE = 20;
 
   const af = { keyword:'', oem:'', service:'', status:'', date:'', team:'' };
@@ -409,9 +412,23 @@
 
   const shortId = id => {
     const s = String(id || '');
-    const clean = s.replace(/^TMI-/, '');
+    const clean = s.replace(/^(TMI-|SUB-|RMA-)/, '');
     return 'T-' + clean.slice(-6).toUpperCase();
   };
+
+  function displayRma(record) {
+    if (record.rmaNumber) return shortId(record.rmaNumber);
+    const s = String(record.status || '').toLowerCase();
+    if (['approved', 'closed'].includes(s) && /^TMI-/.test(String(record.id || ''))) {
+      return shortId(record.id);
+    }
+    return '—';
+  }
+
+  function countPendingFor(records, field, label) {
+    const norm = v => String(v || '').toLowerCase().replace(/\s+/g, '');
+    return records.filter(r => norm(r[field]) === norm(label)).length;
+  }
 
   function fmtStatus(s){
     const v = String(s || 'pending').toLowerCase();
@@ -446,9 +463,10 @@
 
       allRequests = d;
       document.getElementById('metricTotal').textContent = allRequests.length;
-      document.getElementById('metricPending').textContent = allRequests.filter(x => String(x.status || '').toLowerCase() === 'pending').length;
+      document.getElementById('metricPendingCustomer').textContent = countPendingFor(allRequests, 'pendingForCustomer', 'Pending For Customer');
+      document.getElementById('metricPendingFastech').textContent = countPendingFor(allRequests, 'pendingForFastech', 'Pending For Fastech');
       document.getElementById('metricReview').textContent = allRequests.filter(x => String(x.status || '').toLowerCase() === 'forwarded').length;
-      document.getElementById('metricFinalized').textContent = allRequests.filter(x => ['approved','closed'].includes(String(x.status || '').toLowerCase())).length;
+      document.getElementById('metricFinalized').textContent = allRequests.filter(x => ['approved','closed','rejected'].includes(String(x.status || '').toLowerCase())).length;
       applyFilters();
     } catch(e){
       tb.innerHTML = '<tr><td colspan="12" class="td-empty">Could not load requests.</td></tr>';
@@ -551,7 +569,7 @@
       return `
       <tr>
         <td style="color:var(--muted);font-size:12px;">${start+i+1}</td>
-        <td><strong>${esc(shortId(r.id||'-'))}</strong></td>
+        <td><strong>${esc(displayRma(r))}</strong></td>
         <td>${esc(r.oem||'-')}</td>
         <td>${esc(r.serviceType||'-')}</td>
         <td>
@@ -606,10 +624,9 @@
     if(!r.ok || !d.request) return;
 
     currentRequest = d.request;
-    currentHistory = d.history || [];
     const cr = currentRequest;
 
-    document.getElementById('modalTitle').textContent = `Request — ${shortId(cr.id || '')}`;
+    document.getElementById('modalTitle').textContent = `Request — ${displayRma(cr) !== '—' ? displayRma(cr) : shortId(cr.id || '')}`;
 
     document.getElementById('modalDetailsWrap').innerHTML = `
       <div class="detail-section" style="margin-bottom:14px;">
@@ -617,7 +634,11 @@
         <div class="detail-grid">
           <div class="detail-item">
             <div class="d-label">RMA No</div>
-            <div class="d-value">${esc(shortId(cr.id||'-'))}</div>
+            <div class="d-value">${esc(displayRma(cr))}</div>
+          </div>
+          <div class="detail-item">
+            <div class="d-label">Submission Reference</div>
+            <div class="d-value">${esc(cr.id || '—')}</div>
           </div>
           <div class="detail-item">
             <div class="d-label">OEM</div>
@@ -717,50 +738,14 @@
             : `<div class="td-empty">No uploaded files found for this request.</div>`
         }
       </div>
-
-      <div class="detail-section" style="margin-bottom:14px;">
-        <div class="detail-section-title">Customer History</div>
-        ${
-          currentHistory.length
-            ? `<div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>RMA No</th>
-                      <th>OEM</th>
-                      <th>Service</th>
-                      <th>Product</th>
-                      <th>Status</th>
-                      <th>Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${currentHistory.map(h => `
-                      <tr>
-                        <td><strong>${esc(shortId(h.id||'-'))}</strong></td>
-                        <td>${esc(h.oem||'-')}</td>
-                        <td>${esc(h.serviceType||'-')}</td>
-                        <td>${esc(h.product||'-')}</td>
-                        <td><span class="${pillClass(h.status)}">${esc(fmtStatus(h.status))}</span></td>
-                        <td>${esc(h.createdAt||'-')}</td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
-              </div>`
-            : `<div class="td-empty">No previous requests found for this customer.</div>`
-        }
-      </div>
     `;
 
-    document.getElementById('uStatus').value = cr.status || 'pending';
+    document.getElementById('uPendingCustomer').value = cr.pendingForCustomer || '';
+    document.getElementById('uPendingFastech').value = cr.pendingForFastech || '';
     document.getElementById('uForwardTo').value = cr.forwardTo || '';
-    document.getElementById('uNote').value = cr.internalNote || '';
-    document.getElementById('uFeedback').value = cr.customerFeedback || '';
 
-    const isCalibrationOrRepair = ['Calibration', 'Repair'].includes(cr.serviceType);
     const approvalSection = document.getElementById('approvalSection');
-    approvalSection.classList.toggle('active', isCalibrationOrRepair);
+    approvalSection.classList.add('active');
     updateApprovalStatusNote(cr.status);
 
     document.getElementById('modalOverlay').classList.add('open');
@@ -774,7 +759,9 @@
 
     if(s === 'approved'){
       note.className = 'approval-status-note is-approved';
-      note.textContent = 'This request has been approved. The customer was notified by email.';
+      note.textContent = currentRequest?.rmaNumber
+        ? `Approved. RMA ${displayRma(currentRequest)} assigned. The customer was notified by email.`
+        : 'This request has been approved. The customer was notified by email.';
       note.style.display = '';
       actions.style.display = 'none';
       undoBtn.style.display = '';
@@ -812,8 +799,8 @@
     const payload = {
       status,
       forwardTo: document.getElementById('uForwardTo').value,
-      internalNote: document.getElementById('uNote').value,
-      customerFeedback: document.getElementById('uFeedback').value
+      pendingForCustomer: document.getElementById('uPendingCustomer').value,
+      pendingForFastech: document.getElementById('uPendingFastech').value
     };
 
     try {
@@ -825,15 +812,16 @@
       const data = await res.json();
       if(!res.ok) throw new Error(data.message || 'Update failed.');
 
-      document.getElementById('uStatus').value = status;
+      currentRequest = data.request;
       updateApprovalStatusNote(status);
 
       const emailNote = data.emails?.customer?.sent
-        ? 'The customer has been emailed.'
+        ? (data.request?.rmaNumber ? `Customer emailed with RMA ${displayRma(data.request)}.` : 'The customer has been emailed.')
         : (data.emails?.customer?.error ? 'Note: the customer email failed to send, but the status was updated.' : '');
       if(emailNote) alert(emailNote);
 
       loadRequests();
+      if (currentRequest) openModal(currentRequest.id);
     } catch(err){
       alert(err.message || 'Could not update this request.');
     }
@@ -849,10 +837,9 @@
     if(!currentRequest) return;
 
     const payload = {
-      status: document.getElementById('uStatus').value,
       forwardTo: document.getElementById('uForwardTo').value,
-      internalNote: document.getElementById('uNote').value,
-      customerFeedback: document.getElementById('uFeedback').value
+      pendingForCustomer: document.getElementById('uPendingCustomer').value,
+      pendingForFastech: document.getElementById('uPendingFastech').value
     };
 
     await fetch(`${API}/api/requests/${encodeURIComponent(currentRequest.id)}`,{

@@ -69,8 +69,27 @@ const readSupport = () => readJSON(SUPPORT_FILE, []);
 const writeSupport = (data) => writeJSON(SUPPORT_FILE, data);
 const readUsers = () => readJSON(USERS_FILE, []);
 
-function generateId() {
-  return "TMI-" + Date.now() + Math.floor(Math.random() * 1000);
+function generateSubmissionId() {
+  return "SUB-" + Date.now() + Math.floor(Math.random() * 1000);
+}
+
+function generateRmaNumber() {
+  return "RMA-" + Date.now() + Math.floor(Math.random() * 1000);
+}
+
+function isApprovedStatus(status) {
+  return String(status || "").toLowerCase() === "approved";
+}
+
+function assignRmaOnApproval(record, previousStatus) {
+  const nowApproved = isApprovedStatus(record.status);
+  const wasApproved = isApprovedStatus(previousStatus);
+  if (nowApproved && !wasApproved && !record.rmaNumber) {
+    record.rmaNumber = generateRmaNumber();
+  }
+  if (!nowApproved && wasApproved) {
+    record.rmaNumber = "";
+  }
 }
 
 function nowIST() {
@@ -235,7 +254,10 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
       : [];
 
     const record = {
-      id: generateId(),
+      id: generateSubmissionId(),
+      rmaNumber: "",
+      pendingForCustomer: "",
+      pendingForFastech: "",
       oem: body.oem || "",
       serviceType: body.serviceType || "",
       product: body.product || "",
@@ -245,6 +267,9 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
       phone: body.phone || "",
       company: body.company || "",
       designation: body.designation || "",
+      location: body.location || "",
+      poNumber: body.serviceType === "Calibration" ? body.poNumber || "" : "",
+      poDate: body.serviceType === "Calibration" ? body.poDate || "" : "",
       serialSingle: body.serialSingle || "",
       serialBaseUnit: body.serialBaseUnit || "",
       serialRfCable: body.serialRfCable || "",
@@ -281,16 +306,19 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
       await sendMail({
         to: teamEmail,
         subject: `New FASCAL request ${record.id}`,
-        text: `New request received from ${record.name} (${record.email}). RMA: ${record.id}`,
+        text: `New request received from ${record.name} (${record.email}). Submission reference: ${record.id}`,
         html: `
           <h3>New FASCAL Request</h3>
-          <p><strong>RMA:</strong> ${record.id}</p>
+          <p><strong>Submission Reference:</strong> ${record.id}</p>
           <p><strong>Name:</strong> ${record.name}</p>
           <p><strong>Email:</strong> ${record.email}</p>
           <p><strong>OEM:</strong> ${record.oem}</p>
           <p><strong>Service:</strong> ${record.serviceType}</p>
           <p><strong>Product:</strong> ${record.product}</p>
+          <p><strong>Location:</strong> ${record.location || "—"}</p>
+          ${record.poNumber || record.poDate ? `<p><strong>PO:</strong> ${record.poNumber || "—"} / ${record.poDate || "—"}</p>` : ""}
           <p><strong>Description:</strong> ${record.description}</p>
+          <p><em>RMA number will be assigned after admin approval.</em></p>
         `,
         replyTo: record.email,
       });
@@ -300,23 +328,7 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
       emails.team.error = mailErr.message;
     }
 
-    // Customer confirmation email on submit: only for Support.
-    // Calibration/Repair customers are notified later, once the team updates the status on the dashboard.
-    if (record.serviceType === "Support") {
-      try {
-        await sendMail({
-          to: record.email,
-          subject: `FASCAL request received: ${record.id}`,
-          text: `Hi ${record.name}, your request has been received. RMA number: ${record.id}`,
-          html: `<p>Hi ${record.name},</p><p>Your request has been received successfully.</p><p><strong>RMA number:</strong> ${record.id}</p>`,
-        });
-        emails.customer.sent = true;
-      } catch (mailErr) {
-        console.error("Customer mail failed:", mailErr.message);
-        emails.customer.error = mailErr.message;
-      }
-    }
-
+    // Customer is notified by email only after admin approval (RMA assigned then).
     res.status(201).json({
       message: "Request submitted successfully.",
       id: record.id,
@@ -345,47 +357,50 @@ app.put("/api/requests/:id", async (req, res) => {
     "product",
     "oem",
     "serviceType",
+    "pendingForCustomer",
+    "pendingForFastech",
   ];
   const body = req.body || {};
   allowed.forEach((k) => {
     if (body[k] !== undefined) db[idx][k] = body[k];
   });
+  if (body.forwardTo !== undefined && String(body.forwardTo || "").trim()) {
+    if (!body.status || body.status === "pending") {
+      db[idx].status = "forwarded";
+    }
+  }
+  assignRmaOnApproval(db[idx], previousStatus);
   db[idx].updatedAt = nowIST();
   writeDB(db);
 
   const record = db[idx];
   const statusChanged =
     body.status !== undefined && body.status !== previousStatus;
-  const isCalibrationOrRepair = ["Calibration", "Repair"].includes(
-    record.serviceType,
-  );
   let customerMail = { sent: false };
 
-  // For Calibration/Repair requests, the customer is notified by email ONLY when the team
-  // explicitly approves or rejects the request — not on any other status change (e.g. forwarded).
   if (
     statusChanged &&
-    isCalibrationOrRepair &&
     record.email &&
     (record.status === "approved" || record.status === "rejected")
   ) {
     const isApproved = record.status === "approved";
+    const rmaRef = record.rmaNumber || record.id;
     const subject = isApproved
-      ? `Your FASCAL request ${record.id} has been approved`
+      ? `Your FASCAL request has been approved — RMA ${rmaRef}`
       : `Your FASCAL request ${record.id} has been rejected`;
     const introLine = isApproved
-      ? `Good news — your request (RMA: ${record.id}) has been approved.`
-      : `Your request (RMA: ${record.id}) has been rejected.`;
+      ? `Good news — your request has been approved. Your RMA number is ${rmaRef}.`
+      : `Your request (reference: ${record.id}) has been rejected.`;
 
     try {
       await sendMail({
         to: record.email,
         subject,
-        text: `Hi ${record.name}, ${introLine}${record.customerFeedback ? ` Note from our team: ${record.customerFeedback}` : ""}`,
+        text: `Hi ${record.name}, ${introLine}`,
         html: `
           <p>Hi ${record.name},</p>
           <p>${introLine}</p>
-          ${record.customerFeedback ? `<p><strong>Note from our team:</strong> ${record.customerFeedback}</p>` : ""}
+          ${isApproved ? `<p><strong>RMA Number:</strong> ${rmaRef}</p>` : ""}
         `,
       });
       customerMail.sent = true;
@@ -417,6 +432,9 @@ app.get("/api/export/csv", (req, res) => {
     return res.status(404).json({ message: "No data to export." });
   const cols = [
     "id",
+    "rmaNumber",
+    "pendingForCustomer",
+    "pendingForFastech",
     "oem",
     "serviceType",
     "product",
@@ -458,16 +476,37 @@ app.get("/api/export/csv", (req, res) => {
 
 app.get("/api/stats", (req, res) => {
   const db = readDB();
-  const count = (s) =>
+  const norm = (s) =>
+    String(s || "")
+      .toLowerCase()
+      .replace(/\s+/g, "");
+  const countPendingFor = (field, label) =>
+    db.filter((r) => norm(r[field]) === norm(label)).length;
+  const countStatus = (s) =>
     db.filter((r) => String(r.status || "").toLowerCase() === s).length;
   res.json({
     total: db.length,
-    pending: count("pending"),
-    review: count("review") + count("forwarded"),
-    approved: count("approved"),
-    resolved: count("resolved"),
-    closed: count("closed"),
-    rejected: count("rejected"),
+    pendingForCustomer: countPendingFor(
+      "pendingForCustomer",
+      "Pending For Customer",
+    ),
+    pendingForFastech: countPendingFor(
+      "pendingForFastech",
+      "Pending For Fastech",
+    ),
+    forwarded: countStatus("forwarded"),
+    finalised: db.filter((r) =>
+      ["approved", "closed", "rejected"].includes(
+        String(r.status || "").toLowerCase(),
+      ),
+    ).length,
+    // Legacy fields kept for compatibility
+    pending: countStatus("pending"),
+    review: countStatus("review") + countStatus("forwarded"),
+    approved: countStatus("approved"),
+    resolved: countStatus("resolved"),
+    closed: countStatus("closed"),
+    rejected: countStatus("rejected"),
   });
 });
 
@@ -483,7 +522,9 @@ app.get("/api/support", (req, res) => {
 app.get("/api/support/stats", (req, res) => {
   const support = readSupport();
   const norm = (s) =>
-    String(s || "").toLowerCase().replace(/\s+/g, "");
+    String(s || "")
+      .toLowerCase()
+      .replace(/\s+/g, "");
   const count = (s) => support.filter((r) => norm(r.status) === s).length;
   res.json({
     total: support.length,
@@ -532,7 +573,10 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
       : [];
 
     const record = {
-      id: generateId(),
+      id: generateSubmissionId(),
+      rmaNumber: "",
+      pendingForCustomer: "",
+      pendingForFastech: "",
       subject: body.subject || "",
       priority: body.priority || "Medium",
       oem: body.oem || "",
@@ -569,7 +613,9 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
     const emails = { team: { sent: false } };
 
     if (!process.env.TEAM_EMAIL) {
-      console.warn("TEAM_EMAIL is not set — falling back to hardcoded default.");
+      console.warn(
+        "TEAM_EMAIL is not set — falling back to hardcoded default.",
+      );
     }
     const teamEmail = process.env.TEAM_EMAIL;
 
@@ -580,7 +626,7 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
         text: `New support request from ${record.name} (${record.email}). Subject: ${record.subject}. Priority: ${record.priority}.`,
         html: `
           <h3>New FASCAL Support Request</h3>
-          <p><strong>Ticket:</strong> ${record.id}</p>
+          <p><strong>Submission Reference:</strong> ${record.id}</p>
           <p><strong>Subject:</strong> ${record.subject}</p>
           <p><strong>Priority:</strong> ${record.priority}</p>
           <p><strong>Name:</strong> ${record.name}</p>
@@ -591,6 +637,7 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
           <p><strong>Product:</strong> ${record.product}</p>
           <p><strong>Software Version:</strong> ${record.softwareVersion || "—"}</p>
           <p><strong>Description:</strong> ${record.description}</p>
+          <p><em>RMA number will be assigned after admin approval.</em></p>
         `,
         replyTo: record.email,
       });
@@ -607,9 +654,7 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
       emails,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Support submit failed." });
+    res.status(500).json({ message: err.message || "Support submit failed." });
   }
 });
 
@@ -627,11 +672,14 @@ app.put("/api/support/:id", async (req, res) => {
     "internalNote",
     "customerFeedback",
     "subject",
+    "pendingForCustomer",
+    "pendingForFastech",
   ];
   const body = req.body || {};
   allowed.forEach((k) => {
     if (body[k] !== undefined) support[idx][k] = body[k];
   });
+  assignRmaOnApproval(support[idx], previousStatus);
   support[idx].updatedAt = nowIST();
   writeSupport(support);
 
@@ -646,22 +694,23 @@ app.put("/api/support/:id", async (req, res) => {
     (record.status === "Approved" || record.status === "Rejected")
   ) {
     const isApproved = record.status === "Approved";
+    const rmaRef = record.rmaNumber || record.id;
     const subject = isApproved
-      ? `Your FASCAL support request ${record.id} has been approved`
+      ? `Your FASCAL support request has been approved — RMA ${rmaRef}`
       : `Your FASCAL support request ${record.id} has been rejected`;
     const introLine = isApproved
-      ? `Good news — your support request (Ticket: ${record.id}) has been approved.`
-      : `Your support request (Ticket: ${record.id}) has been rejected.`;
+      ? `Good news — your support request has been approved. Your RMA number is ${rmaRef}.`
+      : `Your support request (reference: ${record.id}) has been rejected.`;
 
     try {
       await sendMail({
         to: record.email,
         subject,
-        text: `Hi ${record.name}, ${introLine}${record.customerFeedback ? ` Note from our team: ${record.customerFeedback}` : ""}`,
+        text: `Hi ${record.name}, ${introLine}`,
         html: `
           <p>Hi ${record.name},</p>
           <p>${introLine}</p>
-          ${record.customerFeedback ? `<p><strong>Note from our team:</strong> ${record.customerFeedback}</p>` : ""}
+          ${isApproved ? `<p><strong>RMA Number:</strong> ${rmaRef}</p>` : ""}
         `,
       });
       customerMail.sent = true;
