@@ -267,6 +267,9 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
       phone: body.phone || "",
       company: body.company || "",
       designation: body.designation || "",
+      location: body.location || "",
+      poNumber: body.serviceType === "Calibration" ? body.poNumber || "" : "",
+      poDate: body.serviceType === "Calibration" ? body.poDate || "" : "",
       serialSingle: body.serialSingle || "",
       serialBaseUnit: body.serialBaseUnit || "",
       serialRfCable: body.serialRfCable || "",
@@ -312,6 +315,8 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
           <p><strong>OEM:</strong> ${record.oem}</p>
           <p><strong>Service:</strong> ${record.serviceType}</p>
           <p><strong>Product:</strong> ${record.product}</p>
+          <p><strong>Location:</strong> ${record.location || "—"}</p>
+          ${record.poNumber || record.poDate ? `<p><strong>PO:</strong> ${record.poNumber || "—"} / ${record.poDate || "—"}</p>` : ""}
           <p><strong>Description:</strong> ${record.description}</p>
           <p><em>RMA number will be assigned after admin approval.</em></p>
         `,
@@ -471,7 +476,10 @@ app.get("/api/export/csv", (req, res) => {
 
 app.get("/api/stats", (req, res) => {
   const db = readDB();
-  const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, "");
+  const norm = (s) =>
+    String(s || "")
+      .toLowerCase()
+      .replace(/\s+/g, "");
   const countPendingFor = (field, label) =>
     db.filter((r) => norm(r[field]) === norm(label)).length;
   const countStatus = (s) =>
@@ -514,7 +522,9 @@ app.get("/api/support", (req, res) => {
 app.get("/api/support/stats", (req, res) => {
   const support = readSupport();
   const norm = (s) =>
-    String(s || "").toLowerCase().replace(/\s+/g, "");
+    String(s || "")
+      .toLowerCase()
+      .replace(/\s+/g, "");
   const count = (s) => support.filter((r) => norm(r.status) === s).length;
   res.json({
     total: support.length,
@@ -603,7 +613,9 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
     const emails = { team: { sent: false } };
 
     if (!process.env.TEAM_EMAIL) {
-      console.warn("TEAM_EMAIL is not set — falling back to hardcoded default.");
+      console.warn(
+        "TEAM_EMAIL is not set — falling back to hardcoded default.",
+      );
     }
     const teamEmail = process.env.TEAM_EMAIL;
 
@@ -642,9 +654,7 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
       emails,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Support submit failed." });
+    res.status(500).json({ message: err.message || "Support submit failed." });
   }
 });
 
