@@ -292,6 +292,14 @@
   <div class="toast" id="toast"></div>
 
   <script>
+    (function requireTeamLogin() {
+      let u = null;
+      try { u = JSON.parse(localStorage.getItem("cxUser") || "null"); } catch (e) {}
+      if (!u || !u.token || u.role !== "team") {
+        window.location.replace("login.html");
+      }
+    })();
+
     let allSupport = [];
     let currentDetail = null;
     let statusFilter = "All";
@@ -319,7 +327,21 @@
       return "pill pill-open";
     }
 
-    function priorityPillClass(p) {
+    function displayRma(record) {
+      if (record.rmaNumber) return record.rmaNumber;
+      if (norm(record.status) === "approved" && /^TMI-/.test(String(record.id || ""))) {
+        return record.id;
+      }
+      return "—";
+    }
+
+    function pendingOptions(field, current) {
+      const label = field === "customer" ? "Pending For Customer" : "Pending For Fastech";
+      const opts = ["", label, "Resolved"];
+      return opts.map(function (o) {
+        return '<option value="' + esc(o) + '"' + (current === o ? " selected" : "") + '>' + esc(o || "— None —") + '</option>';
+      }).join("");
+    }
       const v = norm(p);
       if (v === "high") return "pill pill-priority-high";
       if (v === "medium") return "pill pill-priority-medium";
@@ -330,14 +352,11 @@
     function ensureAuth() {
       let user = null;
       try { user = JSON.parse(localStorage.getItem("cxUser") || "null"); } catch (e) {}
-      if (!user) {
-        try { user = JSON.parse(localStorage.getItem("fastech_team_session") || "null"); } catch (e) {}
-      }
-      if (!user) {
+      if (!user || !user.token || user.role !== "team") {
         window.location.href = "/login.html";
         return null;
       }
-      const name = user.username || user.name || "Support";
+      const name = user.username || user.name || "Team";
       const initial = String(name).charAt(0).toUpperCase();
       const av = document.getElementById("userAvatarSidebar");
       const nm = document.getElementById("userNameSidebar");
