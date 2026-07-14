@@ -264,7 +264,7 @@
       }
       .metrics {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 12px;
       }
       .metric-card {
@@ -762,12 +762,7 @@
               <div class="metric-value" id="openCount">0</div>
               <div class="metric-sub">Awaiting team action</div>
             </div>
-            <div class="metric-card">
-              <div class="metric-icon yellow">⏳</div>
-              <div class="metric-label">In Progress</div>
-              <div class="metric-value" id="progressCount">0</div>
-              <div class="metric-sub">Being worked on</div>
-            </div>
+       
             <div class="metric-card">
               <div class="metric-icon indigo">✔️</div>
               <div class="metric-label">Approved</div>
@@ -972,7 +967,7 @@
 
       function pendingOptions(field, current) {
         const label =
-          field === "customer" ? "Pending For Customer" : "Pending For Fastech";
+          field === "customer" ? "Pending From Customer" : "Pending From Fastech";
 
         const opts = ["", label, "Resolved"];
 

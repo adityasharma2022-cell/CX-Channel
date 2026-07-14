@@ -61,6 +61,7 @@
     .metric-icon.yellow{background:#fef3c7;color:#92400e}
     .metric-icon.indigo{background:#dbeafe;color:#1d4ed8}
     .metric-icon.green{background:#dcfce7;color:#166534}
+    .metric-icon.red{background:#fee2e2;color:#b91c1c}
     .metric-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
     .metric-value{font-size:32px;font-weight:800;line-height:1.1;margin:8px 0 2px}
     .metric-sub{font-size:12px;color:#94a3b8}
@@ -200,34 +201,34 @@
 
         <div class="metrics">
           <div class="metric-card">
-            <div class="metric-icon blue">T</div>
-            <div class="metric-label">Total Requests</div>
-            <div class="metric-value" id="metricTotal">0</div>
-            <div class="metric-sub">All requests in the system</div>
+            <div class="metric-icon yellow">⏳</div>
+            <div class="metric-label">Pending</div>
+            <div class="metric-value" id="metricPending">0</div>
+            <div class="metric-sub">Awaiting team action</div>
           </div>
           <div class="metric-card">
-            <div class="metric-icon yellow">PC</div>
-            <div class="metric-label">Pending For Customer</div>
-            <div class="metric-value" id="metricPendingCustomer">0</div>
-            <div class="metric-sub">Awaiting customer action</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-icon yellow">PF</div>
-            <div class="metric-label">Pending For Fastech</div>
-            <div class="metric-value" id="metricPendingFastech">0</div>
-            <div class="metric-sub">Awaiting Fastech action</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-icon indigo">R</div>
+            <div class="metric-icon indigo">➡️</div>
             <div class="metric-label">Forwarded</div>
-            <div class="metric-value" id="metricReview">0</div>
+            <div class="metric-value" id="metricForwarded">0</div>
             <div class="metric-sub">Forwarded for action</div>
           </div>
           <div class="metric-card">
-            <div class="metric-icon green">F</div>
-            <div class="metric-label">Finalized</div>
-            <div class="metric-value" id="metricFinalized">0</div>
-            <div class="metric-sub">Approved or closed requests</div>
+            <div class="metric-icon green">✓</div>
+            <div class="metric-label">Approved</div>
+            <div class="metric-value" id="metricApproved">0</div>
+            <div class="metric-sub">Approved requests</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon blue">🔒</div>
+            <div class="metric-label">Closed</div>
+            <div class="metric-value" id="metricClosed">0</div>
+            <div class="metric-sub">Closed requests</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon red">✕</div>
+            <div class="metric-label">Rejected</div>
+            <div class="metric-value" id="metricRejected">0</div>
+            <div class="metric-sub">Rejected requests</div>
           </div>
         </div>
 
@@ -316,7 +317,7 @@
                   <th>Company</th>
                   <th>Designation</th>
                   <th>Status</th>
-                  <th>Notes</th>
+                  <th>Pending From</th>
                   <th>Date</th>
                   <th>Action</th>
                 </tr>
@@ -357,20 +358,11 @@
           <div class="detail-section-title">Update Request</div>
           <div class="detail-grid">
             <div class="field">
-              <label>Pending For Customer</label>
-              <select id="uPendingCustomer">
+              <label>Status</label>
+              <select id="uPendingStatus">
                 <option value="">— None —</option>
-                <option value="Pending For Customer">Pending For Customer</option>
-                <option value="Resolved">Resolved</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label>Pending For Fastech</label>
-              <select id="uPendingFastech">
-                <option value="">— None —</option>
-                <option value="Pending For Fastech">Pending For Fastech</option>
-                <option value="Resolved">Resolved</option>
+                <option value="Pending from Customer">Pending from Customer</option>
+                <option value="Pending from Fastech">Pending from Fastech</option>
               </select>
             </div>
 
@@ -462,14 +454,14 @@
       if(!r.ok || !Array.isArray(d)) throw new Error('bad');
 
       allRequests = d;
-      document.getElementById('metricTotal').textContent = allRequests.length;
-      document.getElementById('metricPendingCustomer').textContent = countPendingFor(allRequests, 'pendingForCustomer', 'Pending For Customer');
-      document.getElementById('metricPendingFastech').textContent = countPendingFor(allRequests, 'pendingForFastech', 'Pending For Fastech');
-      document.getElementById('metricReview').textContent = allRequests.filter(x => String(x.status || '').toLowerCase() === 'forwarded').length;
-      document.getElementById('metricFinalized').textContent = allRequests.filter(x => ['approved','closed','rejected'].includes(String(x.status || '').toLowerCase())).length;
+      document.getElementById('metricPending').textContent = allRequests.filter(x => String(x.status || '').toLowerCase() === 'pending').length;
+      document.getElementById('metricForwarded').textContent = allRequests.filter(x => String(x.status || '').toLowerCase() === 'forwarded').length;
+      document.getElementById('metricApproved').textContent = allRequests.filter(x => String(x.status || '').toLowerCase() === 'approved').length;
+      document.getElementById('metricClosed').textContent = allRequests.filter(x => String(x.status || '').toLowerCase() === 'closed').length;
+      document.getElementById('metricRejected').textContent = allRequests.filter(x => String(x.status || '').toLowerCase() === 'rejected').length;
       applyFilters();
     } catch(e){
-      tb.innerHTML = '<tr><td colspan="12" class="td-empty">Could not load requests.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="11" class="td-empty">Could not load requests.</td></tr>';
     }
   }
 
@@ -556,15 +548,15 @@
     tb.innerHTML = pageRows.map((r,i)=>{
       const id = String(r.id||'');
       const safeId = id.replace(/'/g,"\\'");
-      const note = String(r.internalNote || '').trim();
-      const forwardTo = String(r.forwardTo || '').trim();
-      const noteCards = [
-        note ? `<div class="note-card"><span class="note-label">Note</span><span class="note-text">${esc(note)}</span></div>` : '',
-        forwardTo ? `<div class="note-card forward"><span class="note-label">Forwarded to</span><span class="note-text">${esc(forwardTo)}</span></div>` : ''
-      ].filter(Boolean).join('');
-      const notesCell = noteCards
-        ? `<div class="notes-cell">${noteCards}</div>`
-        : `<span class="notes-empty">—</span>`;
+
+      let pendingFromCell = '—';
+      const pcVal = String(r.pendingForCustomer || '').toLowerCase().replace(/\s+/g, '');
+      const pfVal = String(r.pendingForFastech || '').toLowerCase().replace(/\s+/g, '');
+      if (pcVal === 'pendingforcustomer' || pcVal === 'pendingfromcustomer') {
+        pendingFromCell = '<span class="pill pill-pending">Pending from Customer</span>';
+      } else if (pfVal === 'pendingforfastech' || pfVal === 'pendingfromfastech') {
+        pendingFromCell = '<span class="pill pill-pending">Pending from Fastech</span>';
+      }
 
       return `
       <tr>
@@ -584,7 +576,7 @@
         <td>${esc(r.company||'-')}</td>
         <td>${esc(r.designation||'-')}</td>
         <td><span class="${pillClass(r.status)}">${esc(fmtStatus(r.status))}</span></td>
-        <td>${notesCell}</td>
+        <td>${pendingFromCell}</td>
         <td style="font-size:12px;color:var(--muted);white-space:nowrap;">${esc(r.createdAt||'-')}</td>
         <td><button class="btn btn-primary btn-sm" onclick="openModal('${safeId}')">View</button></td>
       </tr>`;
@@ -738,10 +730,146 @@
             : `<div class="td-empty">No uploaded files found for this request.</div>`
         }
       </div>
+
+      <div class="detail-section" style="margin-bottom:14px;">
+        <div class="detail-section-title">Internal Processing Details</div>
+        <div class="detail-grid">
+          
+          <div class="field">
+            <label>Received Date</label>
+            <input type="date" id="ipReceivedDate" />
+          </div>
+          
+          <div class="field">
+            <label>Date of Investigation</label>
+            <input type="date" id="ipDateOfInvestigation" />
+          </div>
+
+          <div class="field">
+            <label>Warranty</label>
+            <select id="ipWarranty">
+              <option value="">— Select —</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+              <option value="Out of Warranty">Out of Warranty</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Estimate Date</label>
+            <input type="date" id="ipEstimateDate" />
+          </div>
+
+          <div class="field">
+            <label>Estimate Number</label>
+            <input type="text" id="ipEstimateNumber" placeholder="Estimate Number" />
+          </div>
+
+          <div class="field">
+            <label>Estimate Amount (INR)</label>
+            <input type="number" id="ipEstimateAmount" placeholder="Estimate Amount (INR)" />
+          </div>
+
+          <div class="field">
+            <label>P.O. No. & Date</label>
+            <input type="text" id="ipPoNoAndDate" placeholder="P.O. No. & Date" />
+          </div>
+
+          <div class="field">
+            <label>PO Received Date</label>
+            <input type="date" id="ipPoReceivedDate" />
+          </div>
+
+          <div class="field">
+            <label>OEM RMA No.</label>
+            <input type="text" id="ipOemRmaNo" placeholder="OEM RMA No." />
+          </div>
+
+          <div class="field">
+            <label>Date of Sent</label>
+            <input type="date" id="ipDateOfSent" />
+          </div>
+
+          <div class="field">
+            <label>Platform / Module</label>
+            <input type="text" id="ipPlatformModule" placeholder="Platform / Module" />
+          </div>
+
+          <div class="field">
+            <label>OEM Quotation</label>
+            <input type="text" id="ipOemQuotation" placeholder="OEM Quotation" />
+          </div>
+
+          <div class="field">
+            <label>Date of Receiving from OEM</label>
+            <input type="date" id="ipDateOfReceivingFromOem" />
+          </div>
+
+          <div class="field">
+            <label>DC No. & Date</label>
+            <input type="text" id="ipDcNoAndDate" placeholder="DC No. & Date" />
+          </div>
+
+          <div class="field">
+            <label>Dispatched Date</label>
+            <input type="date" id="ipDispatchedDate" />
+          </div>
+
+          <div class="field">
+            <label>LR No.</label>
+            <input type="text" id="ipLrNo" placeholder="LR No." />
+          </div>
+
+          <div class="field">
+            <label>Delivered Date</label>
+            <input type="date" id="ipDeliveredDate" />
+          </div>
+
+          <div class="field">
+            <label>Ack. Date from WH</label>
+            <input type="date" id="ipAckDateFromWh" />
+          </div>
+
+          <div class="field full">
+            <label>Admin Note</label>
+            <textarea id="ipAdminNote" placeholder="Admin notes..."></textarea>
+          </div>
+
+          <div class="field full">
+            <label>Investigation Details</label>
+            <textarea id="ipInvestigationDetails" placeholder="Investigation details..."></textarea>
+          </div>
+
+          <div class="field full">
+            <label>Repair Details</label>
+            <textarea id="ipRepairDetails" placeholder="Repair details..."></textarea>
+          </div>
+
+          <div class="field full">
+            <label>Reason for Waiting</label>
+            <textarea id="ipReasonForWaiting" placeholder="Reason for waiting..."></textarea>
+          </div>
+
+          <div class="field full">
+            <label>Remark</label>
+            <textarea id="ipRemark" placeholder="Remarks..."></textarea>
+          </div>
+
+        </div>
+      </div>
     `;
 
-    document.getElementById('uPendingCustomer').value = cr.pendingForCustomer || '';
-    document.getElementById('uPendingFastech').value = cr.pendingForFastech || '';
+    loadInternalDetails(cr.id);
+
+    let pendingStatusVal = '';
+    const crPc = String(cr.pendingForCustomer || '').toLowerCase().replace(/\s+/g, '');
+    const crPf = String(cr.pendingForFastech || '').toLowerCase().replace(/\s+/g, '');
+    if (crPc === 'pendingforcustomer' || crPc === 'pendingfromcustomer') {
+      pendingStatusVal = 'Pending from Customer';
+    } else if (crPf === 'pendingforfastech' || crPf === 'pendingfromfastech') {
+      pendingStatusVal = 'Pending from Fastech';
+    }
+    document.getElementById('uPendingStatus').value = pendingStatusVal;
     document.getElementById('uForwardTo').value = cr.forwardTo || '';
 
     const approvalSection = document.getElementById('approvalSection');
@@ -796,11 +924,12 @@
   }
 
   async function applyApprovalDecision(status){
+    const pendingVal = document.getElementById('uPendingStatus').value;
     const payload = {
       status,
       forwardTo: document.getElementById('uForwardTo').value,
-      pendingForCustomer: document.getElementById('uPendingCustomer').value,
-      pendingForFastech: document.getElementById('uPendingFastech').value
+      pendingForCustomer: pendingVal === 'Pending from Customer' ? 'Pending For Customer' : '',
+      pendingForFastech: pendingVal === 'Pending from Fastech' ? 'Pending For Fastech' : ''
     };
 
     try {
@@ -820,6 +949,7 @@
         : (data.emails?.customer?.error ? 'Note: the customer email failed to send, but the status was updated.' : '');
       if(emailNote) alert(emailNote);
 
+      saveInternalDetails(currentRequest.id);
       loadRequests();
       if (currentRequest) openModal(currentRequest.id);
     } catch(err){
@@ -836,10 +966,11 @@
   async function saveUpdate(){
     if(!currentRequest) return;
 
+    const pendingVal = document.getElementById('uPendingStatus').value;
     const payload = {
       forwardTo: document.getElementById('uForwardTo').value,
-      pendingForCustomer: document.getElementById('uPendingCustomer').value,
-      pendingForFastech: document.getElementById('uPendingFastech').value
+      pendingForCustomer: pendingVal === 'Pending from Customer' ? 'Pending For Customer' : '',
+      pendingForFastech: pendingVal === 'Pending from Fastech' ? 'Pending For Fastech' : ''
     };
 
     await fetch(`${API}/api/requests/${encodeURIComponent(currentRequest.id)}`,{
@@ -848,8 +979,39 @@
       body:JSON.stringify(payload)
     });
 
+    saveInternalDetails(currentRequest.id);
     closeModal();
     loadRequests();
+  }
+
+  const internalFields = [
+    'ipAdminNote', 'ipReceivedDate', 'ipDateOfInvestigation', 'ipWarranty',
+    'ipInvestigationDetails', 'ipRepairDetails', 'ipEstimateDate', 'ipEstimateNumber',
+    'ipEstimateAmount', 'ipPoNoAndDate', 'ipPoReceivedDate', 'ipOemRmaNo',
+    'ipDateOfSent', 'ipPlatformModule', 'ipOemQuotation', 'ipDateOfReceivingFromOem',
+    'ipDcNoAndDate', 'ipDispatchedDate', 'ipLrNo', 'ipReasonForWaiting',
+    'ipDeliveredDate', 'ipAckDateFromWh', 'ipRemark'
+  ];
+
+  function saveInternalDetails(requestId) {
+    const data = {};
+    internalFields.forEach(f => {
+      const el = document.getElementById(f);
+      if (el) data[f] = el.value;
+    });
+    localStorage.setItem(`cx_internal_details_${requestId}`, JSON.stringify(data));
+  }
+
+  function loadInternalDetails(requestId) {
+    const raw = localStorage.getItem(`cx_internal_details_${requestId}`);
+    if (!raw) return;
+    try {
+      const data = JSON.parse(raw);
+      internalFields.forEach(f => {
+        const el = document.getElementById(f);
+        if (el && data[f] !== undefined) el.value = data[f];
+      });
+    } catch (e) {}
   }
 
   function exportCsv(){

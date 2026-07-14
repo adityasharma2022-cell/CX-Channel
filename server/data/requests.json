@@ -24,14 +24,17 @@
     "returnAddress": "vwevew",
     "calAddress": "vwvew",
     "additionalInfo": "vwevew",
-    "status": "approved",
+    "status": "forwarded",
     "forwardTo": "qefq",
     "operationsTeam": "fqfq",
     "serviceTeam": "qfq",
     "customerFeedback": "fqfqfqfq",
     "internalNote": "fqfqfq",
     "createdAt": "24/05/2026, 19:41:42",
-    "updatedAt": "01/07/2026, 21:45:14"
+    "updatedAt": "14/07/2026, 17:44:01",
+    "pendingForCustomer": "Pending For Customer",
+    "pendingForFastech": "",
+    "rmaNumber": ""
   },
   {
     "id": "TMI-1780315200213641",
