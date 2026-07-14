@@ -70,7 +70,7 @@ const writeDB = (data) => writeJSON(DB_FILE, data);
 const readUsers = () => readJSON(USERS_FILE, []);
 
 function generateId() {
-  return "TMI-" + Date.now() + Math.floor(Math.random() * 1000);
+  return Date.now() + Math.floor(Math.random() * 1000);
 }
 
 function nowIST() {

@@ -430,46 +430,74 @@ app.get("/api/export/csv", (req, res) => {
   const db = readDB();
   if (!db.length)
     return res.status(404).json({ message: "No data to export." });
-  const cols = [
-    "id",
-    "rmaNumber",
-    "pendingForCustomer",
-    "pendingForFastech",
-    "oem",
-    "serviceType",
-    "product",
-    "description",
-    "name",
-    "email",
-    "phone",
-    "company",
-    "designation",
-    "serialSingle",
-    "serialBaseUnit",
-    "serialRfCable",
-    "serialAntenna",
-    "billingAddress",
-    "returnAddress",
-    "calCertificateAddress",
-    "additionalInfo",
-    "status",
-    "forwardTo",
-    "operationsTeam",
-    "serviceTeam",
-    "customerFeedback",
-    "internalNote",
-    "createdAt",
-    "updatedAt",
+
+  const shortId = (id) => {
+    const s = String(id || '');
+    const clean = s.replace(/^(TMI-|SUB-|RMA-)/, '');
+    return 'T-' + clean.slice(-6).toUpperCase();
+  };
+
+  const displayRma = (record) => {
+    if (record.rmaNumber) return shortId(record.rmaNumber);
+    const s = String(record.status || '').toLowerCase();
+    if (['approved', 'closed'].includes(s) && /^TMI-/.test(String(record.id || ''))) {
+      return shortId(record.id);
+    }
+    return '—';
+  };
+
+  const fmtStatus = (s) => {
+    const v = String(s || 'pending').toLowerCase();
+    return v.charAt(0).toUpperCase() + v.slice(1);
+  };
+
+  const headers = [
+    "Sr.",
+    "RMA No",
+    "OEM",
+    "Service Type",
+    "Product Model",
+    "Customer Name",
+    "Company",
+    "Designation",
+    "Status",
+    "Pending From",
+    "Date"
   ];
-  const escape = (v) => `\"${String(v ?? "").replace(/\"/g, '\"\"')}\"`;
-  const csv = [
-    cols.join(","),
-    ...db.map((r) => cols.map((c) => escape(r[c])).join(",")),
-  ].join("\r\n");
+
+  const escape = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+
+  const rows = db.map((r, idx) => {
+    let pendingForVal = '—';
+    const pcNorm = String(r.pendingForCustomer || '').toLowerCase().replace(/\s+/g, '');
+    const pfNorm = String(r.pendingForFastech || '').toLowerCase().replace(/\s+/g, '');
+    if (pcNorm === 'pendingforcustomer' || pcNorm === 'pendingfromcustomer') {
+      pendingForVal = 'Pending from Customer';
+    } else if (pfNorm === 'pendingforfastech' || pfNorm === 'pendingfromfastech') {
+      pendingForVal = 'Pending from Fastech';
+    }
+
+    return [
+      idx + 1,
+      displayRma(r),
+      r.oem || "-",
+      r.serviceType || "-",
+      r.product || "-",
+      r.name || "-",
+      r.company || "-",
+      r.designation || "-",
+      fmtStatus(r.status),
+      pendingForVal,
+      r.createdAt || "-"
+    ].map(escape).join(",");
+  });
+
+  const csv = [headers.join(","), ...rows].join("\r\n");
+
   res.setHeader("Content-Type", "text/csv");
   res.setHeader(
     "Content-Disposition",
-    `attachment; filename="fascal_requests_${Date.now()}.csv"`,
+    `attachment; filename="fascal_requests_${Date.now()}.csv"`
   );
   res.send(csv);
 });
@@ -486,13 +514,13 @@ app.get("/api/stats", (req, res) => {
     db.filter((r) => String(r.status || "").toLowerCase() === s).length;
   res.json({
     total: db.length,
-    pendingForCustomer: countPendingFor(
-      "pendingForCustomer",
-      "Pending For Customer",
+    pendingFromCustomer: countPendingFor(
+      "pendingFromCustomer",
+      "Pending From Customer",
     ),
-    pendingForFastech: countPendingFor(
-      "pendingForFastech",
-      "Pending For Fastech",
+    pendingFromFastech: countPendingFor(
+      "pendingFromFastech",
+      "Pending From Fastech",
     ),
     forwarded: countStatus("forwarded"),
     finalised: db.filter((r) =>
