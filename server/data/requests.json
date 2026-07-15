@@ -24,17 +24,17 @@
     "returnAddress": "vwevew",
     "calAddress": "vwvew",
     "additionalInfo": "vwevew",
-    "status": "forwarded",
+    "status": "approved",
     "forwardTo": "qefq",
     "operationsTeam": "fqfq",
     "serviceTeam": "qfq",
     "customerFeedback": "fqfqfqfq",
     "internalNote": "fqfqfq",
     "createdAt": "24/05/2026, 19:41:42",
-    "updatedAt": "14/07/2026, 17:44:01",
+    "updatedAt": "16/07/2026, 01:40:56",
     "pendingForCustomer": "Pending For Customer",
     "pendingForFastech": "",
-    "rmaNumber": ""
+    "rmaNumber": "RMA-1784146256465699"
   },
   {
     "id": "TMI-1780315200213641",
@@ -259,14 +259,17 @@
     "returnAddress": "asdasdas",
     "calCertificateAddress": "asdasdasd",
     "images": [],
-    "status": "pending",
+    "status": "approved",
     "forwardTo": "qefq",
     "operationsTeam": "fqfq",
     "serviceTeam": "qfq",
     "customerFeedback": "",
     "internalNote": "asd",
     "createdAt": "13/06/2026, 18:58:44",
-    "updatedAt": "13/06/2026, 19:00:49"
+    "updatedAt": "16/07/2026, 01:52:38",
+    "pendingForCustomer": "",
+    "pendingForFastech": "",
+    "rmaNumber": "RMA-1784146958444488"
   },
   {
     "id": "TMI-1781357607688940",
@@ -287,14 +290,17 @@
     "returnAddress": "",
     "calCertificateAddress": "",
     "images": [],
-    "status": "pending",
+    "status": "approved",
     "forwardTo": "",
     "operationsTeam": "",
     "serviceTeam": "",
     "customerFeedback": "",
     "internalNote": "",
     "createdAt": "13/06/2026, 19:03:27",
-    "updatedAt": "13/06/2026, 19:03:27"
+    "updatedAt": "16/07/2026, 01:16:49",
+    "pendingForCustomer": "",
+    "pendingForFastech": "",
+    "rmaNumber": "RMA-1784144809030478"
   },
   {
     "id": "TMI-1781357748292497",
@@ -315,16 +321,17 @@
     "returnAddress": "",
     "calCertificateAddress": "",
     "images": [],
-    "status": "pending",
+    "status": "approved",
     "forwardTo": "",
     "operationsTeam": "",
     "serviceTeam": "",
     "customerFeedback": "",
     "internalNote": "",
     "createdAt": "13/06/2026, 19:05:48",
-    "updatedAt": "13/07/2026, 19:45:16",
-    "pendingForCustomer": "",
-    "pendingForFastech": "Pending For Fastech"
+    "updatedAt": "16/07/2026, 01:16:41",
+    "pendingForCustomer": "Pending For Customer",
+    "pendingForFastech": "",
+    "rmaNumber": "RMA-1784144787128332"
   },
   {
     "id": "TMI-1781357960965401",
