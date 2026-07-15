@@ -757,23 +757,24 @@
 
           <section class="metrics">
             <div class="metric-card">
-              <div class="metric-icon blue">🟦</div>
+              <div class="metric-icon blue">📋</div>
+              <div class="metric-label">Total</div>
+              <div class="metric-value" id="totalCount">0</div>
+              <div class="metric-sub">All support tickets</div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-icon yellow">🟦</div>
               <div class="metric-label">Open</div>
               <div class="metric-value" id="openCount">0</div>
               <div class="metric-sub">Awaiting team action</div>
             </div>
-       
+
             <div class="metric-card">
-              <div class="metric-icon indigo">✔️</div>
-              <div class="metric-label">Approved</div>
-              <div class="metric-value" id="approvedCount">0</div>
+              <div class="metric-icon green">✔️</div>
+              <div class="metric-label">Closed</div>
+              <div class="metric-value" id="closedCount">0</div>
               <div class="metric-sub">Resolved &amp; confirmed</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-icon green">📋</div>
-              <div class="metric-label">Total</div>
-              <div class="metric-value" id="totalCount">0</div>
-              <div class="metric-sub">All support tickets</div>
             </div>
           </section>
 
@@ -783,6 +784,9 @@
                 <h3>All Support Requests</h3>
                 <p>Click a row to view full details and update status.</p>
               </div>
+              <button class="btn btn-primary" onclick="exportCsv()">
+                Export CSV
+              </button>
             </div>
 
             <div class="tabs">
@@ -802,27 +806,6 @@
               </button>
               <button
                 class="tab-btn"
-                data-filter="In Progress"
-                onclick="setStatusFilter('In Progress', this)"
-              >
-                In Progress
-              </button>
-              <button
-                class="tab-btn"
-                data-filter="Approved"
-                onclick="setStatusFilter('Approved', this)"
-              >
-                Approved
-              </button>
-              <button
-                class="tab-btn"
-                data-filter="Rejected"
-                onclick="setStatusFilter('Rejected', this)"
-              >
-                Rejected
-              </button>
-              <button
-                class="tab-btn"
                 data-filter="Closed"
                 onclick="setStatusFilter('Closed', this)"
               >
@@ -836,7 +819,7 @@
                 <input
                   id="searchInput"
                   type="text"
-                  placeholder="ID, name, email, OEM, subject…"
+                  placeholder="ID, name, email, OEM, description…"
                   oninput="renderTable()"
                 />
               </div>
@@ -876,7 +859,7 @@
                     <th>Ticket</th>
                     <th>Customer</th>
                     <th>OEM / Product</th>
-                    <th>Subject</th>
+                    <th>Description</th>
                     <th>Priority</th>
                     <th>Status</th>
                     <th>Date</th>
@@ -947,43 +930,8 @@
       function statusPillClass(status) {
         const s = norm(status);
         if (s === "open") return "pill pill-open";
-        if (s === "inprogress") return "pill pill-progress";
-        if (s === "approved") return "pill pill-approved";
-        if (s === "rejected") return "pill pill-rejected";
         if (s === "closed") return "pill pill-closed";
         return "pill pill-open";
-      }
-
-      function displayRma(record) {
-        if (record.rmaNumber) return record.rmaNumber;
-        if (
-          norm(record.status) === "approved" &&
-          /^TMI-/.test(String(record.id || ""))
-        ) {
-          return record.id;
-        }
-        return "—";
-      }
-
-      function pendingOptions(field, current) {
-        const label =
-          field === "customer" ? "Pending From Customer" : "Pending From Fastech";
-
-        const opts = ["", label, "Resolved"];
-
-        return opts
-          .map(function (o) {
-            return (
-              '<option value="' +
-              esc(o) +
-              '"' +
-              (current === o ? " selected" : "") +
-              ">" +
-              esc(o || "— None —") +
-              "</option>"
-            );
-          })
-          .join("");
       }
 
       function priorityPillClass(p) {
@@ -1032,6 +980,16 @@
         }, 2400);
       }
 
+      function exportCsv() {
+        const params = new URLSearchParams();
+        if (statusFilter && statusFilter !== "All") {
+          params.set("status", statusFilter);
+        }
+        const qs = params.toString();
+        const url = "/api/support/export/csv" + (qs ? "?" + qs : "");
+        window.open(url, "_blank");
+      }
+
       async function loadSupport() {
         const tbody = document.getElementById("supportTbody");
         tbody.innerHTML =
@@ -1052,16 +1010,15 @@
         const open = allSupport.filter(function (r) {
           return norm(r.status) === "open";
         }).length;
-        const progress = allSupport.filter(function (r) {
-          return norm(r.status) === "inprogress";
+        const closed = allSupport.filter(function (r) {
+          return norm(r.status) === "closed";
         }).length;
-        const approved = allSupport.filter(function (r) {
-          return norm(r.status) === "approved";
-        }).length;
-        document.getElementById("openCount").textContent = open;
-        document.getElementById("progressCount").textContent = progress;
-        document.getElementById("approvedCount").textContent = approved;
-        document.getElementById("totalCount").textContent = allSupport.length;
+        const totalEl = document.getElementById("totalCount");
+        const openEl = document.getElementById("openCount");
+        const closedEl = document.getElementById("closedCount");
+        if (totalEl) totalEl.textContent = allSupport.length;
+        if (openEl) openEl.textContent = open;
+        if (closedEl) closedEl.textContent = closed;
       }
 
       function setStatusFilter(value, btn) {
@@ -1101,7 +1058,7 @@
           });
         if (q) {
           rows = rows.filter(function (r) {
-            return [r.id, r.name, r.email, r.oem, r.product, r.subject].some(
+            return [r.id, r.name, r.email, r.oem, r.product, r.description].some(
               function (v) {
                 return String(v || "")
                   .toLowerCase()
@@ -1148,7 +1105,7 @@
             esc(r.product || "—") +
             "</div></td>" +
             "<td>" +
-            esc(r.subject || "—") +
+            esc(r.description || "—") +
             "</td>" +
             '<td><span class="' +
             priorityPillClass(r.priority) +
@@ -1260,9 +1217,6 @@
           '<div class="detail-section">' +
           '<div class="detail-section-title">Support Details</div>' +
           '<div class="detail-grid">' +
-          '<div class="detail-item full"><div class="d-label">Subject</div><div class="d-value">' +
-          esc(record.subject || "—") +
-          "</div></div>" +
           '<div class="detail-item full"><div class="d-label">Description</div><div class="d-value">' +
           esc(record.description || "—") +
           "</div></div>" +
@@ -1283,15 +1237,6 @@
           "<option" +
           (record.status === "Open" ? " selected" : "") +
           ">Open</option>" +
-          "<option" +
-          (record.status === "In Progress" ? " selected" : "") +
-          ">In Progress</option>" +
-          "<option" +
-          (record.status === "Approved" ? " selected" : "") +
-          ">Approved</option>" +
-          "<option" +
-          (record.status === "Rejected" ? " selected" : "") +
-          ">Rejected</option>" +
           "<option" +
           (record.status === "Closed" ? " selected" : "") +
           ">Closed</option>" +
@@ -1324,8 +1269,8 @@
           "</textarea></div>" +
           "</div>" +
           '<div class="detail-item full">' +
-          '<div class="d-label">Customer-Facing Note (sent on approval/rejection)</div>' +
-          '<div class="field"><textarea id="editCustomerFeedback" placeholder="Note included in customer email when status is approved or rejected.">' +
+          '<div class="d-label">Customer-Facing Note</div>' +
+          '<div class="field"><textarea id="editCustomerFeedback" placeholder="Internal customer-facing note (saved with the request).">' +
           esc(record.customerFeedback || "") +
           "</textarea></div>" +
           "</div>" +
@@ -1367,23 +1312,11 @@
               body: JSON.stringify(payload),
             },
           );
-          if (!res.ok) throw new Error("Update failed");
-          const data = await res.json();
-          const emailInfo = data.emails && data.emails.customer;
-          if (payload.status === "Approved" || payload.status === "Rejected") {
-            if (emailInfo && emailInfo.sent) {
-              showToast("Updated. Customer email sent.", "success");
-            } else if (emailInfo && emailInfo.error) {
-              showToast(
-                "Updated, but customer email failed: " + emailInfo.error,
-                "error",
-              );
-            } else {
-              showToast("Updated successfully.", "success");
-            }
-          } else {
-            showToast("Updated successfully.", "success");
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.message || "Update failed");
           }
+          showToast("Updated successfully.", "success");
           closeModal();
           await loadSupport();
         } catch (err) {

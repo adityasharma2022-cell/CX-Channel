@@ -234,7 +234,6 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
       "oem",
       "serviceType",
       "product",
-      "description",
     ];
     const missing = required.filter((k) => !body[k]);
     if (missing.length)
@@ -557,9 +556,6 @@ app.get("/api/support/stats", (req, res) => {
   res.json({
     total: support.length,
     open: count("open"),
-    inProgress: count("inprogress"),
-    approved: count("approved"),
-    rejected: count("rejected"),
     closed: count("closed"),
   });
 });
@@ -580,8 +576,6 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
       "email",
       "oem",
       "product",
-      "description",
-      "subject",
     ];
     const missing = required.filter((k) => !body[k]);
     if (missing.length)
@@ -605,7 +599,6 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
       rmaNumber: "",
       pendingForCustomer: "",
       pendingForFastech: "",
-      subject: body.subject || "",
       priority: body.priority || "Medium",
       oem: body.oem || "",
       serviceType: "Support",
@@ -650,12 +643,11 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
     try {
       await sendMail({
         to: teamEmail,
-        subject: `New FASCAL Support Request ${record.id}: ${record.subject}`,
-        text: `New support request from ${record.name} (${record.email}). Subject: ${record.subject}. Priority: ${record.priority}.`,
+        subject: `New FASCAL Support Request ${record.id}`,
+        text: `New support request from ${record.name} (${record.email}). Priority: ${record.priority}.`,
         html: `
           <h3>New FASCAL Support Request</h3>
           <p><strong>Submission Reference:</strong> ${record.id}</p>
-          <p><strong>Subject:</strong> ${record.subject}</p>
           <p><strong>Priority:</strong> ${record.priority}</p>
           <p><strong>Name:</strong> ${record.name}</p>
           <p><strong>Email:</strong> ${record.email}</p>
@@ -664,7 +656,7 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
           <p><strong>OEM:</strong> ${record.oem}</p>
           <p><strong>Product:</strong> ${record.product}</p>
           <p><strong>Software Version:</strong> ${record.softwareVersion || "—"}</p>
-          <p><strong>Description:</strong> ${record.description}</p>
+          <p><strong>Description:</strong> ${record.description || "—"}</p>
           <p><em>RMA number will be assigned after admin approval.</em></p>
         `,
         replyTo: record.email,
@@ -699,60 +691,85 @@ app.put("/api/support/:id", async (req, res) => {
     "assignedTeam",
     "internalNote",
     "customerFeedback",
-    "subject",
     "pendingForCustomer",
     "pendingForFastech",
   ];
   const body = req.body || {};
-  allowed.forEach((k) => {
-    if (body[k] !== undefined) support[idx][k] = body[k];
-  });
-  assignRmaOnApproval(support[idx], previousStatus);
-  support[idx].updatedAt = nowIST();
-  writeSupport(support);
 
-  const record = support[idx];
-  const statusChanged =
-    body.status !== undefined && body.status !== previousStatus;
-  let customerMail = { sent: false };
-
-  if (
-    statusChanged &&
-    record.email &&
-    (record.status === "Approved" || record.status === "Rejected")
-  ) {
-    const isApproved = record.status === "Approved";
-    const rmaRef = record.rmaNumber || record.id;
-    const subject = isApproved
-      ? `Your FASCAL support request has been approved — RMA ${rmaRef}`
-      : `Your FASCAL support request ${record.id} has been rejected`;
-    const introLine = isApproved
-      ? `Good news — your support request has been approved. Your RMA number is ${rmaRef}.`
-      : `Your support request (reference: ${record.id}) has been rejected.`;
-
-    try {
-      await sendMail({
-        to: record.email,
-        subject,
-        text: `Hi ${record.name}, ${introLine}`,
-        html: `
-          <p>Hi ${record.name},</p>
-          <p>${introLine}</p>
-          ${isApproved ? `<p><strong>RMA Number:</strong> ${rmaRef}</p>` : ""}
-        `,
-      });
-      customerMail.sent = true;
-    } catch (mailErr) {
-      console.error("Support approval/rejection mail failed:", mailErr.message);
-      customerMail.error = mailErr.message;
+  if (body.status !== undefined) {
+    const allowedStatuses = ["Open", "Closed"];
+    if (!allowedStatuses.includes(body.status)) {
+      return res
+        .status(400)
+        .json({ message: `Invalid status. Allowed: ${allowedStatuses.join(", ")}.` });
     }
   }
 
+  allowed.forEach((k) => {
+    if (body[k] !== undefined) support[idx][k] = body[k];
+  });
+  support[idx].updatedAt = nowIST();
+  writeSupport(support);
+
   res.json({
     message: "Support request updated successfully.",
-    request: record,
-    emails: { customer: customerMail },
+    request: support[idx],
   });
+});
+
+app.get("/api/support/export/csv", (req, res) => {
+  const support = readSupport();
+  if (!support.length)
+    return res.status(404).json({ message: "No data to export." });
+
+  const filterStatus = String(req.query.status || "").trim();
+  const norm = (v) => String(v || "").toLowerCase().replace(/\s+/g, "");
+  const rows = filterStatus && norm(filterStatus) !== "all"
+    ? support.filter((r) => norm(r.status) === norm(filterStatus))
+    : support;
+
+  if (!rows.length)
+    return res.status(404).json({ message: "No data to export." });
+
+  const headers = [
+    "Ticket",
+    "Customer",
+    "Email",
+    "OEM / Product",
+    "Subject",
+    "Priority",
+    "Status",
+    "Date",
+  ];
+
+  const escape = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+
+  const dataRows = rows.map((r) => {
+    const customerCell = `${r.name || "—"}${r.email ? ` <${r.email}>` : ""}`;
+    const oemCell = `${r.oem || "—"}${r.product ? ` / ${r.product}` : ""}`;
+    return [
+      r.id || "-",
+      customerCell,
+      r.email || "-",
+      oemCell,
+      r.description || "-",
+      r.priority || "Medium",
+      r.status || "Open",
+      r.createdAt || "-",
+    ];
+  });
+
+  const csv = [
+    headers.join(","),
+    ...dataRows.map((row) => row.map(escape).join(",")),
+  ].join("\r\n");
+
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="fascal_support_${Date.now()}.csv"`,
+  );
+  res.send(csv);
 });
 
 app.delete("/api/support/:id", (req, res) => {
