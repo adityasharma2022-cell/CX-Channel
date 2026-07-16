@@ -264,7 +264,7 @@
       }
       .metrics {
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(6, 1fr);
         gap: 12px;
       }
       .metric-card {
@@ -367,7 +367,7 @@
       }
       .field label {
         font-size: 11px;
-        text-transform: uppercase;
+        text-transform: none;
         letter-spacing: 0.08em;
         font-weight: 800;
         color: #64748b;
@@ -611,7 +611,7 @@
       }
       .detail-section-title {
         font-size: 12px;
-        text-transform: uppercase;
+        text-transform: none;
         letter-spacing: 0.08em;
         color: #64748b;
         font-weight: 800;
@@ -627,8 +627,10 @@
       }
       .d-label {
         font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
+        /* Field labels use sentence/title case in the markup itself
+           ("Customer Name", not "CUSTOMER NAME") — so we must NOT force
+           uppercase here, or CSS would override the casing visually. */
+        text-transform: none;
         color: #94a3b8;
         font-weight: 800;
         margin-bottom: 4px;
@@ -1116,6 +1118,21 @@
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;");
 
+      // createdAt is stored as a human string like "24/05/2026, 19:41:42"
+      // (DD/MM/YYYY, HH:MM:SS). Plain string/alphabetical comparison sorts
+      // this WRONG (e.g. "24/05" would appear to come before "01/06" even
+      // though June is later). This turns the string into a real timestamp
+      // (milliseconds) so date sorting works correctly.
+      function parseIST(str) {
+        if (!str) return 0;
+        const [datePart, timePart] = String(str).split(", ");
+        if (!datePart) return 0;
+        const [day, month, year] = datePart.split("/").map(Number);
+        const [h = 0, m = 0, s = 0] = (timePart || "").split(":").map(Number);
+        if (!day || !month || !year) return 0;
+        return new Date(year, month - 1, day, h, m, s).getTime();
+      }
+
       const shortId = (id) => {
         const s = String(id || "");
         const clean = s.replace(/^(TMI-|SUB-|RMA-)/, "");
@@ -1132,14 +1149,6 @@
           return shortId(record.id);
         }
         return "—";
-      }
-
-      function countPendingFor(records, field, label) {
-        const norm = (v) =>
-          String(v || "")
-            .toLowerCase()
-            .replace(/\s+/g, "");
-        return records.filter((r) => norm(r[field]) === norm(label)).length;
       }
 
       function fmtStatus(s) {
@@ -1187,11 +1196,11 @@
       // Dashboard card counts. We prefer the server-side /api/stats endpoint
       // (single source of truth) and fall back to client-side aggregation if
       // the call fails so the UI never shows stale zeros.
+      // "Pending From Customer/Fastech" is treated as a simple non-empty
+      // flag on the client fallback too, so old records saved with slightly
+      // different wording ("Pending For Customer") still count correctly.
       async function refreshMetrics() {
-        const norm = (v) =>
-          String(v || "")
-            .toLowerCase()
-            .replace(/\s+/g, "");
+        const isPendingFlag = (v) => String(v || "").trim().length > 0;
 
         let stats = null;
         try {
@@ -1208,11 +1217,11 @@
         const localClosed = allRequests.filter(
           (x) => String(x.status || "").toLowerCase() === "closed",
         ).length;
-        const localPfc = allRequests.filter(
-          (x) => norm(x.pendingForCustomer) === "pendingfromcustomer",
+        const localPfc = allRequests.filter((x) =>
+          isPendingFlag(x.pendingForCustomer),
         ).length;
-        const localPff = allRequests.filter(
-          (x) => norm(x.pendingForFastech) === "pendingfromfastech",
+        const localPff = allRequests.filter((x) =>
+          isPendingFlag(x.pendingForFastech),
         ).length;
 
         const set = (id, val) => {
@@ -1324,7 +1333,12 @@
           return true;
         });
 
+        // Sort by real date/time when sorting on createdAt (the default),
+        // otherwise fall back to plain text comparison for other columns.
         rows.sort((a, b) => {
+          if (sortKey === "createdAt") {
+            return (parseIST(a.createdAt) - parseIST(b.createdAt)) * sortDir;
+          }
           const av = String(a[sortKey] || ""),
             bv = String(b[sortKey] || "");
           return av < bv ? -1 * sortDir : av > bv ? 1 * sortDir : 0;
@@ -1357,22 +1371,14 @@
             const safeId = id.replace(/'/g, "\\'");
 
             let pendingFromCell = "—";
-            const pcVal = String(r.pendingForCustomer || "")
-              .toLowerCase()
-              .replace(/\s+/g, "");
-            const pfVal = String(r.pendingForFastech || "")
-              .toLowerCase()
-              .replace(/\s+/g, "");
-            if (
-              pcVal === "pendingforcustomer" ||
-              pcVal === "pendingfromcustomer"
-            ) {
+            const pcHasValue =
+              String(r.pendingForCustomer || "").trim().length > 0;
+            const pfHasValue =
+              String(r.pendingForFastech || "").trim().length > 0;
+            if (pcHasValue) {
               pendingFromCell =
                 '<span class="pill pill-pending">Pending from Customer</span>';
-            } else if (
-              pfVal === "pendingforfastech" ||
-              pfVal === "pendingfromfastech"
-            ) {
+            } else if (pfHasValue) {
               pendingFromCell =
                 '<span class="pill pill-pending">Pending from Fastech</span>';
             }
@@ -1493,7 +1499,7 @@
             <div class="d-value">${esc(cr.phone || "-")}</div>
           </div>
           <div class="detail-item">
-            <div class="d-label">E-MAIL</div>
+            <div class="d-label">Email</div>
             <div class="d-value">${esc(cr.email || "-")}</div>
           </div>
           <div class="detail-item">
@@ -1520,15 +1526,15 @@
         <div class="detail-grid">
           <div class="detail-item">
             <div class="d-label">Base Unit S-Number</div>
-            <div class="d-value">${esc(cr.serialBaseUnit || "-")}</div>
+            <div class="d-value">${esc(cr.serialBaseUnit || cr.basicUnit || "-")}</div>
           </div>
           <div class="detail-item">
             <div class="d-label">RF Cable Serial Number</div>
-            <div class="d-value">${esc(cr.serialRfCable || "-")}</div>
+            <div class="d-value">${esc(cr.serialRfCable || cr.rfCable || "-")}</div>
           </div>
           <div class="detail-item full">
             <div class="d-label">Antenna Serial Number</div>
-            <div class="d-value">${esc(cr.serialAntenna || "-")}</div>
+            <div class="d-value">${esc(cr.serialAntenna || cr.antenna || "-")}</div>
           </div>
         </div>
       </div>
@@ -1703,18 +1709,13 @@
         loadInternalDetails(cr.id);
 
         let pendingStatusVal = "";
-        const crPc = String(cr.pendingForCustomer || "")
-          .toLowerCase()
-          .replace(/\s+/g, "");
-        const crPf = String(cr.pendingForFastech || "")
-          .toLowerCase()
-          .replace(/\s+/g, "");
-        if (crPc === "pendingforcustomer" || crPc === "pendingfromcustomer") {
+        const crPcHasValue =
+          String(cr.pendingForCustomer || "").trim().length > 0;
+        const crPfHasValue =
+          String(cr.pendingForFastech || "").trim().length > 0;
+        if (crPcHasValue) {
           pendingStatusVal = "Pending from Customer";
-        } else if (
-          crPf === "pendingforfastech" ||
-          crPf === "pendingfromfastech"
-        ) {
+        } else if (crPfHasValue) {
           pendingStatusVal = "Pending from Fastech";
         }
         document.getElementById("uStatus").value = String(
@@ -1842,16 +1843,22 @@
       async function saveUpdate() {
         if (!currentRequest) return;
 
+        const statusVal = document.getElementById("uStatus").value;
         const pendingVal = document.getElementById("uPendingStatus").value;
+        // Pending From Customer/Fastech only makes sense when the main
+        // Status is "pending" — clear it out otherwise so a stale flag
+        // doesn't linger once the request moves to Open/Approved/Closed.
         const payload = {
+          status: statusVal,
           pendingForCustomer:
-            pendingVal === "Pending from Customer"
+            statusVal === "pending" && pendingVal === "Pending from Customer"
               ? "Pending For Customer"
               : "",
           pendingForFastech:
-            pendingVal === "Pending from Fastech" ? "Pending For Fastech" : "",
+            statusVal === "pending" && pendingVal === "Pending from Fastech"
+              ? "Pending For Fastech"
+              : "",
         };
-        // ...rest stays the same
 
         await fetch(
           `${API}/api/requests/${encodeURIComponent(currentRequest.id)}`,
