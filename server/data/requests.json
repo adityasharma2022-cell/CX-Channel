@@ -204,7 +204,9 @@
     "customerFeedback": "",
     "internalNote": "",
     "createdAt": "05/06/2026, 18:53:03",
-    "updatedAt": "05/06/2026, 18:53:03"
+    "updatedAt": "16/07/2026, 14:43:23",
+    "pendingForCustomer": "Pending For Customer",
+    "pendingForFastech": ""
   },
   {
     "id": "TMI-178066718265410",
@@ -231,14 +233,17 @@
         "size": 94764
       }
     ],
-    "status": "pending",
+    "status": "approved",
     "forwardTo": "",
     "operationsTeam": "",
     "serviceTeam": "",
     "customerFeedback": "",
     "internalNote": "",
     "createdAt": "05/06/2026, 19:16:22",
-    "updatedAt": "05/06/2026, 19:16:22"
+    "updatedAt": "16/07/2026, 14:43:11",
+    "pendingForCustomer": "Pending For Customer",
+    "pendingForFastech": "",
+    "rmaNumber": "RMA-1784193156531853"
   },
   {
     "id": "TMI-1781357324176642",

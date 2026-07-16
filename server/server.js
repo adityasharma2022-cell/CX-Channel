@@ -77,6 +77,13 @@ function generateRmaNumber() {
   return "RMA-" + Date.now() + Math.floor(Math.random() * 1000);
 }
 
+// Canonical dashboard statuses (single source of truth for both UI and backend).
+// "Open / Pending / Approved / Closed" are the main statuses.
+// "Pending from Customer" and "Pending from Fastech" are stored as sub-status
+// fields (pendingForCustomer / pendingForFastech) and do not replace the
+// primary status.
+const VALID_STATUSES = ["open", "pending", "approved", "closed"];
+
 function isApprovedStatus(status) {
   return String(status || "").toLowerCase() === "approved";
 }
@@ -278,10 +285,7 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
       calCertificateAddress: body.calCertificateAddress || "",
       additionalInfo: body.additionalInfo || "",
       images: uploadedImages,
-      status: "pending",
-      forwardTo: "",
-      operationsTeam: "",
-      serviceTeam: "",
+      status: "open",
       customerFeedback: "",
       internalNote: "",
       createdAt: now,
@@ -348,9 +352,6 @@ app.put("/api/requests/:id", async (req, res) => {
   const previousStatus = db[idx].status;
   const allowed = [
     "status",
-    "forwardTo",
-    "operationsTeam",
-    "serviceTeam",
     "customerFeedback",
     "internalNote",
     "product",
@@ -360,14 +361,21 @@ app.put("/api/requests/:id", async (req, res) => {
     "pendingForFastech",
   ];
   const body = req.body || {};
+
+  // Validate the primary status field against the canonical set.
+  if (body.status !== undefined) {
+    const normalized = String(body.status || "").toLowerCase();
+    if (!VALID_STATUSES.includes(normalized)) {
+      return res.status(400).json({
+        message: `Invalid status. Allowed: ${VALID_STATUSES.join(", ")}.`,
+      });
+    }
+    body.status = normalized;
+  }
+
   allowed.forEach((k) => {
     if (body[k] !== undefined) db[idx][k] = body[k];
   });
-  if (body.forwardTo !== undefined && String(body.forwardTo || "").trim()) {
-    if (!body.status || body.status === "pending") {
-      db[idx].status = "forwarded";
-    }
-  }
   assignRmaOnApproval(db[idx], previousStatus);
   db[idx].updatedAt = nowIST();
   writeDB(db);
@@ -377,19 +385,10 @@ app.put("/api/requests/:id", async (req, res) => {
     body.status !== undefined && body.status !== previousStatus;
   let customerMail = { sent: false };
 
-  if (
-    statusChanged &&
-    record.email &&
-    (record.status === "approved" || record.status === "rejected")
-  ) {
-    const isApproved = record.status === "approved";
+  if (statusChanged && record.email && record.status === "approved") {
     const rmaRef = record.rmaNumber || record.id;
-    const subject = isApproved
-      ? `Your FASCAL request has been approved — RMA ${rmaRef}`
-      : `Your FASCAL request ${record.id} has been rejected`;
-    const introLine = isApproved
-      ? `Good news — your request has been approved. Your RMA number is ${rmaRef}.`
-      : `Your request (reference: ${record.id}) has been rejected.`;
+    const subject = `Your FASCAL request has been approved — RMA ${rmaRef}`;
+    const introLine = `Good news — your request has been approved. Your RMA number is ${rmaRef}.`;
 
     try {
       await sendMail({
@@ -397,14 +396,14 @@ app.put("/api/requests/:id", async (req, res) => {
         subject,
         text: `Hi ${record.name}, ${introLine}`,
         html: `
-          <p>Hi ${record.name},</p>
-          <p>${introLine}</p>
-          ${isApproved ? `<p><strong>RMA Number:</strong> ${rmaRef}</p>` : ""}
-        `,
+        <p>Hi ${record.name},</p>
+        <p>${introLine}</p>
+        <p><strong>RMA Number:</strong> ${rmaRef}</p>
+      `,
       });
       customerMail.sent = true;
     } catch (mailErr) {
-      console.error("Approval/rejection mail failed:", mailErr.message);
+      console.error("Approval mail failed:", mailErr.message);
       customerMail.error = mailErr.message;
     }
   }
@@ -507,33 +506,28 @@ app.get("/api/stats", (req, res) => {
     String(s || "")
       .toLowerCase()
       .replace(/\s+/g, "");
-  const countPendingFor = (field, label) =>
-    db.filter((r) => norm(r[field]) === norm(label)).length;
   const countStatus = (s) =>
     db.filter((r) => String(r.status || "").toLowerCase() === s).length;
+  const countPendingFor = (field, label) =>
+    db.filter((r) => norm(r[field]) === norm(label)).length;
+
+  // Cards shown on the Main Dashboard. Each field maps to exactly one
+  // metric card so the UI can render them in a single pass.
   res.json({
     total: db.length,
+    open: countStatus("open"),
+    pending: countStatus("pending"),
     pendingFromCustomer: countPendingFor(
-      "pendingFromCustomer",
+      "pendingForCustomer",
       "Pending From Customer",
     ),
     pendingFromFastech: countPendingFor(
-      "pendingFromFastech",
+      "pendingForFastech",
       "Pending From Fastech",
     ),
-    forwarded: countStatus("forwarded"),
-    finalised: db.filter((r) =>
-      ["approved", "closed", "rejected"].includes(
-        String(r.status || "").toLowerCase(),
-      ),
-    ).length,
-    // Legacy fields kept for compatibility
-    pending: countStatus("pending"),
-    review: countStatus("review") + countStatus("forwarded"),
-    approved: countStatus("approved"),
-    resolved: countStatus("resolved"),
     closed: countStatus("closed"),
-    rejected: countStatus("rejected"),
+    // Convenience field for "anything finalised" — kept for any future use
+    approved: countStatus("approved"),
   });
 });
 
