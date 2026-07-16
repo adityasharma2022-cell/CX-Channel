@@ -204,7 +204,9 @@
     "customerFeedback": "",
     "internalNote": "",
     "createdAt": "05/06/2026, 18:53:03",
-    "updatedAt": "05/06/2026, 18:53:03"
+    "updatedAt": "16/07/2026, 14:43:23",
+    "pendingForCustomer": "Pending For Customer",
+    "pendingForFastech": ""
   },
   {
     "id": "TMI-178066718265410",
@@ -231,14 +233,17 @@
         "size": 94764
       }
     ],
-    "status": "pending",
+    "status": "approved",
     "forwardTo": "",
     "operationsTeam": "",
     "serviceTeam": "",
     "customerFeedback": "",
     "internalNote": "",
     "createdAt": "05/06/2026, 19:16:22",
-    "updatedAt": "05/06/2026, 19:16:22"
+    "updatedAt": "16/07/2026, 14:43:11",
+    "pendingForCustomer": "Pending For Customer",
+    "pendingForFastech": "",
+    "rmaNumber": "RMA-1784193156531853"
   },
   {
     "id": "TMI-1781357324176642",
@@ -585,14 +590,16 @@
     "calCertificateAddress": "",
     "additionalInfo": "",
     "images": [],
-    "status": "pending",
+    "status": "closed",
     "forwardTo": "",
     "operationsTeam": "",
     "serviceTeam": "",
     "customerFeedback": "",
     "internalNote": "",
     "createdAt": "02/07/2026, 24:43:06",
-    "updatedAt": "02/07/2026, 24:43:06"
+    "updatedAt": "17/07/2026, 01:04:14",
+    "pendingForCustomer": "",
+    "pendingForFastech": ""
   },
   {
     "id": "TMI-1782933414994984",
@@ -614,14 +621,16 @@
     "calCertificateAddress": "",
     "additionalInfo": "",
     "images": [],
-    "status": "pending",
+    "status": "open",
     "forwardTo": "",
     "operationsTeam": "",
     "serviceTeam": "",
     "customerFeedback": "",
     "internalNote": "",
     "createdAt": "02/07/2026, 24:46:54",
-    "updatedAt": "02/07/2026, 24:46:54"
+    "updatedAt": "17/07/2026, 01:04:06",
+    "pendingForCustomer": "",
+    "pendingForFastech": ""
   },
   {
     "id": "TMI-1782933872721121",
@@ -643,14 +652,17 @@
     "calCertificateAddress": "",
     "additionalInfo": "",
     "images": [],
-    "status": "pending",
+    "status": "approved",
     "forwardTo": "",
     "operationsTeam": "",
     "serviceTeam": "",
     "customerFeedback": "",
     "internalNote": "",
     "createdAt": "02/07/2026, 24:54:32",
-    "updatedAt": "02/07/2026, 24:54:32"
+    "updatedAt": "17/07/2026, 01:01:56",
+    "pendingForCustomer": "",
+    "pendingForFastech": "",
+    "rmaNumber": "RMA-178423030902926"
   },
   {
     "id": "TMI-1782934049005549",
@@ -672,14 +684,17 @@
     "calCertificateAddress": "",
     "additionalInfo": "",
     "images": [],
-    "status": "pending",
+    "status": "approved",
     "forwardTo": "",
     "operationsTeam": "",
     "serviceTeam": "",
     "customerFeedback": "",
     "internalNote": "",
     "createdAt": "02/07/2026, 24:57:28",
-    "updatedAt": "02/07/2026, 24:57:28"
+    "updatedAt": "17/07/2026, 00:59:06",
+    "pendingForCustomer": "",
+    "pendingForFastech": "Pending For Fastech",
+    "rmaNumber": "RMA-1784230146268572"
   },
   {
     "id": "SUB-1783951727837825",

@@ -264,7 +264,7 @@
       }
       .metrics {
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(6, 1fr);
         gap: 12px;
       }
       .metric-card {
@@ -295,13 +295,17 @@
         background: #dbeafe;
         color: #1d4ed8;
       }
-      .metric-icon.green {
-        background: #dcfce7;
-        color: #166534;
+      .metric-icon.sky {
+        background: #e0f2fe;
+        color: #0369a1;
       }
-      .metric-icon.red {
-        background: #fee2e2;
-        color: #b91c1c;
+      .metric-icon.orange {
+        background: #ffedd5;
+        color: #c2410c;
+      }
+      .metric-icon.purple {
+        background: #ede9fe;
+        color: #6d28d9;
       }
       .metric-label {
         font-size: 11px;
@@ -363,7 +367,7 @@
       }
       .field label {
         font-size: 11px;
-        text-transform: uppercase;
+        text-transform: none;
         letter-spacing: 0.08em;
         font-weight: 800;
         color: #64748b;
@@ -485,7 +489,7 @@
         background: #fef3c7;
         color: #92400e;
       }
-      .pill-review {
+      .pill-open {
         background: #dbeafe;
         color: #1d4ed8;
       }
@@ -607,7 +611,7 @@
       }
       .detail-section-title {
         font-size: 12px;
-        text-transform: uppercase;
+        text-transform: none;
         letter-spacing: 0.08em;
         color: #64748b;
         font-weight: 800;
@@ -623,8 +627,10 @@
       }
       .d-label {
         font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
+        /* Field labels use sentence/title case in the markup itself
+           ("Customer Name", not "CUSTOMER NAME") — so we must NOT force
+           uppercase here, or CSS would override the casing visually. */
+        text-transform: none;
         color: #94a3b8;
         font-weight: 800;
         margin-bottom: 4px;
@@ -835,34 +841,40 @@
 
           <div class="metrics">
             <div class="metric-card">
+              <div class="metric-icon indigo">📊</div>
+              <div class="metric-label">Total Requests</div>
+              <div class="metric-value" id="metricTotal">0</div>
+              <div class="metric-sub">All requests on record</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon sky">📂</div>
+              <div class="metric-label">Open</div>
+              <div class="metric-value" id="metricOpen">0</div>
+              <div class="metric-sub">Newly received requests</div>
+            </div>
+            <div class="metric-card">
               <div class="metric-icon yellow">⏳</div>
               <div class="metric-label">Pending</div>
               <div class="metric-value" id="metricPending">0</div>
               <div class="metric-sub">Awaiting team action</div>
             </div>
             <div class="metric-card">
-              <div class="metric-icon indigo">➡️</div>
-              <div class="metric-label">Forwarded</div>
-              <div class="metric-value" id="metricForwarded">0</div>
-              <div class="metric-sub">Forwarded for action</div>
+              <div class="metric-icon orange">🙋</div>
+              <div class="metric-label">Pending From Customer</div>
+              <div class="metric-value" id="metricPendingFromCustomer">0</div>
+              <div class="metric-sub">Waiting on the customer</div>
             </div>
             <div class="metric-card">
-              <div class="metric-icon green">✓</div>
-              <div class="metric-label">Approved</div>
-              <div class="metric-value" id="metricApproved">0</div>
-              <div class="metric-sub">Approved requests</div>
+              <div class="metric-icon purple">🛠️</div>
+              <div class="metric-label">Pending From Fastech</div>
+              <div class="metric-value" id="metricPendingFromFastech">0</div>
+              <div class="metric-sub">Waiting on Fastech</div>
             </div>
             <div class="metric-card">
               <div class="metric-icon blue">🔒</div>
               <div class="metric-label">Closed</div>
               <div class="metric-value" id="metricClosed">0</div>
               <div class="metric-sub">Closed requests</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-icon red">✕</div>
-              <div class="metric-label">Rejected</div>
-              <div class="metric-value" id="metricRejected">0</div>
-              <div class="metric-sub">Rejected requests</div>
             </div>
           </div>
 
@@ -917,11 +929,10 @@
                 <label>Status</label>
                 <select id="fStatus">
                   <option value="">All Status</option>
+                  <option>open</option>
                   <option>pending</option>
-                  <option>forwarded</option>
                   <option>approved</option>
                   <option>closed</option>
-                  <option>rejected</option>
                 </select>
               </div>
 
@@ -955,17 +966,17 @@
               </button>
               <button
                 class="tab-btn"
+                data-sf="open"
+                onclick="setStatusFilter('open')"
+              >
+                Open
+              </button>
+              <button
+                class="tab-btn"
                 data-sf="pending"
                 onclick="setStatusFilter('pending')"
               >
                 Pending
-              </button>
-              <button
-                class="tab-btn"
-                data-sf="forwarded"
-                onclick="setStatusFilter('forwarded')"
-              >
-                Forwarded
               </button>
               <button
                 class="tab-btn"
@@ -980,13 +991,6 @@
                 onclick="setStatusFilter('closed')"
               >
                 Closed
-              </button>
-              <button
-                class="tab-btn"
-                data-sf="rejected"
-                onclick="setStatusFilter('rejected')"
-              >
-                Rejected
               </button>
             </div>
 
@@ -1037,6 +1041,20 @@
             <div class="detail-grid">
               <div class="field">
                 <label>Status</label>
+                <select id="uStatus">
+                  <option value="open">Open</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="closed">Closed</option>
+                </select>
+                <small class="field-hint">
+                  When set to <strong>Pending</strong>, choose who is waiting
+                  below.
+                </small>
+              </div>
+
+              <div class="field">
+                <label>Pending From</label>
                 <select id="uPendingStatus">
                   <option value="">— None —</option>
                   <option value="Pending from Customer">
@@ -1046,11 +1064,9 @@
                     Pending from Fastech
                   </option>
                 </select>
-              </div>
-
-              <div class="field">
-                <label>Forward To</label>
-                <input id="uForwardTo" placeholder="Team or person" />
+                <small class="field-hint">
+                  Active only when Status = Pending.
+                </small>
               </div>
             </div>
 
@@ -1102,6 +1118,21 @@
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;");
 
+      // createdAt is stored as a human string like "24/05/2026, 19:41:42"
+      // (DD/MM/YYYY, HH:MM:SS). Plain string/alphabetical comparison sorts
+      // this WRONG (e.g. "24/05" would appear to come before "01/06" even
+      // though June is later). This turns the string into a real timestamp
+      // (milliseconds) so date sorting works correctly.
+      function parseIST(str) {
+        if (!str) return 0;
+        const [datePart, timePart] = String(str).split(", ");
+        if (!datePart) return 0;
+        const [day, month, year] = datePart.split("/").map(Number);
+        const [h = 0, m = 0, s = 0] = (timePart || "").split(":").map(Number);
+        if (!day || !month || !year) return 0;
+        return new Date(year, month - 1, day, h, m, s).getTime();
+      }
+
       const shortId = (id) => {
         const s = String(id || "");
         const clean = s.replace(/^(TMI-|SUB-|RMA-)/, "");
@@ -1120,14 +1151,6 @@
         return "—";
       }
 
-      function countPendingFor(records, field, label) {
-        const norm = (v) =>
-          String(v || "")
-            .toLowerCase()
-            .replace(/\s+/g, "");
-        return records.filter((r) => norm(r[field]) === norm(label)).length;
-      }
-
       function fmtStatus(s) {
         const v = String(s || "pending").toLowerCase();
         return v.charAt(0).toUpperCase() + v.slice(1);
@@ -1137,7 +1160,7 @@
         const v = String(s || "").toLowerCase();
         if (v === "approved") return "pill pill-success";
         if (v === "closed") return "pill pill-closed";
-        if (v === "forwarded") return "pill pill-review";
+        if (v === "open") return "pill pill-open";
         if (v === "rejected") return "pill pill-rejected";
         return "pill pill-pending";
       }
@@ -1162,31 +1185,58 @@
           if (!r.ok || !Array.isArray(d)) throw new Error("bad");
 
           allRequests = d;
-          document.getElementById("metricPending").textContent =
-            allRequests.filter(
-              (x) => String(x.status || "").toLowerCase() === "pending",
-            ).length;
-          document.getElementById("metricForwarded").textContent =
-            allRequests.filter(
-              (x) => String(x.status || "").toLowerCase() === "forwarded",
-            ).length;
-          document.getElementById("metricApproved").textContent =
-            allRequests.filter(
-              (x) => String(x.status || "").toLowerCase() === "approved",
-            ).length;
-          document.getElementById("metricClosed").textContent =
-            allRequests.filter(
-              (x) => String(x.status || "").toLowerCase() === "closed",
-            ).length;
-          document.getElementById("metricRejected").textContent =
-            allRequests.filter(
-              (x) => String(x.status || "").toLowerCase() === "rejected",
-            ).length;
+          await refreshMetrics();
           applyFilters();
         } catch (e) {
           tb.innerHTML =
             '<tr><td colspan="11" class="td-empty">Could not load requests.</td></tr>';
         }
+      }
+
+      // Dashboard card counts. We prefer the server-side /api/stats endpoint
+      // (single source of truth) and fall back to client-side aggregation if
+      // the call fails so the UI never shows stale zeros.
+      // "Pending From Customer/Fastech" is treated as a simple non-empty
+      // flag on the client fallback too, so old records saved with slightly
+      // different wording ("Pending For Customer") still count correctly.
+      async function refreshMetrics() {
+        const isPendingFlag = (v) => String(v || "").trim().length > 0;
+
+        let stats = null;
+        try {
+          const r = await fetch(`${API}/api/stats`);
+          if (r.ok) stats = await r.json();
+        } catch {}
+
+        const localOpen = allRequests.filter(
+          (x) => String(x.status || "").toLowerCase() === "open",
+        ).length;
+        const localPending = allRequests.filter(
+          (x) => String(x.status || "").toLowerCase() === "pending",
+        ).length;
+        const localClosed = allRequests.filter(
+          (x) => String(x.status || "").toLowerCase() === "closed",
+        ).length;
+        const localPfc = allRequests.filter((x) =>
+          isPendingFlag(x.pendingForCustomer),
+        ).length;
+        const localPff = allRequests.filter((x) =>
+          isPendingFlag(x.pendingForFastech),
+        ).length;
+
+        const set = (id, val) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = String(val ?? 0);
+        };
+        set("metricTotal", stats?.total ?? allRequests.length);
+        set("metricOpen", stats?.open ?? localOpen);
+        set("metricPending", stats?.pending ?? localPending);
+        set(
+          "metricPendingFromCustomer",
+          stats?.pendingFromCustomer ?? localPfc,
+        );
+        set("metricPendingFromFastech", stats?.pendingFromFastech ?? localPff);
+        set("metricClosed", stats?.closed ?? localClosed);
       }
 
       function applyFilters() {
@@ -1202,7 +1252,7 @@
         af.status = (document.getElementById("fStatus").value || "")
           .trim()
           .toLowerCase();
-        af.date = (dentByIt.getElementById("fDate").value || "").trim();
+        af.date = (document.getElementById("fDate").value || "").trim();
         af.team = (document.getElementById("fTeam").value || "")
           .trim()
           .toLowerCase();
@@ -1255,7 +1305,7 @@
             return false;
           if (
             af.team &&
-            ![r.forwardTo, r.operationsTeam, r.serviceTeam]
+            ![r.id, r.name, r.email, r.company, r.product]
               .join(" ")
               .toLowerCase()
               .includes(af.team)
@@ -1283,7 +1333,12 @@
           return true;
         });
 
+        // Sort by real date/time when sorting on createdAt (the default),
+        // otherwise fall back to plain text comparison for other columns.
         rows.sort((a, b) => {
+          if (sortKey === "createdAt") {
+            return (parseIST(a.createdAt) - parseIST(b.createdAt)) * sortDir;
+          }
           const av = String(a[sortKey] || ""),
             bv = String(b[sortKey] || "");
           return av < bv ? -1 * sortDir : av > bv ? 1 * sortDir : 0;
@@ -1316,22 +1371,14 @@
             const safeId = id.replace(/'/g, "\\'");
 
             let pendingFromCell = "—";
-            const pcVal = String(r.pendingForCustomer || "")
-              .toLowerCase()
-              .replace(/\s+/g, "");
-            const pfVal = String(r.pendingForFastech || "")
-              .toLowerCase()
-              .replace(/\s+/g, "");
-            if (
-              pcVal === "pendingforcustomer" ||
-              pcVal === "pendingfromcustomer"
-            ) {
+            const pcHasValue =
+              String(r.pendingForCustomer || "").trim().length > 0;
+            const pfHasValue =
+              String(r.pendingForFastech || "").trim().length > 0;
+            if (pcHasValue) {
               pendingFromCell =
                 '<span class="pill pill-pending">Pending from Customer</span>';
-            } else if (
-              pfVal === "pendingforfastech" ||
-              pfVal === "pendingfromfastech"
-            ) {
+            } else if (pfHasValue) {
               pendingFromCell =
                 '<span class="pill pill-pending">Pending from Fastech</span>';
             }
@@ -1452,7 +1499,7 @@
             <div class="d-value">${esc(cr.phone || "-")}</div>
           </div>
           <div class="detail-item">
-            <div class="d-label">E-MAIL</div>
+            <div class="d-label">Email</div>
             <div class="d-value">${esc(cr.email || "-")}</div>
           </div>
           <div class="detail-item">
@@ -1479,15 +1526,15 @@
         <div class="detail-grid">
           <div class="detail-item">
             <div class="d-label">Base Unit S-Number</div>
-            <div class="d-value">${esc(cr.serialBaseUnit || "-")}</div>
+            <div class="d-value">${esc(cr.serialBaseUnit || cr.basicUnit || "-")}</div>
           </div>
           <div class="detail-item">
             <div class="d-label">RF Cable Serial Number</div>
-            <div class="d-value">${esc(cr.serialRfCable || "-")}</div>
+            <div class="d-value">${esc(cr.serialRfCable || cr.rfCable || "-")}</div>
           </div>
           <div class="detail-item full">
             <div class="d-label">Antenna Serial Number</div>
-            <div class="d-value">${esc(cr.serialAntenna || "-")}</div>
+            <div class="d-value">${esc(cr.serialAntenna || cr.antenna || "-")}</div>
           </div>
         </div>
       </div>
@@ -1529,15 +1576,10 @@
       <div class="detail-section" style="margin-bottom:14px;">
         <div class="detail-section-title">Internal Processing Details</div>
         <div class="detail-grid">
-          
+
           <div class="field">
             <label>Received Date</label>
             <input type="date" id="ipReceivedDate" />
-          </div>
-          
-          <div class="field">
-            <label>Date of Investigation</label>
-            <input type="date" id="ipDateOfInvestigation" />
           </div>
 
           <div class="field">
@@ -1631,16 +1673,6 @@
           </div>
 
           <div class="field full">
-            <label>Investigation Details</label>
-            <textarea id="ipInvestigationDetails" placeholder="Investigation details..."></textarea>
-          </div>
-
-          <div class="field full">
-            <label>Repair Details</label>
-            <textarea id="ipRepairDetails" placeholder="Repair details..."></textarea>
-          </div>
-
-          <div class="field full">
             <label>Reason for Waiting</label>
             <textarea id="ipReasonForWaiting" placeholder="Reason for waiting..."></textarea>
           </div>
@@ -1652,27 +1684,44 @@
 
         </div>
       </div>
+
+      <div class="detail-section" style="margin-bottom:14px;">
+        <div class="detail-section-title">Investigation &amp; Repair</div>
+        <div class="detail-grid">
+          <div class="field">
+            <label>Date of Investigation</label>
+            <input type="date" id="ipDateOfInvestigation" />
+          </div>
+
+          <div class="field full">
+            <label>Investigation Details</label>
+            <textarea id="ipInvestigationDetails" placeholder="Investigation details..."></textarea>
+          </div>
+
+          <div class="field full">
+            <label>Repair Details</label>
+            <textarea id="ipRepairDetails" placeholder="Repair details..."></textarea>
+          </div>
+        </div>
+      </div>
     `;
 
         loadInternalDetails(cr.id);
 
         let pendingStatusVal = "";
-        const crPc = String(cr.pendingForCustomer || "")
-          .toLowerCase()
-          .replace(/\s+/g, "");
-        const crPf = String(cr.pendingForFastech || "")
-          .toLowerCase()
-          .replace(/\s+/g, "");
-        if (crPc === "pendingforcustomer" || crPc === "pendingfromcustomer") {
+        const crPcHasValue =
+          String(cr.pendingForCustomer || "").trim().length > 0;
+        const crPfHasValue =
+          String(cr.pendingForFastech || "").trim().length > 0;
+        if (crPcHasValue) {
           pendingStatusVal = "Pending from Customer";
-        } else if (
-          crPf === "pendingforfastech" ||
-          crPf === "pendingfromfastech"
-        ) {
+        } else if (crPfHasValue) {
           pendingStatusVal = "Pending from Fastech";
         }
+        document.getElementById("uStatus").value = String(
+          cr.status || "open",
+        ).toLowerCase();
         document.getElementById("uPendingStatus").value = pendingStatusVal;
-        document.getElementById("uForwardTo").value = cr.forwardTo || "";
 
         const approvalSection = document.getElementById("approvalSection");
         approvalSection.classList.add("active");
@@ -1740,7 +1789,6 @@
         const pendingVal = document.getElementById("uPendingStatus").value;
         const payload = {
           status,
-          forwardTo: document.getElementById("uForwardTo").value,
           pendingForCustomer:
             pendingVal === "Pending from Customer"
               ? "Pending For Customer"
@@ -1795,15 +1843,21 @@
       async function saveUpdate() {
         if (!currentRequest) return;
 
+        const statusVal = document.getElementById("uStatus").value;
         const pendingVal = document.getElementById("uPendingStatus").value;
+        // Pending From Customer/Fastech only makes sense when the main
+        // Status is "pending" — clear it out otherwise so a stale flag
+        // doesn't linger once the request moves to Open/Approved/Closed.
         const payload = {
-          forwardTo: document.getElementById("uForwardTo").value,
+          status: statusVal,
           pendingForCustomer:
-            pendingVal === "Pending from Customer"
+            statusVal === "pending" && pendingVal === "Pending from Customer"
               ? "Pending For Customer"
               : "",
           pendingForFastech:
-            pendingVal === "Pending from Fastech" ? "Pending For Fastech" : "",
+            statusVal === "pending" && pendingVal === "Pending from Fastech"
+              ? "Pending For Fastech"
+              : "",
         };
 
         await fetch(

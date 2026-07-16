@@ -77,6 +77,40 @@ function generateRmaNumber() {
   return "RMA-" + Date.now() + Math.floor(Math.random() * 1000);
 }
 
+// ---------------------------------------------------------------------------
+// createdAt is stored as a human-readable IST string like
+// "24/05/2026, 19:41:42" (DD/MM/YYYY, HH:MM:SS). Plain string sorting
+// (localeCompare / < / >) sorts this alphabetically, which is WRONG for
+// dates — e.g. "24/05/2026" would sort before "01/06/2026" alphabetically
+// even though June comes after May. This helper turns that string into a
+// real numeric timestamp (milliseconds) so we can sort dates correctly.
+// ---------------------------------------------------------------------------
+function parseIST(str) {
+  if (!str) return 0;
+  const [datePart, timePart] = String(str).split(", ");
+  if (!datePart) return 0;
+  const [day, month, year] = datePart.split("/").map(Number);
+  const [h = 0, m = 0, s = 0] = (timePart || "").split(":").map(Number);
+  if (!day || !month || !year) return 0;
+  return new Date(year, month - 1, day, h, m, s).getTime();
+}
+
+// A "Pending From Customer" / "Pending From Fastech" field is really just a
+// yes/no flag — it's set to some non-empty text when true, and "" when not.
+// Older records saved it as "Pending For Customer" (note: For, not From),
+// so instead of matching exact wording we just check the field is non-empty.
+// This keeps old and new records both counting correctly.
+function isPendingFlag(value) {
+  return String(value || "").trim().length > 0;
+}
+
+// Canonical dashboard statuses (single source of truth for both UI and backend).
+// "Open / Pending / Approved / Closed" are the main statuses.
+// "Pending from Customer" and "Pending from Fastech" are stored as sub-status
+// fields (pendingForCustomer / pendingForFastech) and do not replace the
+// primary status.
+const VALID_STATUSES = ["open", "pending", "approved", "closed"];
+
 function isApprovedStatus(status) {
   return String(status || "").toLowerCase() === "approved";
 }
@@ -206,13 +240,13 @@ app.post("/auth/signup", (req, res) => {
   res.status(201).json({ message: "Account created successfully." });
 });
 
+// Requests are always returned newest-first, sorted by the real date/time
+// (see parseIST above), not by plain text comparison.
 app.get("/api/requests", (req, res) => {
   const db = readDB();
   const email = req.query.email;
   const rows = email ? db.filter((r) => r.email === email) : db;
-  res.json(
-    rows.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")),
-  );
+  res.json(rows.sort((a, b) => parseIST(b.createdAt) - parseIST(a.createdAt)));
 });
 
 app.get("/api/requests/:id", (req, res) => {
@@ -221,20 +255,14 @@ app.get("/api/requests/:id", (req, res) => {
   if (!request) return res.status(404).json({ message: "Request not found." });
   const history = db
     .filter((r) => r.email === request.email && r.id !== request.id)
-    .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+    .sort((a, b) => parseIST(b.createdAt) - parseIST(a.createdAt));
   res.json({ request, history });
 });
 
 app.post("/api/requests", upload.array("images", 10), async (req, res) => {
   try {
     const body = req.body || {};
-    const required = [
-      "name",
-      "email",
-      "oem",
-      "serviceType",
-      "product",
-    ];
+    const required = ["name", "email", "oem", "serviceType", "product"];
     const missing = required.filter((k) => !body[k]);
     if (missing.length)
       return res
@@ -278,10 +306,7 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
       calCertificateAddress: body.calCertificateAddress || "",
       additionalInfo: body.additionalInfo || "",
       images: uploadedImages,
-      status: "pending",
-      forwardTo: "",
-      operationsTeam: "",
-      serviceTeam: "",
+      status: "open",
       customerFeedback: "",
       internalNote: "",
       createdAt: now,
@@ -348,9 +373,6 @@ app.put("/api/requests/:id", async (req, res) => {
   const previousStatus = db[idx].status;
   const allowed = [
     "status",
-    "forwardTo",
-    "operationsTeam",
-    "serviceTeam",
     "customerFeedback",
     "internalNote",
     "product",
@@ -360,14 +382,21 @@ app.put("/api/requests/:id", async (req, res) => {
     "pendingForFastech",
   ];
   const body = req.body || {};
+
+  // Validate the primary status field against the canonical set.
+  if (body.status !== undefined) {
+    const normalized = String(body.status || "").toLowerCase();
+    if (!VALID_STATUSES.includes(normalized)) {
+      return res.status(400).json({
+        message: `Invalid status. Allowed: ${VALID_STATUSES.join(", ")}.`,
+      });
+    }
+    body.status = normalized;
+  }
+
   allowed.forEach((k) => {
     if (body[k] !== undefined) db[idx][k] = body[k];
   });
-  if (body.forwardTo !== undefined && String(body.forwardTo || "").trim()) {
-    if (!body.status || body.status === "pending") {
-      db[idx].status = "forwarded";
-    }
-  }
   assignRmaOnApproval(db[idx], previousStatus);
   db[idx].updatedAt = nowIST();
   writeDB(db);
@@ -377,19 +406,10 @@ app.put("/api/requests/:id", async (req, res) => {
     body.status !== undefined && body.status !== previousStatus;
   let customerMail = { sent: false };
 
-  if (
-    statusChanged &&
-    record.email &&
-    (record.status === "approved" || record.status === "rejected")
-  ) {
-    const isApproved = record.status === "approved";
+  if (statusChanged && record.email && record.status === "approved") {
     const rmaRef = record.rmaNumber || record.id;
-    const subject = isApproved
-      ? `Your FASCAL request has been approved — RMA ${rmaRef}`
-      : `Your FASCAL request ${record.id} has been rejected`;
-    const introLine = isApproved
-      ? `Good news — your request has been approved. Your RMA number is ${rmaRef}.`
-      : `Your request (reference: ${record.id}) has been rejected.`;
+    const subject = `Your FASCAL request has been approved — RMA ${rmaRef}`;
+    const introLine = `Good news — your request has been approved. Your RMA number is ${rmaRef}.`;
 
     try {
       await sendMail({
@@ -397,14 +417,14 @@ app.put("/api/requests/:id", async (req, res) => {
         subject,
         text: `Hi ${record.name}, ${introLine}`,
         html: `
-          <p>Hi ${record.name},</p>
-          <p>${introLine}</p>
-          ${isApproved ? `<p><strong>RMA Number:</strong> ${rmaRef}</p>` : ""}
-        `,
+        <p>Hi ${record.name},</p>
+        <p>${introLine}</p>
+        <p><strong>RMA Number:</strong> ${rmaRef}</p>
+      `,
       });
       customerMail.sent = true;
     } catch (mailErr) {
-      console.error("Approval/rejection mail failed:", mailErr.message);
+      console.error("Approval mail failed:", mailErr.message);
       customerMail.error = mailErr.message;
     }
   }
@@ -431,22 +451,25 @@ app.get("/api/export/csv", (req, res) => {
     return res.status(404).json({ message: "No data to export." });
 
   const shortId = (id) => {
-    const s = String(id || '');
-    const clean = s.replace(/^(TMI-|SUB-|RMA-)/, '');
-    return 'T-' + clean.slice(-6).toUpperCase();
+    const s = String(id || "");
+    const clean = s.replace(/^(TMI-|SUB-|RMA-)/, "");
+    return "T-" + clean.slice(-6).toUpperCase();
   };
 
   const displayRma = (record) => {
     if (record.rmaNumber) return shortId(record.rmaNumber);
-    const s = String(record.status || '').toLowerCase();
-    if (['approved', 'closed'].includes(s) && /^TMI-/.test(String(record.id || ''))) {
+    const s = String(record.status || "").toLowerCase();
+    if (
+      ["approved", "closed"].includes(s) &&
+      /^TMI-/.test(String(record.id || ""))
+    ) {
       return shortId(record.id);
     }
-    return '—';
+    return "—";
   };
 
   const fmtStatus = (s) => {
-    const v = String(s || 'pending').toLowerCase();
+    const v = String(s || "pending").toLowerCase();
     return v.charAt(0).toUpperCase() + v.slice(1);
   };
 
@@ -461,19 +484,22 @@ app.get("/api/export/csv", (req, res) => {
     "Designation",
     "Status",
     "Pending From",
-    "Date"
+    "Date",
   ];
 
   const escape = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
-  const rows = db.map((r, idx) => {
-    let pendingForVal = '—';
-    const pcNorm = String(r.pendingForCustomer || '').toLowerCase().replace(/\s+/g, '');
-    const pfNorm = String(r.pendingForFastech || '').toLowerCase().replace(/\s+/g, '');
-    if (pcNorm === 'pendingforcustomer' || pcNorm === 'pendingfromcustomer') {
-      pendingForVal = 'Pending from Customer';
-    } else if (pfNorm === 'pendingforfastech' || pfNorm === 'pendingfromfastech') {
-      pendingForVal = 'Pending from Fastech';
+  // Export newest-first too, so it matches what's shown on screen.
+  const sortedDb = [...db].sort(
+    (a, b) => parseIST(b.createdAt) - parseIST(a.createdAt),
+  );
+
+  const rows = sortedDb.map((r, idx) => {
+    let pendingForVal = "—";
+    if (isPendingFlag(r.pendingForCustomer)) {
+      pendingForVal = "Pending from Customer";
+    } else if (isPendingFlag(r.pendingForFastech)) {
+      pendingForVal = "Pending from Fastech";
     }
 
     return [
@@ -487,8 +513,10 @@ app.get("/api/export/csv", (req, res) => {
       r.designation || "-",
       fmtStatus(r.status),
       pendingForVal,
-      r.createdAt || "-"
-    ].map(escape).join(",");
+      r.createdAt || "-",
+    ]
+      .map(escape)
+      .join(",");
   });
 
   const csv = [headers.join(","), ...rows].join("\r\n");
@@ -496,44 +524,31 @@ app.get("/api/export/csv", (req, res) => {
   res.setHeader("Content-Type", "text/csv");
   res.setHeader(
     "Content-Disposition",
-    `attachment; filename="fascal_requests_${Date.now()}.csv"`
+    `attachment; filename="fascal_requests_${Date.now()}.csv"`,
   );
   res.send(csv);
 });
 
+// Dashboard card counts — single source of truth used by the Main Dashboard.
+// "Pending From Customer" / "Pending From Fastech" are treated as simple
+// non-empty flags (see isPendingFlag) so both old ("Pending For Customer")
+// and new ("Pending From Customer") saved values count correctly.
 app.get("/api/stats", (req, res) => {
   const db = readDB();
-  const norm = (s) =>
-    String(s || "")
-      .toLowerCase()
-      .replace(/\s+/g, "");
-  const countPendingFor = (field, label) =>
-    db.filter((r) => norm(r[field]) === norm(label)).length;
   const countStatus = (s) =>
     db.filter((r) => String(r.status || "").toLowerCase() === s).length;
+
   res.json({
     total: db.length,
-    pendingFromCustomer: countPendingFor(
-      "pendingFromCustomer",
-      "Pending From Customer",
-    ),
-    pendingFromFastech: countPendingFor(
-      "pendingFromFastech",
-      "Pending From Fastech",
-    ),
-    forwarded: countStatus("forwarded"),
-    finalised: db.filter((r) =>
-      ["approved", "closed", "rejected"].includes(
-        String(r.status || "").toLowerCase(),
-      ),
-    ).length,
-    // Legacy fields kept for compatibility
+    open: countStatus("open"),
     pending: countStatus("pending"),
-    review: countStatus("review") + countStatus("forwarded"),
-    approved: countStatus("approved"),
-    resolved: countStatus("resolved"),
+    pendingFromCustomer: db.filter((r) => isPendingFlag(r.pendingForCustomer))
+      .length,
+    pendingFromFastech: db.filter((r) => isPendingFlag(r.pendingForFastech))
+      .length,
     closed: countStatus("closed"),
-    rejected: countStatus("rejected"),
+    // Convenience field for "anything finalised" — kept for any future use
+    approved: countStatus("approved"),
   });
 });
 
@@ -541,9 +556,7 @@ app.get("/api/support", (req, res) => {
   const support = readSupport();
   const email = req.query.email;
   const rows = email ? support.filter((r) => r.email === email) : support;
-  res.json(
-    rows.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")),
-  );
+  res.json(rows.sort((a, b) => parseIST(b.createdAt) - parseIST(a.createdAt)));
 });
 
 app.get("/api/support/stats", (req, res) => {
@@ -571,12 +584,7 @@ app.get("/api/support/:id", (req, res) => {
 app.post("/api/support", upload.array("images", 10), async (req, res) => {
   try {
     const body = req.body || {};
-    const required = [
-      "name",
-      "email",
-      "oem",
-      "product",
-    ];
+    const required = ["name", "email", "oem", "product"];
     const missing = required.filter((k) => !body[k]);
     if (missing.length)
       return res
@@ -699,9 +707,9 @@ app.put("/api/support/:id", async (req, res) => {
   if (body.status !== undefined) {
     const allowedStatuses = ["Open", "Closed"];
     if (!allowedStatuses.includes(body.status)) {
-      return res
-        .status(400)
-        .json({ message: `Invalid status. Allowed: ${allowedStatuses.join(", ")}.` });
+      return res.status(400).json({
+        message: `Invalid status. Allowed: ${allowedStatuses.join(", ")}.`,
+      });
     }
   }
 
@@ -723,10 +731,14 @@ app.get("/api/support/export/csv", (req, res) => {
     return res.status(404).json({ message: "No data to export." });
 
   const filterStatus = String(req.query.status || "").trim();
-  const norm = (v) => String(v || "").toLowerCase().replace(/\s+/g, "");
-  const rows = filterStatus && norm(filterStatus) !== "all"
-    ? support.filter((r) => norm(r.status) === norm(filterStatus))
-    : support;
+  const norm = (v) =>
+    String(v || "")
+      .toLowerCase()
+      .replace(/\s+/g, "");
+  const rows =
+    filterStatus && norm(filterStatus) !== "all"
+      ? support.filter((r) => norm(r.status) === norm(filterStatus))
+      : support;
 
   if (!rows.length)
     return res.status(404).json({ message: "No data to export." });
