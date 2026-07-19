@@ -68,13 +68,25 @@ const writeDB = (data) => writeJSON(DB_FILE, data);
 const readSupport = () => readJSON(SUPPORT_FILE, []);
 const writeSupport = (data) => writeJSON(SUPPORT_FILE, data);
 const readUsers = () => readJSON(USERS_FILE, []);
+const escapeHtml = (value) =>
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 
 function generateSubmissionId() {
   return "SUB-" + Date.now() + Math.floor(Math.random() * 1000);
 }
 
-function generateRmaNumber() {
-  return "RMA-" + Date.now() + Math.floor(Math.random() * 1000);
+function generateRmaNumber(existingNumbers = new Set()) {
+  // RMAs are deliberately a number only (no T-/RMA- prefix). Keep retrying
+  // in the unlikely event that a five digit number is already in use.
+  let number;
+  do {
+    number = String(Math.floor(10000 + Math.random() * 90000));
+  } while (existingNumbers.has(number));
+  return number;
 }
 
 // ---------------------------------------------------------------------------
@@ -106,24 +118,13 @@ function isPendingFlag(value) {
 
 // Canonical dashboard statuses (single source of truth for both UI and backend).
 // "Open / Pending / Approved / Closed" are the main statuses.
-// "Pending from Customer" and "Pending from Fastech" are stored as sub-status
+// "Pending from Customer", "Pending from Fastech", and "Pending from OEM" are stored as sub-status
 // fields (pendingForCustomer / pendingForFastech) and do not replace the
 // primary status.
 const VALID_STATUSES = ["open", "pending", "approved", "closed"];
 
 function isApprovedStatus(status) {
   return String(status || "").toLowerCase() === "approved";
-}
-
-function assignRmaOnApproval(record, previousStatus) {
-  const nowApproved = isApprovedStatus(record.status);
-  const wasApproved = isApprovedStatus(previousStatus);
-  if (nowApproved && !wasApproved && !record.rmaNumber) {
-    record.rmaNumber = generateRmaNumber();
-  }
-  if (!nowApproved && wasApproved) {
-    record.rmaNumber = "";
-  }
 }
 
 function nowIST() {
@@ -246,7 +247,14 @@ app.get("/api/requests", (req, res) => {
   const db = readDB();
   const email = req.query.email;
   const rows = email ? db.filter((r) => r.email === email) : db;
-  res.json(rows.sort((a, b) => parseIST(b.createdAt) - parseIST(a.createdAt)));
+  res.json(rows.sort((a, b) => {
+    // Issued RMAs lead the work queue, newest issue first. Unassigned new
+    // requests follow in submission order until an admin selects a status.
+    const aIssued = parseIST(a.rmaIssuedAt);
+    const bIssued = parseIST(b.rmaIssuedAt);
+    if (aIssued || bIssued) return bIssued - aIssued;
+    return parseIST(b.createdAt) - parseIST(a.createdAt);
+  }));
 });
 
 app.get("/api/requests/:id", (req, res) => {
@@ -283,8 +291,15 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
     const record = {
       id: generateSubmissionId(),
       rmaNumber: "",
+      rmaIssuedAt: "",
       pendingForCustomer: "",
       pendingForFastech: "",
+      pendingForOem: "",
+      customStatus: "",
+      approvalStatus: "",
+      customerMailStatus: "",
+      disapprovalReason: "",
+      processingDetails: {},
       oem: body.oem || "",
       serviceType: body.serviceType || "",
       product: body.product || "",
@@ -306,7 +321,9 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
       calCertificateAddress: body.calCertificateAddress || "",
       additionalInfo: body.additionalInfo || "",
       images: uploadedImages,
-      status: "open",
+      // A submitted request is intentionally unassigned. Only an admin may
+      // place it in Open, Pending, Approved, or Closed.
+      status: "",
       customerFeedback: "",
       internalNote: "",
       createdAt: now,
@@ -370,7 +387,6 @@ app.put("/api/requests/:id", async (req, res) => {
   if (idx === -1)
     return res.status(404).json({ message: "Request not found." });
 
-  const previousStatus = db[idx].status;
   const allowed = [
     "status",
     "customerFeedback",
@@ -380,13 +396,17 @@ app.put("/api/requests/:id", async (req, res) => {
     "serviceType",
     "pendingForCustomer",
     "pendingForFastech",
+    "pendingForOem",
+    "customStatus",
+    "processingDetails",
   ];
   const body = req.body || {};
+  const decision = String(body.approvalDecision || "").toLowerCase();
 
   // Validate the primary status field against the canonical set.
   if (body.status !== undefined) {
     const normalized = String(body.status || "").toLowerCase();
-    if (!VALID_STATUSES.includes(normalized)) {
+    if (normalized && !VALID_STATUSES.includes(normalized)) {
       return res.status(400).json({
         message: `Invalid status. Allowed: ${VALID_STATUSES.join(", ")}.`,
       });
@@ -394,19 +414,42 @@ app.put("/api/requests/:id", async (req, res) => {
     body.status = normalized;
   }
 
+  if (decision && !["approved", "disapproved", "reset"].includes(decision)) {
+    return res.status(400).json({ message: "Invalid approval decision." });
+  }
+
   allowed.forEach((k) => {
     if (body[k] !== undefined) db[idx][k] = body[k];
   });
-  assignRmaOnApproval(db[idx], previousStatus);
-  db[idx].updatedAt = nowIST();
-  writeDB(db);
-
   const record = db[idx];
-  const statusChanged =
-    body.status !== undefined && body.status !== previousStatus;
   let customerMail = { sent: false };
 
-  if (statusChanged && record.email && record.status === "approved") {
+  // An approval creates the RMA and moves the request into the Open queue.
+  // Approval can be requested explicitly or through the legacy Status=approved
+  // value, which keeps existing integrations working.
+  const isApproval = decision === "approved" || body.status === "approved";
+  if (isApproval) {
+    if (!record.rmaNumber) {
+      record.rmaNumber = generateRmaNumber(
+        new Set(db.map((item) => String(item.rmaNumber || ""))),
+      );
+      record.rmaIssuedAt = nowIST();
+    }
+    record.status = "open";
+    record.approvalStatus = "approved";
+    record.disapprovalReason = "";
+  } else if (decision === "disapproved") {
+    record.approvalStatus = "disapproved";
+    record.disapprovalReason = String(body.disapprovalReason || "").trim();
+    // Keep disapproved requests actionable without introducing an unsupported
+    // table status.
+    if (!record.status || record.status === "approved") record.status = "pending";
+  } else if (decision === "reset") {
+    record.approvalStatus = "";
+    record.disapprovalReason = "";
+  }
+
+  if (isApproval && record.email) {
     const rmaRef = record.rmaNumber || record.id;
     const subject = `Your FASCAL request has been approved — RMA ${rmaRef}`;
     const introLine = `Good news — your request has been approved. Your RMA number is ${rmaRef}.`;
@@ -423,11 +466,32 @@ app.put("/api/requests/:id", async (req, res) => {
       `,
       });
       customerMail.sent = true;
+      record.customerMailStatus = "sent";
     } catch (mailErr) {
       console.error("Approval mail failed:", mailErr.message);
       customerMail.error = mailErr.message;
+      record.customerMailStatus = "failed";
+    }
+  } else if (decision === "disapproved" && record.email) {
+    const reason = record.disapprovalReason || "No reason was provided.";
+    try {
+      await sendMail({
+        to: record.email,
+        subject: "Your FASCAL request has been disapproved",
+        text: `Hi ${record.name}, your request has been disapproved. Reason: ${reason}`,
+        html: `<p>Hi ${escapeHtml(record.name)},</p><p>Your request has been disapproved.</p><p><strong>Reason:</strong> ${escapeHtml(reason)}</p>`,
+      });
+      customerMail.sent = true;
+      record.customerMailStatus = "sent";
+    } catch (mailErr) {
+      console.error("Disapproval mail failed:", mailErr.message);
+      customerMail.error = mailErr.message;
+      record.customerMailStatus = "failed";
     }
   }
+
+  record.updatedAt = nowIST();
+  writeDB(db);
 
   res.json({
     message: "Request updated successfully.",
@@ -450,70 +514,75 @@ app.get("/api/export/csv", (req, res) => {
   if (!db.length)
     return res.status(404).json({ message: "No data to export." });
 
-  const shortId = (id) => {
-    const s = String(id || "");
-    const clean = s.replace(/^(TMI-|SUB-|RMA-)/, "");
-    return "T-" + clean.slice(-6).toUpperCase();
-  };
-
   const displayRma = (record) => {
-    if (record.rmaNumber) return shortId(record.rmaNumber);
-    const s = String(record.status || "").toLowerCase();
-    if (
-      ["approved", "closed"].includes(s) &&
-      /^TMI-/.test(String(record.id || ""))
-    ) {
-      return shortId(record.id);
-    }
-    return "—";
+    return record.rmaNumber
+      ? String(record.rmaNumber).replace(/^(?:T-|RMA-)/i, "")
+      : "—";
   };
 
   const fmtStatus = (s) => {
-    const v = String(s || "pending").toLowerCase();
+    const v = String(s || "").toLowerCase();
+    if (!v) return "—";
     return v.charAt(0).toUpperCase() + v.slice(1);
   };
 
-  const headers = [
-    "Sr.",
-    "RMA No",
-    "OEM",
-    "Service Type",
-    "Product Model",
-    "Customer Name",
-    "Company",
-    "Designation",
-    "Status",
-    "Pending From",
-    "Date",
+  const baseFields = [
+    ["RMA No", (r) => displayRma(r)],
+    ["RMA Issued Date", (r) => r.rmaIssuedAt || "-"],
+    ["Submission Reference", (r) => r.id || "-"],
+    ["Status", (r) => fmtStatus(r.status)],
+    ["Pending From", (r) => {
+      if (isPendingFlag(r.pendingForCustomer)) return "Pending from Customer";
+      if (isPendingFlag(r.pendingForFastech)) return "Pending from Fastech";
+      if (isPendingFlag(r.pendingForOem)) return "Pending from OEM";
+      return "—";
+    }],
+    ["Custom Status", (r) => r.customStatus || "-"],
+    ["Approval Status", (r) => r.approvalStatus || "-"],
+    ["Customer Mail Status", (r) => r.customerMailStatus === "failed" ? "Failed to Mail the customer" : r.customerMailStatus || "-"],
+    ["Disapproval Reason", (r) => r.disapprovalReason || "-"],
   ];
+  const excluded = new Set(["rmaNumber", "rmaIssuedAt", "status", "pendingForCustomer", "pendingForFastech", "pendingForOem", "customStatus", "approvalStatus", "customerMailStatus", "disapprovalReason", "processingDetails", "images"]);
+  // Keep every field visible in the View panel in the export, even when a
+  // particular request has not filled that field yet.
+  const viewRecordKeys = [
+    "id", "oem", "serviceType", "product", "productDetails", "description",
+    "name", "email", "phone", "company", "designation", "department", "location",
+    "poNumber", "poDate", "serialSingle", "serialNumber", "serialBaseUnit", "basicUnit",
+    "serialRfCable", "rfCable", "serialAntenna", "antenna", "probe", "other",
+    "billingAddress", "returnAddress", "calCertificateAddress", "calAddress",
+    "additionalInfo", "customerFeedback", "internalNote", "createdAt", "updatedAt",
+  ];
+  const recordKeys = [...new Set([...viewRecordKeys, ...db.flatMap((r) => Object.keys(r))])].filter((key) => !excluded.has(key));
+  const processingKeys = [...new Set([
+    "ipAdminNote", "ipReceivedDate", "ipDateOfInvestigation", "ipWarranty",
+    "ipInvestigationDetails", "ipRepairDetails", "ipEstimateDate", "ipEstimateNumber",
+    "ipEstimateAmount", "ipPoNoAndDate", "ipPoReceivedDate", "ipOemRmaNo",
+    "ipDateOfSent", "ipPlatformModule", "ipOemQuotation", "ipDateOfReceivingFromOem",
+    "ipDcNoAndDate", "ipDispatchedDate", "ipLrNo", "ipReasonForWaiting",
+    "ipDeliveredDate", "ipAckDateFromWh", "ipRemark",
+    ...db.flatMap((r) => Object.keys(r.processingDetails || {})),
+  ])];
+  const heading = (key) => key.replace(/^ip/, "").replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
+  const headers = ["Sr.", ...baseFields.map(([label]) => label), ...recordKeys.map(heading), ...processingKeys.map(heading), "Uploaded Files"];
 
   const escape = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
   // Export newest-first too, so it matches what's shown on screen.
-  const sortedDb = [...db].sort(
-    (a, b) => parseIST(b.createdAt) - parseIST(a.createdAt),
-  );
+  const sortedDb = [...db].sort((a, b) => {
+    const aIssued = parseIST(a.rmaIssuedAt);
+    const bIssued = parseIST(b.rmaIssuedAt);
+    if (aIssued || bIssued) return bIssued - aIssued;
+    return parseIST(b.createdAt) - parseIST(a.createdAt);
+  });
 
   const rows = sortedDb.map((r, idx) => {
-    let pendingForVal = "—";
-    if (isPendingFlag(r.pendingForCustomer)) {
-      pendingForVal = "Pending from Customer";
-    } else if (isPendingFlag(r.pendingForFastech)) {
-      pendingForVal = "Pending from Fastech";
-    }
-
     return [
       idx + 1,
-      displayRma(r),
-      r.oem || "-",
-      r.serviceType || "-",
-      r.product || "-",
-      r.name || "-",
-      r.company || "-",
-      r.designation || "-",
-      fmtStatus(r.status),
-      pendingForVal,
-      r.createdAt || "-",
+      ...baseFields.map(([, getter]) => getter(r)),
+      ...recordKeys.map((key) => typeof r[key] === "object" ? JSON.stringify(r[key]) : r[key] || "-"),
+      ...processingKeys.map((key) => r.processingDetails?.[key] || "-"),
+      (r.images || []).map((file) => file.originalName || file.fileName).join("; ") || "-",
     ]
       .map(escape)
       .join(",");
@@ -546,6 +615,7 @@ app.get("/api/stats", (req, res) => {
       .length,
     pendingFromFastech: db.filter((r) => isPendingFlag(r.pendingForFastech))
       .length,
+    pendingFromOem: db.filter((r) => isPendingFlag(r.pendingForOem)).length,
     closed: countStatus("closed"),
     // Convenience field for "anything finalised" — kept for any future use
     approved: countStatus("approved"),
@@ -570,6 +640,9 @@ app.get("/api/support/stats", (req, res) => {
     total: support.length,
     open: count("open"),
     closed: count("closed"),
+    pendingFromCustomer: support.filter((r) => isPendingFlag(r.pendingForCustomer)).length,
+    pendingFromFastech: support.filter((r) => isPendingFlag(r.pendingForFastech)).length,
+    pendingFromOem: support.filter((r) => isPendingFlag(r.pendingForOem)).length,
   });
 });
 
@@ -607,6 +680,7 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
       rmaNumber: "",
       pendingForCustomer: "",
       pendingForFastech: "",
+      pendingForOem: "",
       priority: body.priority || "Medium",
       oem: body.oem || "",
       serviceType: "Support",
@@ -629,6 +703,9 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
       images: uploadedImages,
       status: "Open",
       assignedTeam: "",
+      approvalStatus: "",
+      customerMailStatus: "",
+      disapprovalReason: "",
       internalNote: "",
       customerFeedback: "",
       createdAt: now,
@@ -692,7 +769,6 @@ app.put("/api/support/:id", async (req, res) => {
   if (idx === -1)
     return res.status(404).json({ message: "Support request not found." });
 
-  const previousStatus = support[idx].status;
   const allowed = [
     "status",
     "priority",
@@ -701,8 +777,10 @@ app.put("/api/support/:id", async (req, res) => {
     "customerFeedback",
     "pendingForCustomer",
     "pendingForFastech",
+    "pendingForOem",
   ];
   const body = req.body || {};
+  const decision = String(body.approvalDecision || "").toLowerCase();
 
   if (body.status !== undefined) {
     const allowedStatuses = ["Open", "Closed"];
@@ -713,15 +791,71 @@ app.put("/api/support/:id", async (req, res) => {
     }
   }
 
+  if (decision && !["approved", "disapproved", "reset"].includes(decision)) {
+    return res.status(400).json({ message: "Invalid approval decision." });
+  }
+
   allowed.forEach((k) => {
     if (body[k] !== undefined) support[idx][k] = body[k];
   });
-  support[idx].updatedAt = nowIST();
+  const record = support[idx];
+  let customerMail = { sent: false };
+
+  if (decision === "approved") {
+    record.status = "Open";
+    record.approvalStatus = "approved";
+    record.disapprovalReason = "";
+  } else if (decision === "disapproved") {
+    record.approvalStatus = "disapproved";
+    record.disapprovalReason = String(body.disapprovalReason || "").trim();
+  } else if (decision === "reset") {
+    record.approvalStatus = "";
+    record.disapprovalReason = "";
+  }
+
+  if ((decision === "approved" || decision === "disapproved") && !record.email) {
+    customerMail.error = "Customer email is missing.";
+    record.customerMailStatus = "failed";
+  } else if (decision === "approved" && record.email) {
+    try {
+      await sendMail({
+        to: record.email,
+        subject: "Your FASCAL support request has been approved",
+        text: `Hi ${record.name}, your support request has been approved. Our team will continue assisting you.`,
+        html: `<p>Hi ${escapeHtml(record.name)},</p><p>Your support request has been approved. Our team will continue assisting you.</p>`,
+      });
+      customerMail.sent = true;
+      record.customerMailStatus = "sent";
+    } catch (mailErr) {
+      console.error("Support approval mail failed:", mailErr.message);
+      customerMail.error = mailErr.message;
+      record.customerMailStatus = "failed";
+    }
+  } else if (decision === "disapproved" && record.email) {
+    const reason = record.disapprovalReason || "No reason was provided.";
+    try {
+      await sendMail({
+        to: record.email,
+        subject: "Your FASCAL support request has been disapproved",
+        text: `Hi ${record.name}, your support request has been disapproved. Reason: ${reason}`,
+        html: `<p>Hi ${escapeHtml(record.name)},</p><p>Your support request has been disapproved.</p><p><strong>Reason:</strong> ${escapeHtml(reason)}</p>`,
+      });
+      customerMail.sent = true;
+      record.customerMailStatus = "sent";
+    } catch (mailErr) {
+      console.error("Support disapproval mail failed:", mailErr.message);
+      customerMail.error = mailErr.message;
+      record.customerMailStatus = "failed";
+    }
+  }
+
+  record.updatedAt = nowIST();
   writeSupport(support);
 
   res.json({
     message: "Support request updated successfully.",
-    request: support[idx],
+    request: record,
+    emails: { customer: customerMail },
   });
 });
 
@@ -743,31 +877,36 @@ app.get("/api/support/export/csv", (req, res) => {
   if (!rows.length)
     return res.status(404).json({ message: "No data to export." });
 
-  const headers = [
-    "Ticket",
-    "Customer",
-    "Email",
-    "OEM / Product",
-    "Subject",
-    "Priority",
-    "Status",
-    "Date",
+  const excluded = new Set(["images"]);
+  const viewKeys = [
+    "id", "name", "email", "phone", "company", "designation", "oem", "product",
+    "softwareVersion", "serialSingle", "serialBaseUnit", "serialRfCable", "serialAntenna",
+    "billingAddress", "returnAddress", "calCertificateAddress", "description", "additionalInfo",
+    "priority", "status", "pendingForCustomer", "pendingForFastech", "pendingForOem",
+    "assignedTeam", "internalNote", "customerFeedback", "approvalStatus", "customerMailStatus",
+    "disapprovalReason", "createdAt", "updatedAt",
   ];
+  const keys = [...new Set([...viewKeys, ...rows.flatMap((r) => Object.keys(r))])]
+    .filter((key) => !excluded.has(key));
+  const heading = (key) =>
+    key === "assignedTeam"
+      ? "Assigned To"
+      : key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
+  const headers = [...keys.map(heading), "Pending From", "Uploaded Files"];
 
   const escape = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
   const dataRows = rows.map((r) => {
-    const customerCell = `${r.name || "—"}${r.email ? ` <${r.email}>` : ""}`;
-    const oemCell = `${r.oem || "—"}${r.product ? ` / ${r.product}` : ""}`;
     return [
-      r.id || "-",
-      customerCell,
-      r.email || "-",
-      oemCell,
-      r.description || "-",
-      r.priority || "Medium",
-      r.status || "Open",
-      r.createdAt || "-",
+      ...keys.map((key) => r[key] || "-"),
+      isPendingFlag(r.pendingForCustomer)
+        ? "Pending from Customer"
+        : isPendingFlag(r.pendingForFastech)
+          ? "Pending from Fastech"
+          : isPendingFlag(r.pendingForOem)
+            ? "Pending from OEM"
+            : "-",
+      (r.images || []).map((file) => file.originalName || file.fileName).join("; ") || "-",
     ];
   });
 
