@@ -264,7 +264,7 @@
       }
       .metrics {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(6, 1fr);
         gap: 12px;
       }
       .metric-card {
@@ -410,6 +410,43 @@
       }
       .btn-ghost {
         background: #fff;
+      }
+      .approval-section {
+        margin-top: 14px;
+        padding: 14px;
+        border: 1px solid #e5eef7;
+        border-radius: 12px;
+        background: #fafcff;
+      }
+      .approval-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .btn-approve {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        border-color: transparent;
+        color: #fff;
+      }
+      .btn-disapprove {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        border-color: transparent;
+        color: #fff;
+      }
+      .approval-status-note {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .approval-status-note.approved {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .approval-status-note.disapproved {
+        background: #fee2e2;
+        color: #b91c1c;
       }
       .btn-sm {
         height: 32px;
@@ -776,6 +813,24 @@
               <div class="metric-value" id="closedCount">0</div>
               <div class="metric-sub">Resolved &amp; confirmed</div>
             </div>
+            <div class="metric-card">
+              <div class="metric-icon yellow">🙋</div>
+              <div class="metric-label">Pending From Customer</div>
+              <div class="metric-value" id="pendingCustomerCount">0</div>
+              <div class="metric-sub">Waiting on customer</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon blue">🛠️</div>
+              <div class="metric-label">Pending From Fastech</div>
+              <div class="metric-value" id="pendingFastechCount">0</div>
+              <div class="metric-sub">Waiting on Fastech</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon yellow">🏭</div>
+              <div class="metric-label">Pending From OEM</div>
+              <div class="metric-value" id="pendingOemCount">0</div>
+              <div class="metric-sub">Waiting on OEM</div>
+            </div>
           </section>
 
           <section class="card">
@@ -862,12 +917,13 @@
                     <th>Description</th>
                     <th>Priority</th>
                     <th>Status</th>
+                    <th>Pending From</th>
                     <th>Date</th>
                   </tr>
                 </thead>
                 <tbody id="supportTbody">
                   <tr>
-                    <td colspan="7" class="td-empty">
+                    <td colspan="8" class="td-empty">
                       Loading support tickets…
                     </td>
                   </tr>
@@ -891,6 +947,36 @@
           <button class="btn btn-primary" onclick="saveChanges()">
             Save Changes
           </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="disapproveModal" style="z-index: 110">
+      <div class="modal" style="width: min(520px, 100%)">
+        <div class="modal-head">
+          <h3>Disapprove Support Request</h3>
+          <button class="btn btn-ghost" onclick="closeDisapproveModal()">
+            Close
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="td-sub">
+            This reason will be sent to the customer by email.
+          </p>
+          <div class="field">
+            <label>Reason for disapproval</label
+            ><textarea
+              id="disapprovalReason"
+              placeholder="Enter the reason for disapproving this request"
+            ></textarea>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeDisapproveModal()">
+              Cancel</button
+            ><button class="btn btn-primary" onclick="confirmDisapprove()">
+              Disapprove Request
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -993,7 +1079,7 @@
       async function loadSupport() {
         const tbody = document.getElementById("supportTbody");
         tbody.innerHTML =
-          '<tr><td colspan="7" class="td-empty">Loading support tickets…</td></tr>';
+          '<tr><td colspan="8" class="td-empty">Loading support tickets…</td></tr>';
         try {
           const res = await fetch("/api/support");
           if (!res.ok) throw new Error("Failed to fetch");
@@ -1002,7 +1088,7 @@
           renderTable();
         } catch (err) {
           tbody.innerHTML =
-            '<tr><td colspan="7" class="td-empty">Failed to load support tickets.</td></tr>';
+            '<tr><td colspan="8" class="td-empty">Failed to load support tickets.</td></tr>';
         }
       }
 
@@ -1013,12 +1099,32 @@
         const closed = allSupport.filter(function (r) {
           return norm(r.status) === "closed";
         }).length;
+        const isPending = function (v) {
+          return String(v || "").trim().length > 0;
+        };
+        const pendingCustomer = allSupport.filter(function (r) {
+          return isPending(r.pendingForCustomer);
+        }).length;
+        const pendingFastech = allSupport.filter(function (r) {
+          return isPending(r.pendingForFastech);
+        }).length;
+        const pendingOem = allSupport.filter(function (r) {
+          return isPending(r.pendingForOem);
+        }).length;
         const totalEl = document.getElementById("totalCount");
         const openEl = document.getElementById("openCount");
         const closedEl = document.getElementById("closedCount");
+        const pendingCustomerEl = document.getElementById(
+          "pendingCustomerCount",
+        );
+        const pendingFastechEl = document.getElementById("pendingFastechCount");
+        const pendingOemEl = document.getElementById("pendingOemCount");
         if (totalEl) totalEl.textContent = allSupport.length;
         if (openEl) openEl.textContent = open;
         if (closedEl) closedEl.textContent = closed;
+        if (pendingCustomerEl) pendingCustomerEl.textContent = pendingCustomer;
+        if (pendingFastechEl) pendingFastechEl.textContent = pendingFastech;
+        if (pendingOemEl) pendingOemEl.textContent = pendingOem;
       }
 
       function setStatusFilter(value, btn) {
@@ -1058,13 +1164,18 @@
           });
         if (q) {
           rows = rows.filter(function (r) {
-            return [r.id, r.name, r.email, r.oem, r.product, r.description].some(
-              function (v) {
-                return String(v || "")
-                  .toLowerCase()
-                  .includes(q);
-              },
-            );
+            return [
+              r.id,
+              r.name,
+              r.email,
+              r.oem,
+              r.product,
+              r.description,
+            ].some(function (v) {
+              return String(v || "")
+                .toLowerCase()
+                .includes(q);
+            });
           });
         }
         if (oemQ)
@@ -1080,7 +1191,7 @@
 
         if (!rows.length) {
           tbody.innerHTML =
-            '<tr><td colspan="7" class="td-empty">No support tickets match your filters.</td></tr>';
+            '<tr><td colspan="8" class="td-empty">No support tickets match your filters.</td></tr>';
           return;
         }
 
@@ -1117,6 +1228,17 @@
             '">' +
             esc(r.status || "Open") +
             "</span></td>" +
+            "<td>" +
+            esc(
+              r.pendingForCustomer
+                ? "Pending from Customer"
+                : r.pendingForFastech
+                  ? "Pending from Fastech"
+                  : r.pendingForOem
+                    ? "Pending from OEM"
+                    : "—",
+            ) +
+            "</td>" +
             '<td><div class="td-sub">' +
             esc(r.createdAt || "—") +
             "</div></td>" +
@@ -1256,11 +1378,26 @@
           ">Low</option>" +
           "</select></div>" +
           "</div>" +
+          '<div class="detail-item">' +
+          '<div class="d-label">Pending From</div>' +
+          '<div class="field"><select id="editPendingFrom">' +
+          '<option value="">— None —</option>' +
+          '<option value="customer"' +
+          (record.pendingForCustomer ? " selected" : "") +
+          ">Pending from Customer</option>" +
+          '<option value="fastech"' +
+          (record.pendingForFastech ? " selected" : "") +
+          ">Pending from Fastech</option>" +
+          '<option value="oem"' +
+          (record.pendingForOem ? " selected" : "") +
+          ">Pending from OEM</option>" +
+          "</select></div>" +
+          "</div>" +
           '<div class="detail-item full">' +
-          '<div class="d-label">Assigned Team</div>' +
+          '<div class="d-label">Assigned To</div>' +
           '<div class="field"><input id="editAssignedTeam" type="text" value="' +
           esc(record.assignedTeam || "") +
-          '" placeholder="e.g. Service Operations"/></div>' +
+          '" placeholder="Enter assignee name"/></div>' +
           "</div>" +
           '<div class="detail-item full">' +
           '<div class="d-label">Internal Note (not visible to customer)</div>' +
@@ -1281,9 +1418,38 @@
           esc(record.updatedAt || "—") +
           "</div></div>" +
           "</div>" +
+          '<div class="approval-section">' +
+          '<div class="detail-section-title">Approval</div>' +
+          '<p class="td-sub">Approving or disapproving emails the customer automatically.</p>' +
+          '<div class="approval-actions">' +
+          '<button class="btn btn-approve" id="approveSupportBtn" type="button">✓ Approve Request</button>' +
+          '<button class="btn btn-disapprove" id="disapproveSupportBtn" type="button">✕ Disapprove Request</button>' +
+          "</div>" +
+          (record.approvalStatus
+            ? '<div class="approval-status-note ' +
+              esc(record.approvalStatus) +
+              '">' +
+              esc(
+                record.approvalStatus === "approved"
+                  ? record.customerMailStatus === "failed"
+                    ? "Approved. Failed to Mail the customer."
+                    : "Approved. The customer was notified by email."
+                  : record.customerMailStatus === "failed"
+                    ? "Disapproved. Failed to Mail the customer."
+                    : "Disapproved. The customer was notified by email.",
+              ) +
+              "</div>"
+            : "") +
+          "</div>" +
           "</div>";
 
         document.getElementById("modalBody").innerHTML = body;
+        document
+          .getElementById("approveSupportBtn")
+          .addEventListener("click", approveSupportRequest);
+        document
+          .getElementById("disapproveSupportBtn")
+          .addEventListener("click", openDisapproveModal);
         document.getElementById("detailModal").classList.add("open");
       }
 
@@ -1294,6 +1460,7 @@
 
       async function saveChanges() {
         if (!currentDetail) return;
+        const pendingFrom = document.getElementById("editPendingFrom").value;
         const payload = {
           status: document.getElementById("editStatus").value,
           priority: document.getElementById("editPriority").value,
@@ -1301,6 +1468,11 @@
           internalNote: document.getElementById("editInternalNote").value,
           customerFeedback: document.getElementById("editCustomerFeedback")
             .value,
+          pendingForCustomer:
+            pendingFrom === "customer" ? "Pending from Customer" : "",
+          pendingForFastech:
+            pendingFrom === "fastech" ? "Pending from Fastech" : "",
+          pendingForOem: pendingFrom === "oem" ? "Pending from OEM" : "",
         };
 
         try {
@@ -1317,6 +1489,62 @@
             throw new Error(errData.message || "Update failed");
           }
           showToast("Updated successfully.", "success");
+          closeModal();
+          await loadSupport();
+        } catch (err) {
+          showToast("Failed to update: " + err.message, "error");
+        }
+      }
+
+      function openDisapproveModal() {
+        if (!currentDetail) return;
+        document.getElementById("disapprovalReason").value = "";
+        document.getElementById("disapproveModal").classList.add("open");
+      }
+
+      function closeDisapproveModal() {
+        document.getElementById("disapproveModal").classList.remove("open");
+      }
+
+      async function approveSupportRequest() {
+        await applySupportDecision("approved");
+      }
+
+      async function confirmDisapprove() {
+        const reason = document
+          .getElementById("disapprovalReason")
+          .value.trim();
+        if (!reason) {
+          showToast("Enter a reason for disapproval.", "error");
+          return;
+        }
+        closeDisapproveModal();
+        await applySupportDecision("disapproved", reason);
+      }
+
+      async function applySupportDecision(approvalDecision, disapprovalReason) {
+        if (!currentDetail) return;
+        try {
+          const res = await fetch(
+            "/api/support/" + encodeURIComponent(currentDetail.id),
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                approvalDecision,
+                disapprovalReason: disapprovalReason || "",
+              }),
+            },
+          );
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || "Update failed");
+          const mailMessage = data.emails?.customer?.error
+            ? "Failed to Mail the customer."
+            : "Customer was notified by email.";
+          showToast(
+            mailMessage,
+            data.emails?.customer?.error ? "error" : "success",
+          );
           closeModal();
           await loadSupport();
         } catch (err) {
