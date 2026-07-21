@@ -22,12 +22,16 @@
     "calCertificateAddress": "",
     "additionalInfo": "",
     "images": [],
-    "status": "Open",
+    "status": "Closed",
     "assignedTeam": "",
     "internalNote": "",
     "customerFeedback": "",
     "createdAt": "12/07/2026, 23:16:03",
-    "updatedAt": "12/07/2026, 23:16:03"
+    "updatedAt": "21/07/2026, 14:55:14",
+    "assignedName": "",
+    "pendingForCustomer": "",
+    "pendingForFastech": "",
+    "pendingForOem": ""
   },
   {
     "id": "TMI-1783886023302456",
@@ -52,14 +56,17 @@
     "calCertificateAddress": "",
     "additionalInfo": "",
     "images": [],
-    "status": "Open",
+    "status": "Closed",
     "assignedTeam": "",
     "internalNote": "",
     "customerFeedback": "",
     "createdAt": "13/07/2026, 01:23:43",
-    "updatedAt": "20/07/2026, 02:16:10",
+    "updatedAt": "21/07/2026, 15:04:57",
     "pendingForCustomer": "",
-    "pendingForFastech": "Pending from Fastech"
+    "pendingForFastech": "Pending from Fastech",
+    "approvalStatus": "",
+    "disapprovalReason": "",
+    "customerMailStatus": "sent"
   },
   {
     "id": "SUB-1784144354253504",
@@ -86,15 +93,17 @@
     "calCertificateAddress": "",
     "additionalInfo": "",
     "images": [],
-    "status": "Open",
+    "status": "Closed",
     "assignedTeam": "",
     "internalNote": "",
     "customerFeedback": "",
     "createdAt": "16/07/2026, 01:09:14",
-    "updatedAt": "20/07/2026, 02:19:39",
+    "updatedAt": "21/07/2026, 14:16:22",
     "approvalStatus": "disapproved",
     "disapprovalReason": "no reason",
-    "customerMailStatus": "sent"
+    "customerMailStatus": "sent",
+    "assignedName": "",
+    "pendingForOem": ""
   },
   {
     "id": "SUB-1784494387938102",
@@ -122,7 +131,7 @@
     "calCertificateAddress": "",
     "additionalInfo": "",
     "images": [],
-    "status": "Open",
+    "status": "Closed",
     "assignedTeam": "",
     "approvalStatus": "",
     "customerMailStatus": "",
@@ -130,6 +139,7 @@
     "internalNote": "",
     "customerFeedback": "",
     "createdAt": "20/07/2026, 02:23:07",
-    "updatedAt": "20/07/2026, 02:23:07"
+    "updatedAt": "21/07/2026, 14:16:09",
+    "assignedName": ""
   }
 ]
