@@ -808,12 +808,6 @@
             </div>
 
             <div class="metric-card">
-              <div class="metric-icon green">✔️</div>
-              <div class="metric-label">Closed</div>
-              <div class="metric-value" id="closedCount">0</div>
-              <div class="metric-sub">Resolved &amp; confirmed</div>
-            </div>
-            <div class="metric-card">
               <div class="metric-icon yellow">🙋</div>
               <div class="metric-label">Pending From Customer</div>
               <div class="metric-value" id="pendingCustomerCount">0</div>
@@ -830,6 +824,12 @@
               <div class="metric-label">Pending From OEM</div>
               <div class="metric-value" id="pendingOemCount">0</div>
               <div class="metric-sub">Waiting on OEM</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon green">✔️</div>
+              <div class="metric-label">Closed</div>
+              <div class="metric-value" id="closedCount">0</div>
+              <div class="metric-sub">Resolved &amp; confirmed</div>
             </div>
           </section>
 
@@ -947,36 +947,6 @@
           <button class="btn btn-primary" onclick="saveChanges()">
             Save Changes
           </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-overlay" id="disapproveModal" style="z-index: 110">
-      <div class="modal" style="width: min(520px, 100%)">
-        <div class="modal-head">
-          <h3>Disapprove Support Request</h3>
-          <button class="btn btn-ghost" onclick="closeDisapproveModal()">
-            Close
-          </button>
-        </div>
-        <div class="modal-body">
-          <p class="td-sub">
-            This reason will be sent to the customer by email.
-          </p>
-          <div class="field">
-            <label>Reason for disapproval</label
-            ><textarea
-              id="disapprovalReason"
-              placeholder="Enter the reason for disapproving this request"
-            ></textarea>
-          </div>
-          <div class="modal-actions">
-            <button class="btn btn-ghost" onclick="closeDisapproveModal()">
-              Cancel</button
-            ><button class="btn btn-primary" onclick="confirmDisapprove()">
-              Disapprove Request
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -1394,9 +1364,15 @@
           "</select></div>" +
           "</div>" +
           '<div class="detail-item full">' +
-          '<div class="d-label">Assigned To</div>' +
+          '<div class="d-label">Assigned To Team</div>' +
           '<div class="field"><input id="editAssignedTeam" type="text" value="' +
           esc(record.assignedTeam || "") +
+          '" placeholder="Enter team name"/></div>' +
+          "</div>" +
+          '<div class="detail-item full">' +
+          '<div class="d-label">Assigned Name</div>' +
+          '<div class="field"><input id="editAssignedName" type="text" value="' +
+          esc(record.assignedName || "") +
           '" placeholder="Enter assignee name"/></div>' +
           "</div>" +
           '<div class="detail-item full">' +
@@ -1419,25 +1395,16 @@
           "</div></div>" +
           "</div>" +
           '<div class="approval-section">' +
-          '<div class="detail-section-title">Approval</div>' +
-          '<p class="td-sub">Approving or disapproving emails the customer automatically.</p>' +
+          '<div class="detail-section-title">Ticket Actions</div>' +
+          '<p class="td-sub">Click below to close this support ticket and notify the customer by email.</p>' +
           '<div class="approval-actions">' +
-          '<button class="btn btn-approve" id="approveSupportBtn" type="button">✓ Approve Request</button>' +
-          '<button class="btn btn-disapprove" id="disapproveSupportBtn" type="button">✕ Disapprove Request</button>' +
+          '<button class="btn btn-primary" id="ticketClosedBtn" type="button">✓ Ticket Closed</button>' +
           "</div>" +
-          (record.approvalStatus
-            ? '<div class="approval-status-note ' +
-              esc(record.approvalStatus) +
-              '">' +
-              esc(
-                record.approvalStatus === "approved"
-                  ? record.customerMailStatus === "failed"
-                    ? "Approved. Failed to Mail the customer."
-                    : "Approved. The customer was notified by email."
-                  : record.customerMailStatus === "failed"
-                    ? "Disapproved. Failed to Mail the customer."
-                    : "Disapproved. The customer was notified by email.",
-              ) +
+          (record.status === "Closed"
+            ? '<div class="approval-status-note approved">' +
+              (record.customerMailStatus === "failed"
+                ? "Ticket closed. Failed to Mail the customer."
+                : "Ticket closed. The customer was notified by email.") +
               "</div>"
             : "") +
           "</div>" +
@@ -1445,11 +1412,8 @@
 
         document.getElementById("modalBody").innerHTML = body;
         document
-          .getElementById("approveSupportBtn")
-          .addEventListener("click", approveSupportRequest);
-        document
-          .getElementById("disapproveSupportBtn")
-          .addEventListener("click", openDisapproveModal);
+          .getElementById("ticketClosedBtn")
+          .addEventListener("click", closeTicket);
         document.getElementById("detailModal").classList.add("open");
       }
 
@@ -1465,6 +1429,9 @@
           status: document.getElementById("editStatus").value,
           priority: document.getElementById("editPriority").value,
           assignedTeam: document.getElementById("editAssignedTeam").value,
+          assignedName: document.getElementById("editAssignedName")
+            ? document.getElementById("editAssignedName").value
+            : "",
           internalNote: document.getElementById("editInternalNote").value,
           customerFeedback: document.getElementById("editCustomerFeedback")
             .value,
@@ -1496,33 +1463,12 @@
         }
       }
 
-      function openDisapproveModal() {
+      async function closeTicket() {
         if (!currentDetail) return;
-        document.getElementById("disapprovalReason").value = "";
-        document.getElementById("disapproveModal").classList.add("open");
+        await applySupportDecision("ticketClosed");
       }
 
-      function closeDisapproveModal() {
-        document.getElementById("disapproveModal").classList.remove("open");
-      }
-
-      async function approveSupportRequest() {
-        await applySupportDecision("approved");
-      }
-
-      async function confirmDisapprove() {
-        const reason = document
-          .getElementById("disapprovalReason")
-          .value.trim();
-        if (!reason) {
-          showToast("Enter a reason for disapproval.", "error");
-          return;
-        }
-        closeDisapproveModal();
-        await applySupportDecision("disapproved", reason);
-      }
-
-      async function applySupportDecision(approvalDecision, disapprovalReason) {
+      async function applySupportDecision(approvalDecision) {
         if (!currentDetail) return;
         try {
           const res = await fetch(
@@ -1532,7 +1478,6 @@
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 approvalDecision,
-                disapprovalReason: disapprovalReason || "",
               }),
             },
           );

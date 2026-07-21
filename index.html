@@ -264,7 +264,7 @@
       }
       .metrics {
         display: grid;
-        grid-template-columns: repeat(6, 1fr);
+        grid-template-columns: repeat(8, 1fr);
         gap: 12px;
       }
       .metric-card {
@@ -848,8 +848,8 @@
             </div>
             <div class="metric-card">
               <div class="metric-icon sky">📂</div>
-              <div class="metric-label">Open</div>
-              <div class="metric-value" id="metricOpen">0</div>
+              <div class="metric-label">New Request</div>
+              <div class="metric-value" id="metricNew">0</div>
               <div class="metric-sub">Newly received requests</div>
             </div>
             <div class="metric-card">
@@ -882,6 +882,12 @@
               <div class="metric-value" id="metricClosed">0</div>
               <div class="metric-sub">Closed requests</div>
             </div>
+            <div class="metric-card">
+              <div class="metric-icon orange">🚫</div>
+              <div class="metric-label">Disapproved</div>
+              <div class="metric-value" id="metricDisapproved">0</div>
+              <div class="metric-sub">Disapproved requests</div>
+            </div>
           </div>
 
           <div class="card" id="requestListCard">
@@ -889,8 +895,9 @@
               <div>
                 <h3>View RMA Requests</h3>
                 <p>
-                  Filter by OEM, service type, status, date, or RMA number. Click
-                  any row to view full details and update the request inline.
+                  Filter by OEM, service type, status, date, or RMA number.
+                  Click any row to view full details and update the request
+                  inline.
                 </p>
               </div>
               <button class="btn btn-primary" onclick="exportCsv()">
@@ -925,10 +932,7 @@
 
               <div class="field">
                 <label>RMA</label>
-                <input
-                  id="fKeyword"
-                  placeholder="Search RMA number"
-                />
+                <input id="fKeyword" placeholder="Search RMA number" />
               </div>
 
               <div class="field">
@@ -937,7 +941,7 @@
                   <option value="">All Status</option>
                   <option>open</option>
                   <option>pending</option>
-                  <option>approved</option>
+                  <option>disapproved</option>
                   <option>closed</option>
                 </select>
               </div>
@@ -981,10 +985,10 @@
               </button>
               <button
                 class="tab-btn"
-                data-sf="approved"
-                onclick="setStatusFilter('approved')"
+                data-sf="disapproved"
+                onclick="setStatusFilter('disapproved')"
               >
-                Approved
+                Disapproved
               </button>
               <button
                 class="tab-btn"
@@ -1001,7 +1005,7 @@
                   <tr>
                     <th>Sr.</th>
                     <th>RMA No</th>
-                    <th>RMA Issued Date</th>
+                    <th>RMA Date</th>
                     <th>OEM</th>
                     <th>Service Type</th>
                     <th>Product Model</th>
@@ -1028,21 +1032,34 @@
       </main>
     </div>
 
-    <div class="modal-overlay" id="disapproveOverlay" style="z-index:110">
-      <div class="modal" style="width:min(520px, 100%)">
+    <div class="modal-overlay" id="disapproveOverlay" style="z-index: 110">
+      <div class="modal" style="width: min(520px, 100%)">
         <div class="modal-head">
           <h3>Disapprove Request</h3>
-          <button class="btn btn-ghost" onclick="closeDisapproveDialog()">Close</button>
+          <button class="btn btn-ghost" onclick="closeDisapproveDialog()">
+            Close
+          </button>
         </div>
         <div class="modal-body">
-          <p class="approval-hint">Tell the customer why this request was disapproved. This reason will be emailed to them.</p>
+          <p class="approval-hint">
+            Tell the customer why this request was disapproved. This reason will
+            be emailed to them.
+          </p>
           <div class="field full">
             <label>Reason for disapproval</label>
-            <textarea id="disapprovalReason" required placeholder="Enter the reason for disapproving this request"></textarea>
+            <textarea
+              id="disapprovalReason"
+              required
+              placeholder="Enter the reason for disapproving this request"
+            ></textarea>
           </div>
           <div class="modal-actions">
-            <button class="btn btn-ghost" onclick="closeDisapproveDialog()">Cancel</button>
-            <button class="btn btn-reject" onclick="confirmDisapproveRequest()">Disapprove Request</button>
+            <button class="btn btn-ghost" onclick="closeDisapproveDialog()">
+              Cancel
+            </button>
+            <button class="btn btn-reject" onclick="confirmDisapproveRequest()">
+              Disapprove Request
+            </button>
           </div>
         </div>
       </div>
@@ -1057,56 +1074,6 @@
 
         <div class="modal-body">
           <div id="modalDetailsWrap"></div>
-
-          <div class="detail-section">
-            <div class="detail-section-title">Update Request</div>
-            <div class="detail-grid">
-              <div class="field">
-                <label>Status</label>
-                <select id="uStatus">
-                  <option value="">— Select status —</option>
-                  <option value="open">Open</option>
-                  <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="closed">Closed</option>
-                </select>
-                <small class="field-hint">
-                  When set to <strong>Pending</strong>, choose who is waiting
-                  below.
-                </small>
-              </div>
-
-              <div class="field">
-                <label>Pending From</label>
-                <select id="uPendingStatus">
-                  <option value="">— None —</option>
-                  <option value="Pending from Customer">
-                    Pending from Customer
-                  </option>
-                  <option value="Pending from Fastech">
-                    Pending from Fastech
-                  </option>
-                  <option value="Pending from OEM">
-                    Pending from OEM
-                  </option>
-                </select>
-                <small class="field-hint">
-                  Active only when Status = Pending.
-                </small>
-              </div>
-              <div class="field full">
-                <label>Custom Status</label>
-                <input id="uCustomStatus" placeholder="Internal status for CSV export only" />
-                <small class="field-hint">This status is included in the CSV export and is not shown in the request table.</small>
-              </div>
-            </div>
-
-            <div class="modal-actions">
-              <button class="btn btn-primary" onclick="saveUpdate()">
-                Save Update
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -1183,10 +1150,10 @@
 
       function pillClass(s) {
         const v = String(s || "").toLowerCase();
-        if (v === "approved") return "pill pill-success";
+        if (v === "disapproved") return "pill pill-rejected";
         if (v === "closed") return "pill pill-closed";
         if (v === "open") return "pill pill-open";
-        if (v === "rejected") return "pill pill-rejected";
+        if (v === "new") return "pill pill-open";
         return "pill pill-pending";
       }
 
@@ -1233,14 +1200,17 @@
           if (r.ok) stats = await r.json();
         } catch {}
 
-        const localOpen = allRequests.filter(
-          (x) => String(x.status || "").toLowerCase() === "open",
+        const localNew = allRequests.filter(
+          (x) => String(x.status || "").toLowerCase() === "new",
         ).length;
         const localPending = allRequests.filter(
           (x) => String(x.status || "").toLowerCase() === "pending",
         ).length;
         const localClosed = allRequests.filter(
           (x) => String(x.status || "").toLowerCase() === "closed",
+        ).length;
+        const localDisapproved = allRequests.filter(
+          (x) => String(x.status || "").toLowerCase() === "disapproved",
         ).length;
         const localPfc = allRequests.filter((x) =>
           isPendingFlag(x.pendingForCustomer),
@@ -1257,7 +1227,7 @@
           if (el) el.textContent = String(val ?? 0);
         };
         set("metricTotal", stats?.total ?? allRequests.length);
-        set("metricOpen", stats?.open ?? localOpen);
+        set("metricNew", stats?.new ?? localNew);
         set("metricPending", stats?.pending ?? localPending);
         set(
           "metricPendingFromCustomer",
@@ -1266,6 +1236,7 @@
         set("metricPendingFromFastech", stats?.pendingFromFastech ?? localPff);
         set("metricPendingFromOem", stats?.pendingFromOem ?? localPfo);
         set("metricClosed", stats?.closed ?? localClosed);
+        set("metricDisapproved", stats?.disapproved ?? localDisapproved);
       }
 
       function applyFilters() {
@@ -1330,7 +1301,12 @@
           if (af.date && !String(r.createdAt || "").includes(af.date))
             return false;
           if (af.keyword) {
-            if (!String(r.rmaNumber || "").toLowerCase().includes(af.keyword)) return false;
+            if (
+              !String(r.rmaNumber || "")
+                .toLowerCase()
+                .includes(af.keyword)
+            )
+              return false;
           }
           return true;
         });
@@ -1375,8 +1351,7 @@
               String(r.pendingForCustomer || "").trim().length > 0;
             const pfHasValue =
               String(r.pendingForFastech || "").trim().length > 0;
-            const poHasValue =
-              String(r.pendingForOem || "").trim().length > 0;
+            const poHasValue = String(r.pendingForOem || "").trim().length > 0;
             if (pcHasValue) {
               pendingFromCell =
                 '<span class="pill pill-pending">Pending from Customer</span>';
@@ -1488,6 +1463,60 @@
           </div>
         </div>
       </div>
+
+          <div class="detail-section">
+            <div class="detail-section-title">Update Request</div>
+            <div class="detail-grid">
+              <div class="field">
+                <label>RMA Status</label>
+                <select id="uStatus">
+                  <option value="">— Select status —</option>
+                  <option value="open">Open</option>
+                  <option value="pending">Pending</option>
+                  <option value="disapproved">Disapproved</option>
+                  <option value="closed">Closed</option>
+                </select>
+                <small class="field-hint">
+                  When set to <strong>Pending</strong>, choose who is waiting
+                  below.
+                </small>
+              </div>
+
+              <div class="field">
+                <label>RMA Pending Status</label>
+                <select id="uPendingStatus">
+                  <option value="">— None —</option>
+                  <option value="Pending from Customer">
+                    Pending from Customer
+                  </option>
+                  <option value="Pending from Fastech">
+                    Pending from Fastech
+                  </option>
+                  <option value="Pending from OEM">Pending from OEM</option>
+                </select>
+                <small class="field-hint">
+                  Active only when Status = Pending.
+                </small>
+              </div>
+              <div class="field full">
+                <label>RMA Current Status</label>
+                <input
+                  id="uCustomStatus"
+                  placeholder="Internal status for CSV export only"
+                />
+                <small class="field-hint"
+                  >This status is included in the CSV export and is not shown in
+                  the request table.</small
+                >
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button class="btn btn-primary" onclick="saveUpdate()">
+                Save Update
+              </button>
+            </div>
+          </div>
 
       <div class="detail-section" style="margin-bottom:14px;">
         <div class="detail-section-title">Customer Information</div>
@@ -1719,8 +1748,7 @@
           String(cr.pendingForCustomer || "").trim().length > 0;
         const crPfHasValue =
           String(cr.pendingForFastech || "").trim().length > 0;
-        const crPoHasValue =
-          String(cr.pendingForOem || "").trim().length > 0;
+        const crPoHasValue = String(cr.pendingForOem || "").trim().length > 0;
         if (crPcHasValue) {
           pendingStatusVal = "Pending from Customer";
         } else if (crPfHasValue) {
@@ -1749,9 +1777,10 @@
 
         if (s === "approved") {
           note.className = "approval-status-note is-approved";
-          note.textContent = mailStatus === "failed"
-            ? `Approved. RMA ${displayRma(currentRequest)} assigned. Failed to Mail the customer.`
-            : `Approved. RMA ${displayRma(currentRequest)} assigned. The customer was notified by email.`;
+          note.textContent =
+            mailStatus === "failed"
+              ? `Approved. RMA ${displayRma(currentRequest)} assigned. Failed to Mail the customer.`
+              : `Approved. RMA ${displayRma(currentRequest)} assigned. The customer was notified by email.`;
           note.style.display = "";
           actions.style.display = "none";
           undoBtn.style.display = "";
@@ -1792,7 +1821,9 @@
       }
 
       async function confirmDisapproveRequest() {
-        const reason = document.getElementById("disapprovalReason").value.trim();
+        const reason = document
+          .getElementById("disapprovalReason")
+          .value.trim();
         if (!reason) {
           alert("Please enter a reason for disapproving this request.");
           return;
@@ -1829,7 +1860,10 @@
           if (!res.ok) throw new Error(data.message || "Update failed.");
 
           currentRequest = data.request;
-          updateApprovalStatusNote(data.request.approvalStatus, data.request.customerMailStatus);
+          updateApprovalStatusNote(
+            data.request.approvalStatus,
+            data.request.customerMailStatus,
+          );
 
           const emailNote = data.emails?.customer?.sent
             ? data.request?.rmaNumber
@@ -1894,7 +1928,8 @@
             },
           );
           const data = await response.json();
-          if (!response.ok) throw new Error(data.message || "Could not save request update.");
+          if (!response.ok)
+            throw new Error(data.message || "Could not save request update.");
 
           await saveInternalDetails(currentRequest.id);
           closeModal();
@@ -1936,19 +1971,27 @@
           const el = document.getElementById(f);
           if (el) data[f] = el.value;
         });
-        const res = await fetch(`${API}/api/requests/${encodeURIComponent(requestId)}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ processingDetails: data }),
-        });
+        const res = await fetch(
+          `${API}/api/requests/${encodeURIComponent(requestId)}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ processingDetails: data }),
+          },
+        );
         if (!res.ok) throw new Error("Could not save internal details.");
         // Retain a local copy so older saved sessions remain available offline.
-        localStorage.setItem(`cx_internal_details_${requestId}`, JSON.stringify(data));
+        localStorage.setItem(
+          `cx_internal_details_${requestId}`,
+          JSON.stringify(data),
+        );
       }
 
       function loadInternalDetails(requestId) {
         const saved = currentRequest?.processingDetails;
-        const raw = saved ? JSON.stringify(saved) : localStorage.getItem(`cx_internal_details_${requestId}`);
+        const raw = saved
+          ? JSON.stringify(saved)
+          : localStorage.getItem(`cx_internal_details_${requestId}`);
         if (!raw) return;
         try {
           const data = JSON.parse(raw);
