@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  firstName  String?  @map("first_name")
+  lastName   String?  @map("last_name")
+  username   String   @unique
+  email      String?  @unique
+  password   String
+  role       String
+  department String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+model Request {
+  id                    String  @id
+  rmaNumber             String? @default("") @map("rma_number")
+  rmaIssuedAt           String? @default("") @map("rma_issued_at")
+  pendingForCustomer    String  @default("") @map("pending_for_customer")
+  pendingForFastech     String  @default("") @map("pending_for_fastech")
+  pendingForOem         String  @default("") @map("pending_for_oem")
+  customStatus          String  @default("") @map("custom_status")
+  approvalStatus        String  @default("") @map("approval_status")
+  customerMailStatus    String  @default("") @map("customer_mail_status")
+  disapprovalReason     String  @default("") @map("disapproval_reason")
+  oem                   String
+  serviceType           String  @map("service_type")
+  product               String
+  description           String  @default("")
+  name                  String
+  email                 String
+  phone                 String  @default("")
+  company               String  @default("")
+  designation           String  @default("")
+  location              String  @default("")
+  poNumber              String  @default("") @map("po_number")
+  poDate                String  @default("") @map("po_date")
+  serialSingle          String  @default("") @map("serial_single")
+  serialBaseUnit        String  @default("") @map("serial_base_unit")
+  serialRfCable         String  @default("") @map("serial_rf_cable")
+  serialAntenna         String  @default("") @map("serial_antenna")
+  billingAddress        String  @default("") @map("billing_address")
+  returnAddress         String  @default("") @map("return_address")
+  calCertificateAddress String  @default("") @map("cal_certificate_address")
+  additionalInfo        String  @default("") @map("additional_info")
+  status                String  @default("new")
+  customerFeedback      String  @default("") @map("customer_feedback")
+  internalNote          String  @default("") @map("internal_note")
+  createdAt             String  @map("created_at")
+  updatedAt             String  @map("updated_at")
+
+  ipAdminNote              String  @default("") @map("ip_admin_note")
+  ipReceivedDate           String  @default("") @map("ip_received_date")
+  ipDateOfInvestigation    String  @default("") @map("ip_date_of_investigation")
+  ipWarranty               String  @default("") @map("ip_warranty")
+  ipInvestigationDetails   String  @default("") @map("ip_investigation_details")
+  ipRepairDetails          String  @default("") @map("ip_repair_details")
+  ipEstimateDate           String  @default("") @map("ip_estimate_date")
+  ipEstimateNumber         String  @default("") @map("ip_estimate_number")
+  ipEstimateAmount         String  @default("") @map("ip_estimate_amount")
+  ipPoNoAndDate            String  @default("") @map("ip_po_no_and_date")
+  ipPoReceivedDate         String  @default("") @map("ip_po_received_date")
+  ipOemRmaNo               String  @default("") @map("ip_oem_rma_no")
+  ipDateOfSent             String  @default("") @map("ip_date_of_sent")
+  ipPlatformModule         String  @default("") @map("ip_platform_module")
+  ipOemQuotation           String  @default("") @map("ip_oem_quotation")
+  ipDateOfReceivingFromOem String  @default("") @map("ip_date_of_receiving_from_oem")
+  ipDcNoAndDate            String  @default("") @map("ip_dc_no_and_date")
+  ipDispatchedDate         String  @default("") @map("ip_dispatched_date")
+  ipLrNo                   String  @default("") @map("ip_lr_no")
+  ipReasonForWaiting       String  @default("") @map("ip_reason_for_waiting")
+  ipDeliveredDate          String  @default("") @map("ip_delivered_date")
+  ipAckDateFromWh          String  @default("") @map("ip_ack_date_from_wh")
+  ipRemark                 String  @default("") @map("ip_remark")
+
+  images RequestImage[]
+
+  @@map("requests")
+}
+
+model RequestImage {
+  id           Int    @id @default(autoincrement())
+  requestId    String @map("request_id")
+  originalName String @map("original_name")
+  fileName     String @map("file_name")
+  path         String
+  mimeType     String @map("mime_type")
+  size         Int
+
+  request Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@map("request_images")
+}
+
+model Support {
+  id                 String  @id
+  rmaNumber          String  @default("") @map("rma_number")
+  subject            String  @default("")
+  priority           String  @default("Medium")
+  oem                String
+  serviceType        String  @default("Support") @map("service_type")
+  product            String
+  description        String  @default("")
+  name               String
+  email              String
+  phone              String  @default("")
+  company            String  @default("")
+  designation        String  @default("")
+  softwareVersion    String  @default("") @map("software_version")
+  serialSingle       String  @default("") @map("serial_single")
+  serialBaseUnit     String  @default("") @map("serial_base_unit")
+  serialRfCable      String  @default("") @map("serial_rf_cable")
+  serialAntenna      String  @default("") @map("serial_antenna")
+  billingAddress     String  @default("") @map("billing_address")
+  returnAddress      String  @default("") @map("return_address")
+  calCertificateAddress String @default("") @map("cal_certificate_address")
+  additionalInfo     String  @default("") @map("additional_info")
+  status             String  @default("Open")
+  assignedTeam       String  @default("") @map("assigned_team")
+  assignedName       String  @default("") @map("assigned_name")
+  approvalStatus     String  @default("") @map("approval_status")
+  customerMailStatus String  @default("") @map("customer_mail_status")
+  disapprovalReason  String  @default("") @map("disapproval_reason")
+  internalNote       String  @default("") @map("internal_note")
+  customerFeedback   String  @default("") @map("customer_feedback")
+  pendingForCustomer String  @default("") @map("pending_for_customer")
+  pendingForFastech  String  @default("") @map("pending_for_fastech")
+  pendingForOem      String  @default("") @map("pending_for_oem")
+  createdAt          String  @map("created_at")
+  updatedAt          String  @map("updated_at")
+
+  images SupportImage[]
+
+  @@map("support")
+}
+
+model SupportImage {
+  id           Int    @id @default(autoincrement())
+  supportId    String @map("support_id")
+  originalName String @map("original_name")
+  fileName     String @map("file_name")
+  path         String
+  mimeType     String @map("mime_type")
+  size         Int
+
+  support Support @relation(fields: [supportId], references: [id], onDelete: Cascade)
+
+  @@map("support_images")
+}
