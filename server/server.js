@@ -22,7 +22,17 @@ const escapeHtml = (value) =>
     .replace(/"/g, "&quot;");
 
 function generateSubmissionId() {
-  return "SUB-" + Date.now() + Math.floor(Math.random() * 1000);
+  const now = new Date();
+  const ist = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+  const pad = (n) => String(n).padStart(2, "0");
+  const y = ist.getFullYear();
+  const M = pad(ist.getMonth() + 1);
+  const d = pad(ist.getDate());
+  const h = pad(ist.getHours());
+  const m = pad(ist.getMinutes());
+  const s = pad(ist.getSeconds());
+  const r = String(Math.floor(Math.random() * 1000)).padStart(3, "0");
+  return `${y}${M}${d}${h}${m}${s}-${r}`;
 }
 
 async function generateRmaNumber() {
@@ -49,7 +59,7 @@ function isPendingFlag(value) {
   return String(value || "").trim().length > 0;
 }
 
-const VALID_STATUSES = ["new", "open", "pending", "disapproved", "closed"];
+const VALID_STATUSES = ["fresh", "pending", "disapproved", "closed"];
 
 function nowIST() {
   return new Date().toLocaleString("en-IN", {
@@ -253,6 +263,10 @@ app.get("/api/requests", async (req, res) => {
     const formatted = rows.map(formatRequest);
     res.json(
       formatted.sort((a, b) => {
+        const aFresh = String(a.status || "").toLowerCase() === "fresh";
+        const bFresh = String(b.status || "").toLowerCase() === "fresh";
+        if (aFresh && !bFresh) return -1;
+        if (!aFresh && bFresh) return 1;
         const aIssued = parseIST(a.rmaIssuedAt);
         const bIssued = parseIST(b.rmaIssuedAt);
         if (aIssued || bIssued) return bIssued - aIssued;
@@ -329,7 +343,8 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
         returnAddress: body.returnAddress || "",
         calCertificateAddress: body.calCertificateAddress || "",
         additionalInfo: body.additionalInfo || "",
-        status: "new",
+        status: "fresh",
+        rmaStatus: "RMA Not Received",
         createdAt: now,
         updatedAt: now,
         images: {
@@ -396,6 +411,7 @@ app.put("/api/requests/:id", async (req, res) => {
 
     const allowed = [
       "status",
+      "rmaStatus",
       "customerFeedback",
       "internalNote",
       "product",
@@ -442,7 +458,7 @@ app.put("/api/requests/:id", async (req, res) => {
 
     if (decision === "approved") {
       updateData.approvalStatus = "approved";
-      updateData.status = "open";
+      updateData.status = "pending";
       updateData.disapprovalReason = "";
     } else if (decision === "disapproved") {
       updateData.approvalStatus = "disapproved";
@@ -453,10 +469,10 @@ app.put("/api/requests/:id", async (req, res) => {
       updateData.disapprovalReason = "";
     }
 
-    const movingToOpen =
-      (updateData.status || record.status) === "open" &&
+    const movingToPending =
+      (updateData.status || record.status) === "pending" &&
       (!record.rmaNumber || !record.rmaIssuedAt);
-    if (movingToOpen) {
+    if (movingToPending) {
       updateData.rmaNumber = await generateRmaNumber();
       updateData.rmaIssuedAt = nowIST();
     }
@@ -572,6 +588,7 @@ app.get("/api/export/csv", async (req, res) => {
       ["RMA Date", (r) => r.rmaIssuedAt || "-"],
       ["Submission Reference", (r) => r.id || "-"],
       ["Status", (r) => fmtStatus(r.status)],
+      ["RMA Status", (r) => r.rmaStatus || "RMA Not Received"],
       [
         "Pending From",
         (r) => {
@@ -674,6 +691,10 @@ app.get("/api/export/csv", async (req, res) => {
     const escape = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
     const sortedDb = [...formatted].sort((a, b) => {
+      const aFresh = String(a.status || "").toLowerCase() === "fresh";
+      const bFresh = String(b.status || "").toLowerCase() === "fresh";
+      if (aFresh && !bFresh) return -1;
+      if (!aFresh && bFresh) return 1;
       const aIssued = parseIST(a.rmaIssuedAt);
       const bIssued = parseIST(b.rmaIssuedAt);
       if (aIssued || bIssued) return bIssued - aIssued;
@@ -705,6 +726,7 @@ app.get("/api/stats", async (req, res) => {
     const db = await prisma.request.findMany({
       select: {
         status: true,
+        rmaStatus: true,
         pendingForCustomer: true,
         pendingForFastech: true,
         pendingForOem: true,
@@ -714,10 +736,12 @@ app.get("/api/stats", async (req, res) => {
     const countStatus = (s) =>
       db.filter((r) => String(r.status || "").toLowerCase() === s).length;
 
+    const countRmaStatus = (s) =>
+      db.filter((r) => String(r.rmaStatus || "") === s).length;
+
     res.json({
       total: db.length,
-      new: countStatus("new"),
-      open: countStatus("open"),
+      fresh: countStatus("fresh"),
       pending: countStatus("pending"),
       pendingFromCustomer: db.filter((r) =>
         isPendingFlag(r.pendingForCustomer),
@@ -729,6 +753,8 @@ app.get("/api/stats", async (req, res) => {
       disapproved: countStatus("disapproved"),
       closed: countStatus("closed"),
       approved: countStatus("approved"),
+      rmaReceived: countRmaStatus("RMA Received"),
+      rmaNotReceived: countRmaStatus("RMA Not Received"),
     });
   } catch (err) {
     res.status(500).json({ message: err.message || "Stats failed." });

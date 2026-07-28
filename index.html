@@ -320,6 +320,11 @@
         line-height: 1.1;
         margin: 8px 0 2px;
       }
+      .flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
       .metric-sub {
         font-size: 12px;
         color: #94a3b8;
@@ -848,15 +853,15 @@
             </div>
             <div class="metric-card">
               <div class="metric-icon sky">📂</div>
-              <div class="metric-label">New Request</div>
-              <div class="metric-value" id="metricNew">0</div>
+              <div class="metric-label">Fresh Request</div>
+              <div class="metric-value" id="metricFresh">0</div>
               <div class="metric-sub">Newly received requests</div>
             </div>
             <div class="metric-card">
               <div class="metric-icon yellow">⏳</div>
               <div class="metric-label">Pending</div>
               <div class="metric-value" id="metricPending">0</div>
-              <div class="metric-sub">Awaiting team action</div>
+              <div class="metric-sub">Awaiting action</div>
             </div>
             <div class="metric-card">
               <div class="metric-icon orange">🙋</div>
@@ -960,43 +965,67 @@
                 </button>
               </div>
             </div>
-
-            <div class="tabs">
-              <button
-                class="tab-btn active"
-                data-sf="all"
-                onclick="setStatusFilter('all')"
-              >
-                All
-              </button>
-              <button
-                class="tab-btn"
-                data-sf="open"
-                onclick="setStatusFilter('open')"
-              >
-                Open
-              </button>
-              <button
-                class="tab-btn"
-                data-sf="pending"
-                onclick="setStatusFilter('pending')"
-              >
-                Pending
-              </button>
-              <button
-                class="tab-btn"
-                data-sf="disapproved"
-                onclick="setStatusFilter('disapproved')"
-              >
-                Disapproved
-              </button>
-              <button
-                class="tab-btn"
-                data-sf="closed"
-                onclick="setStatusFilter('closed')"
-              >
-                Closed
-              </button>
+            <div class="flex">
+              <div class="tabs">
+                <button
+                  class="tab-btn active"
+                  data-sf="all"
+                  onclick="setStatusFilter('all', event)"
+                >
+                  All
+                </button>
+                <button
+                  class="tab-btn"
+                  data-sf="fresh"
+                  onclick="setStatusFilter('fresh', event)"
+                >
+                  Fresh
+                </button>
+                <button
+                  class="tab-btn"
+                  data-sf="pending"
+                  onclick="setStatusFilter('pending', event)"
+                >
+                  Pending
+                </button>
+                <button
+                  class="tab-btn"
+                  data-sf="disapproved"
+                  onclick="setStatusFilter('disapproved', event)"
+                >
+                  Disapproved
+                </button>
+                <button
+                  class="tab-btn"
+                  data-sf="closed"
+                  onclick="setStatusFilter('closed', event)"
+                >
+                  Closed
+                </button>
+                <button
+                  class="tab-btn"
+                  data-sf="rma-received"
+                  onclick="setStatusFilter('rma-received', event)"
+                >
+                  rma received
+                </button>
+                <button
+                  class="tab-btn"
+                  data-sf="rma-not-received"
+                  onclick="setStatusFilter('rma-not-received', event)"
+                >
+                  rma not received
+                </button>
+              </div>
+              <div
+                style="
+                  padding: 0 18px 18px;
+                  color: #94a3b8;
+                  font-size: 12px;
+                  padding-top: 20px;
+                "
+                id="tableInfo"
+              ></div>
             </div>
 
             <div class="table-wrap">
@@ -1013,6 +1042,7 @@
                     <th>Company</th>
                     <th>Designation</th>
                     <th>Status</th>
+                    <th>RMA Status</th>
                     <th>Pending From</th>
                     <th>Date</th>
                     <th>Action</th>
@@ -1023,10 +1053,6 @@
             </div>
 
             <div class="pagination" id="pagination"></div>
-            <div
-              style="padding: 0 18px 18px; color: #94a3b8; font-size: 12px"
-              id="tableInfo"
-            ></div>
           </div>
         </div>
       </main>
@@ -1095,6 +1121,7 @@
         filtered = [],
         currentRequest = null,
         statusFilter = "all",
+        rmaFilter = "",
         sortKey = "createdAt",
         sortDir = -1,
         page = 1;
@@ -1152,8 +1179,7 @@
         const v = String(s || "").toLowerCase();
         if (v === "disapproved") return "pill pill-rejected";
         if (v === "closed") return "pill pill-closed";
-        if (v === "open") return "pill pill-open";
-        if (v === "new") return "pill pill-open";
+        if (v === "fresh") return "pill pill-open";
         return "pill pill-pending";
       }
 
@@ -1181,7 +1207,7 @@
           applyFilters();
         } catch (e) {
           tb.innerHTML =
-            '<tr><td colspan="13" class="td-empty">Could not load requests.</td></tr>';
+            '<tr><td colspan="14" class="td-empty">Could not load requests.</td></tr>';
         }
       }
 
@@ -1200,8 +1226,8 @@
           if (r.ok) stats = await r.json();
         } catch {}
 
-        const localNew = allRequests.filter(
-          (x) => String(x.status || "").toLowerCase() === "new",
+        const localFresh = allRequests.filter(
+          (x) => String(x.status || "").toLowerCase() === "fresh",
         ).length;
         const localPending = allRequests.filter(
           (x) => String(x.status || "").toLowerCase() === "pending",
@@ -1227,7 +1253,7 @@
           if (el) el.textContent = String(val ?? 0);
         };
         set("metricTotal", stats?.total ?? allRequests.length);
-        set("metricNew", stats?.new ?? localNew);
+        set("metricFresh", stats?.fresh ?? localFresh);
         set("metricPending", stats?.pending ?? localPending);
         set(
           "metricPendingFromCustomer",
@@ -1263,6 +1289,7 @@
         );
         Object.keys(af).forEach((k) => (af[k] = ""));
         statusFilter = "all";
+        rmaFilter = "";
         document
           .querySelectorAll("[data-sf]")
           .forEach((b) => b.classList.toggle("active", b.dataset.sf === "all"));
@@ -1270,8 +1297,15 @@
         buildFiltered();
       }
 
-      function setStatusFilter(sf) {
-        statusFilter = sf;
+      function setStatusFilter(sf, event) {
+        if (sf === "rma-received" || sf === "rma-not-received") {
+          statusFilter = "rma";
+          rmaFilter =
+            sf === "rma-received" ? "RMA Received" : "RMA Not Received";
+        } else {
+          statusFilter = sf;
+          rmaFilter = "";
+        }
         document
           .querySelectorAll("[data-sf]")
           .forEach((b) => b.classList.toggle("active", b.dataset.sf === sf));
@@ -1282,7 +1316,16 @@
       function buildFiltered() {
         let rows = allRequests.filter((r) => {
           const s = String(r.status || "").toLowerCase();
-          if (statusFilter !== "all" && s !== statusFilter) return false;
+          if (
+            statusFilter !== "all" &&
+            statusFilter !== "rma" &&
+            s !== statusFilter
+          )
+            return false;
+          if (statusFilter === "rma") {
+            const rmaS = String(r.rmaStatus || "RMA Not Received");
+            if (rmaFilter && rmaS !== rmaFilter) return false;
+          }
           if (af.status && s !== af.status) return false;
           if (
             af.oem &&
@@ -1311,9 +1354,13 @@
           return true;
         });
 
-        // Always lead with the newest issued RMA. Requests without an RMA
-        // remain below that queue and are ordered by their submission time.
+        // Fresh requests always at the top, then sort by RMA date desc,
+        // then by submission time desc.
         rows.sort((a, b) => {
+          const aFresh = String(a.status || "").toLowerCase() === "fresh";
+          const bFresh = String(b.status || "").toLowerCase() === "fresh";
+          if (aFresh && !bFresh) return -1;
+          if (!aFresh && bFresh) return 1;
           const aIssued = parseIST(a.rmaIssuedAt);
           const bIssued = parseIST(b.rmaIssuedAt);
           if (aIssued || bIssued) return bIssued - aIssued;
@@ -1336,7 +1383,7 @@
 
         if (!pageRows.length) {
           tb.innerHTML =
-            '<tr><td colspan="13" class="td-empty">No matching requests found.</td></tr>';
+            '<tr><td colspan="14" class="td-empty">No matching requests found.</td></tr>';
           renderPagination();
           return;
         }
@@ -1382,6 +1429,7 @@
         <td>${esc(r.company || "-")}</td>
         <td>${esc(r.designation || "-")}</td>
         <td><span class="${pillClass(r.status)}">${esc(fmtStatus(r.status))}</span></td>
+        <td><span class="${pillClass(r.rmaStatus || "RMA Not Received")}">${esc(r.rmaStatus || "RMA Not Received")}</span></td>
         <td>${pendingFromCell}</td>
         <td style="font-size:12px;color:var(--muted);white-space:nowrap;">${esc(r.createdAt || "-")}</td>
         <td><button class="btn btn-primary btn-sm" onclick="openModal('${safeId}')">View</button></td>
@@ -1468,14 +1516,14 @@
             <div class="detail-section-title">Update Request</div>
             <div class="detail-grid">
               <div class="field">
-                <label>RMA Status</label>
-                <select id="uStatus">
-                  <option value="">— Select status —</option>
-                  <option value="open">Open</option>
-                  <option value="pending">Pending</option>
-                  <option value="disapproved">Disapproved</option>
-                  <option value="closed">Closed</option>
-                </select>
+                  <label>Request Status</label>
+                  <select id="uStatus">
+                    <option value="">— Select status —</option>
+                    <option value="fresh">Fresh</option>
+                    <option value="pending">Pending</option>
+                    <option value="disapproved">Disapproved</option>
+                    <option value="closed">Closed</option>
+                  </select>
                 <small class="field-hint">
                   When set to <strong>Pending</strong>, choose who is waiting
                   below.
@@ -1496,6 +1544,17 @@
                 </select>
                 <small class="field-hint">
                   Active only when Status = Pending.
+                </small>
+              </div>
+              <div class="field">
+                <label>RMA Status</label>
+                <select id="uRmaStatus">
+                  <option value="">— None —</option>
+                  <option value="RMA Received">RMA Received</option>
+                  <option value="RMA Not Received">RMA Not Received</option>
+                </select>
+                <small class="field-hint">
+                  Independent from the main request status.
                 </small>
               </div>
               <div class="field full">
@@ -1759,6 +1818,7 @@
         document.getElementById("uStatus").value = String(
           cr.status || "",
         ).toLowerCase();
+        document.getElementById("uRmaStatus").value = cr.rmaStatus || "";
         document.getElementById("uPendingStatus").value = pendingStatusVal;
         document.getElementById("uCustomStatus").value = cr.customStatus || "";
 
@@ -1903,6 +1963,7 @@
         // doesn't linger once the request moves to Open/Approved/Closed.
         const payload = {
           status: statusVal,
+          rmaStatus: document.getElementById("uRmaStatus").value,
           pendingForCustomer:
             statusVal === "pending" && pendingVal === "Pending from Customer"
               ? "Pending For Customer"

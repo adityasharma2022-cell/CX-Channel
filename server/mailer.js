@@ -6,14 +6,15 @@ const SENDER_EMAIL =
   process.env.SNEDER_EMAIL ||
   "undefeatedcrplayer@gmail.com";
 
+const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
+
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "email-smtp.ap-south-1.amazonaws.com",
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: false,
-  requireTLS: true,
+  host: process.env.SMTP_HOST || "smtp.zoho.com",
+  port: SMTP_PORT,
+  secure: SMTP_PORT === 465,
   auth: {
-    user: process.env.SMTP_USER_ID,
-    pass: process.env.SMTP_USER_PASS,
+    user: process.env.SENDER_EMAIL,
+    pass: process.env.SENDER_PASSWORD,
   },
   connectionTimeout: 10000,
   greetingTimeout: 10000,
@@ -34,6 +35,7 @@ async function sendMail({
   text,
   html,
   replyTo,
+  cc,
   attachments = [],
 }) {
   if (!to) {
@@ -43,6 +45,7 @@ async function sendMail({
   return transporter.sendMail({
     from: `"FASCAL Service Portal" <${SENDER_EMAIL}>`,
     to,
+    cc: cc || process.env.CC_EMAIL || undefined,
     subject,
     text,
     html: html || text,

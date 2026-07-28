@@ -24,6 +24,7 @@ model User {
 model Request {
   id                    String  @id
   rmaNumber             String? @default("") @map("rma_number")
+  rmaStatus             String  @default("RMA Not Received") @map("rma_status")
   rmaIssuedAt           String? @default("") @map("rma_issued_at")
   pendingForCustomer    String  @default("") @map("pending_for_customer")
   pendingForFastech     String  @default("") @map("pending_for_fastech")
@@ -52,7 +53,7 @@ model Request {
   returnAddress         String  @default("") @map("return_address")
   calCertificateAddress String  @default("") @map("cal_certificate_address")
   additionalInfo        String  @default("") @map("additional_info")
-  status                String  @default("new")
+  status                String  @default("fresh")
   customerFeedback      String  @default("") @map("customer_feedback")
   internalNote          String  @default("") @map("internal_note")
   createdAt             String  @map("created_at")
