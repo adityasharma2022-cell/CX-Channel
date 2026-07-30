@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FASCAL — Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg1:#08121f;--bg2:#0f172a;--border:rgba(255,255,255,.14);--text:#f8fafc;--muted:#cbd5e1;--primary:#38bdf8;--primary2:#0ea5e9;--shadow:0 20px 60px rgba(0,0,0,.35)}
+    html{font-family:Inter,sans-serif;-webkit-font-smoothing:antialiased}
+    body{min-height:100vh;display:grid;place-items:center;padding:24px;
+      background:radial-gradient(circle at top left,rgba(56,189,248,.18),transparent 28%),
+                 radial-gradient(circle at right top,rgba(14,165,233,.15),transparent 24%),
+                 linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:var(--text)}
+    button,input,select{font:inherit}
+
+    .card{width:min(440px,100%);background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:28px;box-shadow:var(--shadow);padding:36px 32px}
+
+    /* brand */
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:28px;justify-content:center}
+    .logo{width:46px;height:46px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary2));display:grid;place-items:center;box-shadow:0 12px 28px rgba(14,165,233,.28);flex-shrink:0}
+    .logo svg{width:22px;height:22px}
+    .brand-text h1{font-size:20px;font-weight:800;letter-spacing:-.03em;line-height:1}
+    .brand-text p{font-size:11px;text-transform:uppercase;letter-spacing:.18em;opacity:.6;margin-top:3px}
+
+    /* role tabs */
+    .role-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:rgba(0,0,0,.25);border-radius:14px;padding:5px;margin-bottom:24px}
+    .role-tab{height:38px;border-radius:10px;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;transition:.15s}
+    .role-tab.active{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;box-shadow:0 6px 18px rgba(14,165,233,.28)}
+
+    /* form */
+    .form-title{font-size:22px;font-weight:800;letter-spacing:-.04em;margin-bottom:4px}
+    .form-sub{font-size:13px;color:var(--muted);margin-bottom:22px}
+    .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+    label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:#94a3b8}
+    input{width:100%;height:46px;border-radius:13px;border:1px solid rgba(255,255,255,.13);background:rgba(15,23,42,.6);color:var(--text);padding:0 14px;outline:none;transition:border-color .15s,box-shadow .15s;font-size:14px}
+    input:focus{border-color:rgba(56,189,248,.75);box-shadow:0 0 0 4px rgba(56,189,248,.11)}
+    input::placeholder{color:#475569}
+
+    .btn-submit{width:100%;height:48px;border-radius:13px;border:none;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;font-weight:800;font-size:15px;cursor:pointer;margin-top:6px;box-shadow:0 10px 24px rgba(14,165,233,.28);transition:.15s}
+    .btn-submit:hover{opacity:.9}
+    .btn-submit:disabled{opacity:.6;cursor:not-allowed}
+
+    .divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:#334155;font-size:12px}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08)}
+
+    .signup-links{display:grid;gap:8px}
+    .link-btn{width:100%;height:42px;border-radius:13px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;transition:.15s}
+    .link-btn:hover{background:rgba(255,255,255,.1);color:var(--text)}
+
+    .alert{display:none;margin-top:14px;padding:12px 14px;border-radius:13px;font-weight:600;font-size:13px;border:1px solid transparent}
+    .alert-error{background:rgba(239,68,68,.14);color:#fecaca;border-color:rgba(239,68,68,.25)}
+    .alert-success{background:rgba(34,197,94,.14);color:#bbf7d0;border-color:rgba(34,197,94,.25)}
+
+    .footer{text-align:center;margin-top:22px;font-size:12px;color:#334155}
+  </style>
+</head>
+<body>
+
+<script>
+  (function(){
+    try{
+      var u = JSON.parse(localStorage.getItem('cxUser')||'null');
+      if(u && u.token){
+        window.location.replace(u.role === 'customer' ? '/customer.html' : '/index.html');
+      }
+    }catch(e){}
+  })();
+</script>
+
+<div class="card">
+  <div class="brand">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19h16M6 15h12M8 11h8M10 7h4"/>
+      </svg>
+    </div>
+    <div class="brand-text"><h1>FASCAL</h1><p>Service Portal</p></div>
+  </div>
+
+  <div class="role-tabs">
+    <button class="role-tab active" id="tabTeam" onclick="switchRole('team')">Team Login</button>
+    <button class="role-tab" id="tabCustomer" onclick="switchRole('customer')">Customer Login</button>
+  </div>
+
+  <div id="formTeam">
+    <div class="form-title">Welcome back</div>
+    <div class="form-sub">Sign in to the team dashboard.</div>
+    <div class="field"><label>Username</label><input id="tUsername" type="text" placeholder="Enter username" autocomplete="username" /></div>
+    <div class="field"><label>Password</label><input id="tPassword" type="password" placeholder="Enter password" autocomplete="current-password" /></div>
+    <button class="btn-submit" id="tSubmit" onclick="loginTeam()">Sign In</button>
+    <div class="alert alert-error" id="tAlert"></div>
+
+    <div class="divider">or</div>
+    <div class="signup-links">
+      <button class="link-btn" onclick="window.location.href='/team-signup.html'">Create a Team Account</button>
+    </div>
+  </div>
+
+  <div id="formCustomer" style="display:none">
+    <div class="form-title">Customer Login</div>
+    <div class="form-sub">Access your service requests and track status.</div>
+    <div class="field"><label>Username</label><input id="cUsername" type="text" placeholder="Enter username" autocomplete="username" /></div>
+    <div class="field"><label>Password</label><input id="cPassword" type="password" placeholder="Enter password" autocomplete="current-password" /></div>
+    <button class="btn-submit" id="cSubmit" onclick="loginCustomer()">Sign In</button>
+    <div class="alert alert-error" id="cAlert"></div>
+
+    <div class="divider">or</div>
+    <div class="signup-links">
+      <button class="link-btn" onclick="window.location.href='/signup.html'">Create a Customer Account</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer">FASCAL Service Portal &nbsp;·&nbsp; Internal &amp; Customer Access</div>
+
+<script>
+  const API = window.location.origin;
+  const $ = id => document.getElementById(id);
+
+  function switchRole(role) {
+    const isTeam = role === 'team';
+    $('tabTeam').classList.toggle('active', isTeam);
+    $('tabCustomer').classList.toggle('active', !isTeam);
+    $('formTeam').style.display = isTeam ? '' : 'none';
+    $('formCustomer').style.display = isTeam ? 'none' : '';
+  }
+
+  function showAlert(id, msg) {
+    const el = $(id);
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideAlert(id) { $(id).style.display = 'none'; }
+
+  // Enter key support
+  ['tUsername','tPassword'].forEach(id => {
+    $(id).addEventListener('keydown', e => { if(e.key==='Enter') loginTeam(); });
+  });
+  ['cUsername','cPassword'].forEach(id => {
+    $(id).addEventListener('keydown', e => { if(e.key==='Enter') loginCustomer(); });
+  });
+
+  async function loginTeam() {
+    const username = $('tUsername').value.trim();
+    const password = $('tPassword').value.trim();
+    hideAlert('tAlert');
+    if (!username || !password) { showAlert('tAlert','Enter your username and password.'); return; }
+
+    const btn = $('tSubmit');
+    btn.disabled = true; btn.textContent = 'Signing in…';
+
+    try {
+      const res  = await fetch(`${API}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Login failed.');
+      localStorage.setItem('cxUser', JSON.stringify(data));
+      window.location.replace('/index.html');
+    } catch(err) {
+      showAlert('tAlert', err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Sign In';
+    }
+  }
+
+  async function loginCustomer() {
+    const username = $('cUsername').value.trim();
+    const password = $('cPassword').value.trim();
+    hideAlert('cAlert');
+    if (!username || !password) { showAlert('cAlert','Enter your username and password.'); return; }
+
+    const btn = $('cSubmit');
+    btn.disabled = true; btn.textContent = 'Signing in…';
+
+    try {
+      const res  = await fetch(`${API}/api/auth/customer-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Login failed.');
+      localStorage.setItem('cxUser', JSON.stringify(data));
+      window.location.replace('/customer.html');
+    } catch(err) {
+      showAlert('cAlert', err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Sign In';
+    }
+  }
+</script>
+</body>
+</html>

@@ -6,14 +6,26 @@ const SENDER_EMAIL =
   process.env.SNEDER_EMAIL ||
   "undefeatedcrplayer@gmail.com";
 
+const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.zoho.com";
+const SMTP_USER = process.env.SENDER_EMAIL || "";
+
+console.log("[Mailer] Config:", {
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: SMTP_PORT === 465,
+  user: SMTP_USER,
+  hasPassword: !!process.env.SENDER_PASSWORD,
+  ccEmail: process.env.CC_EMAIL || "(none)",
+});
+
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "email-smtp.ap-south-1.amazonaws.com",
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: false,
-  requireTLS: true,
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: SMTP_PORT === 465,
   auth: {
-    user: process.env.SMTP_USER_ID,
-    pass: process.env.SMTP_USER_PASS,
+    user: SMTP_USER,
+    pass: process.env.SENDER_PASSWORD,
   },
   connectionTimeout: 10000,
   greetingTimeout: 10000,
@@ -22,10 +34,25 @@ const transporter = nodemailer.createTransport({
     minVersion: "TLSv1.2",
     rejectUnauthorized: false,
   },
+  debug: true,
+  logger: true,
 });
 
 async function verifyMailer() {
-  return transporter.verify();
+  try {
+    await transporter.verify();
+    console.log("[Mailer] SMTP verification successful");
+    return true;
+  } catch (err) {
+    console.error("[Mailer] SMTP verification failed:", {
+      code: err.code,
+      response: err.response,
+      responseCode: err.responseCode,
+      command: err.command,
+      message: err.message,
+    });
+    throw err;
+  }
 }
 
 async function sendMail({
@@ -34,19 +61,38 @@ async function sendMail({
   text,
   html,
   replyTo,
+  cc,
   attachments = [],
 }) {
-  if (!to) throw new Error("Recipient email (to) is required.");
+  if (!to) {
+    throw new Error("Recipient email (to) is required. Set TEAM_EMAIL in server/.env.");
+  }
 
-  return transporter.sendMail({
-    from: `"FASCAL Service Portal" <${SENDER_EMAIL}>`,
-    to,
-    subject,
-    text,
-    html: html || text,
-    replyTo: replyTo || undefined,
-    attachments,
-  });
+  console.log("[Mailer] Sending mail:", { to, cc: cc || process.env.CC_EMAIL || "(none)", subject });
+
+  try {
+    const result = await transporter.sendMail({
+      from: `"FASCAL Service Portal" <${SENDER_EMAIL}>`,
+      to,
+      cc: cc || process.env.CC_EMAIL || undefined,
+      subject,
+      text,
+      html: html || text,
+      replyTo: replyTo || undefined,
+      attachments,
+    });
+    console.log("[Mailer] Mail sent successfully:", result.messageId);
+    return result;
+  } catch (err) {
+    console.error("[Mailer] Send failed:", {
+      code: err.code,
+      response: err.response,
+      responseCode: err.responseCode,
+      command: err.command,
+      message: err.message,
+    });
+    throw err;
+  }
 }
 
 module.exports = { sendMail, verifyMailer, SENDER_EMAIL };
