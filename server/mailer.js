@@ -1,28 +1,55 @@
 require("dotenv").config();
-const ZohoMailAPI = require("./zoho-mail-api");
+const nodemailer = require("nodemailer");
 
 const SENDER_EMAIL =
   process.env.SENDER_EMAIL ||
   process.env.SNEDER_EMAIL ||
   "undefeatedcrplayer@gmail.com";
 
-const zohoApi = new ZohoMailAPI();
+const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.zoho.com";
+const SMTP_USER = process.env.SENDER_EMAIL || "";
 
 console.log("[Mailer] Config:", {
-  user: SENDER_EMAIL,
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: SMTP_PORT === 465,
+  user: SMTP_USER,
+  hasPassword: !!process.env.SENDER_PASSWORD,
   ccEmail: process.env.CC_EMAIL || "(none)",
-  hasZohoCreds: !!(process.env.ZOHO_CLIENT_ID && process.env.ZOHO_REFRESH_TOKEN),
+});
+
+const transporter = nodemailer.createTransport({
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: SMTP_PORT === 465,
+  auth: {
+    user: SMTP_USER,
+    pass: process.env.SENDER_PASSWORD,
+  },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
+  tls: {
+    minVersion: "TLSv1.2",
+    rejectUnauthorized: false,
+  },
+  debug: true,
+  logger: true,
 });
 
 async function verifyMailer() {
   try {
-    await zohoApi.verify();
-    console.log("[Mailer] Zoho API verification successful");
+    await transporter.verify();
+    console.log("[Mailer] SMTP verification successful");
     return true;
   } catch (err) {
-    console.error("[Mailer] Zoho API verification failed:", {
+    console.error("[Mailer] SMTP verification failed:", {
+      code: err.code,
+      response: err.response,
+      responseCode: err.responseCode,
+      command: err.command,
       message: err.message,
-      response: err.response?.data,
     });
     throw err;
   }
@@ -38,30 +65,31 @@ async function sendMail({
   attachments = [],
 }) {
   if (!to) {
-    throw new Error("Recipient email (to) is required.");
+    throw new Error("Recipient email (to) is required. Set TEAM_EMAIL in server/.env.");
   }
 
-  console.log("[Mailer] Sending mail:", {
-    to,
-    cc: cc || process.env.CC_EMAIL || "(none)",
-    subject,
-  });
+  console.log("[Mailer] Sending mail:", { to, cc: cc || process.env.CC_EMAIL || "(none)", subject });
 
   try {
-    const result = await zohoApi.sendMail({
+    const result = await transporter.sendMail({
+      from: `"FASCAL Service Portal" <${SENDER_EMAIL}>`,
       to,
+      cc: cc || process.env.CC_EMAIL || undefined,
       subject,
       text,
       html: html || text,
-      cc,
+      replyTo: replyTo || undefined,
       attachments,
     });
-    console.log("[Mailer] Mail sent successfully");
+    console.log("[Mailer] Mail sent successfully:", result.messageId);
     return result;
   } catch (err) {
     console.error("[Mailer] Send failed:", {
+      code: err.code,
+      response: err.response,
+      responseCode: err.responseCode,
+      command: err.command,
       message: err.message,
-      response: err.response?.data,
     });
     throw err;
   }
