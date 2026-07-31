@@ -265,7 +265,7 @@
       .metrics {
         display: grid;
         grid-template-columns: repeat(8, 1fr);
-        gap: 12px;
+        gap: 14px;
       }
       .metric-card {
         background: var(--surface);
@@ -273,6 +273,9 @@
         border-radius: 18px;
         padding: 16px;
         box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
       }
       .metric-icon {
         width: 36px;
@@ -282,6 +285,7 @@
         align-items: center;
         justify-content: center;
         margin-bottom: 12px;
+        flex-shrink: 0;
       }
       .metric-icon.blue {
         background: #e0f2fe;
@@ -328,6 +332,7 @@
       .metric-sub {
         font-size: 12px;
         color: #94a3b8;
+        margin-top: auto;
       }
       .card {
         background: var(--surface);
@@ -1007,14 +1012,14 @@
                   data-sf="rma-received"
                   onclick="setStatusFilter('rma-received', event)"
                 >
-                  rma received
+                  Rma received
                 </button>
                 <button
                   class="tab-btn"
                   data-sf="rma-not-received"
                   onclick="setStatusFilter('rma-not-received', event)"
                 >
-                  rma not received
+                  Rma not received
                 </button>
               </div>
               <div
@@ -1658,7 +1663,7 @@
       </div>
       <div class="approval-section" id="approvalSection">
           <div class="detail-section-title">Approval</div>
-          <p class="approval-hint">The customer is not emailed on submission. Approving generates an RMA number and emails the customer automatically.</p>
+          <p class="approval-hint">Approving generates an RMA number and emails the customer the approval details with the RMA instruction document. Disapproving emails the customer your reason.</p>
           <div class="approval-actions" id="approvalActions">
             <button class="btn btn-approve" onclick="approveRequest()">✓ Approve Request</button>
             <button class="btn btn-reject" onclick="openDisapproveDialog()">✕ Disapprove Request</button>
@@ -1894,8 +1899,15 @@
 
       async function applyApprovalDecision(decision, disapprovalReason = "") {
         const pendingVal = document.getElementById("uPendingStatus").value;
+        let senderName = "";
+        try {
+          senderName =
+            JSON.parse(localStorage.getItem("cxUser") || "null")?.username ||
+            "";
+        } catch {}
         const payload = {
           approvalDecision: decision,
+          senderName,
           pendingForCustomer:
             pendingVal === "Pending from Customer"
               ? "Pending For Customer"

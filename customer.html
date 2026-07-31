@@ -1233,8 +1233,8 @@
             if (!res.ok) throw new Error(data.message || "Submit failed");
 
             let msg = isSupport
-              ? `Support request submitted successfully. Your ticket is ${data.id}. The team will review and get back to you.`
-              : `Request submitted successfully. Your TMI number is ${data.id}.`;
+              ? `Support request submitted successfully. Your ticket is ${data.id}. A confirmation email has been sent to you. The team will review and get back to you.`
+              : `Request submitted successfully. Your TMI number is ${data.id}. A confirmation email has been sent to you.`;
             if (data.emails?.team?.sent) {
               msg += isSupport
                 ? " The support team has been notified by email."
@@ -1242,6 +1242,9 @@
             } else if (data.emails?.team?.error) {
               msg +=
                 " Note: email delivery had an issue, but your request was saved.";
+            } else if (data.emails?.customer?.error) {
+              msg +=
+                " Note: the confirmation email failed to send, but your request was saved.";
             }
 
             show(msg, "success");
