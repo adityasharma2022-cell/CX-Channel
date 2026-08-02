@@ -5,6 +5,12 @@ const cors = require("cors");
 const multer = require("multer");
 const bcrypt = require("bcryptjs");
 const { sendMail, verifyMailer } = require("./mailer");
+const {
+  buildSubmissionEmail,
+  buildSupportSubmissionEmail,
+  buildApprovalEmail,
+  buildDisapprovalEmail,
+} = require("./emailTemplates");
 const prisma = require("./prisma");
 
 const app = express();
@@ -33,6 +39,32 @@ function generateSubmissionId() {
   const s = pad(ist.getSeconds());
   const r = String(Math.floor(Math.random() * 1000)).padStart(3, "0");
   return `${y}${M}${d}${h}${m}${s}-${r}`;
+}
+
+async function generateSupportTicketId() {
+  const now = new Date();
+  const ist = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+  const pad = (n) => String(n).padStart(2, "0");
+  const y = String(ist.getFullYear()).slice(-2);
+  const M = pad(ist.getMonth() + 1);
+  const d = pad(ist.getDate());
+  const h = pad(ist.getHours());
+  const m = pad(ist.getMinutes());
+  const s = pad(ist.getSeconds());
+  const prefix = `${y}${M}${d}${h}${m}${s}`;
+
+  // Counter increments across ALL support tickets (001, 002, 003, …) so every
+  // new request follows the previous one in order, not resetting per second.
+  const rows = await prisma.support.findMany({
+    select: { id: true },
+  });
+  let maxSeq = 0;
+  for (const row of rows) {
+    const digits = String(row.id).split("-")[1] || "";
+    if (/^\d+$/.test(digits)) maxSeq = Math.max(maxSeq, parseInt(digits, 10));
+  }
+  const seq = String(Math.min(maxSeq + 1, 999)).padStart(3, "0");
+  return `${prefix}-${seq}`;
 }
 
 async function generateRmaNumber() {
@@ -389,6 +421,33 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
       emails.team.error = mailErr.message;
     }
 
+    if (record.email) {
+      try {
+        const mail = buildSubmissionEmail(record);
+        await sendMail({
+          to: record.email,
+          subject: mail.subject,
+          text: mail.text,
+          html: mail.html,
+          replyTo: teamEmail,
+        });
+        emails.customer.sent = true;
+        await prisma.request.update({
+          where: { id: record.id },
+          data: { customerMailStatus: "sent" },
+        });
+        record.customerMailStatus = "sent";
+      } catch (mailErr) {
+        console.error("Submission mail failed:", mailErr.message);
+        emails.customer.error = mailErr.message;
+        await prisma.request.update({
+          where: { id: record.id },
+          data: { customerMailStatus: "failed" },
+        });
+        record.customerMailStatus = "failed";
+      }
+    }
+
     res.status(201).json({
       message: "Request submitted successfully.",
       id: record.id,
@@ -488,15 +547,17 @@ app.put("/api/requests/:id", async (req, res) => {
     let customerMail = { sent: false };
 
     if (decision === "approved" && record.email) {
-      const rmaDisplay = record.rmaNumber
-        ? String(record.rmaNumber).replace(/^(?:T-|RMA-)/i, "")
-        : "";
       try {
+        const mail = buildApprovalEmail(record, {
+          senderName: body.senderName,
+        });
         await sendMail({
           to: record.email,
-          subject: `Your FASCAL request has been approved — RMA ${rmaDisplay}`,
-          text: `Hi ${record.name}, your request has been approved. Your RMA number is ${rmaDisplay}.`,
-          html: `<p>Hi ${escapeHtml(record.name)},</p><p>Your request has been approved.</p><p><strong>RMA Number:</strong> ${escapeHtml(rmaDisplay)}</p>`,
+          subject: mail.subject,
+          text: mail.text,
+          html: mail.html,
+          replyTo: process.env.TEAM_EMAIL,
+          attachments: mail.attachments,
         });
         customerMail.sent = true;
         await prisma.request.update({
@@ -516,13 +577,16 @@ app.put("/api/requests/:id", async (req, res) => {
     }
 
     if (decision === "disapproved" && record.email) {
-      const reason = record.disapprovalReason || "No reason was provided.";
       try {
+        const mail = buildDisapprovalEmail(record, {
+          senderName: body.senderName,
+        });
         await sendMail({
           to: record.email,
-          subject: "Your FASCAL request has been disapproved",
-          text: `Hi ${record.name}, your request has been disapproved. Reason: ${reason}`,
-          html: `<p>Hi ${escapeHtml(record.name)},</p><p>Your request has been disapproved.</p><p><strong>Reason:</strong> ${escapeHtml(reason)}</p>`,
+          subject: mail.subject,
+          text: mail.text,
+          html: mail.html,
+          replyTo: process.env.TEAM_EMAIL,
         });
         customerMail.sent = true;
         await prisma.request.update({
@@ -850,7 +914,7 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
         }))
       : [];
 
-    const id = generateSubmissionId();
+    const id = await generateSupportTicketId();
     const record = await prisma.support.create({
       data: {
         id,
@@ -884,7 +948,7 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
       include: SUPPORT_INCLUDE,
     });
 
-    const emails = { team: { sent: false } };
+    const emails = { team: { sent: false }, customer: { sent: false } };
 
     if (!process.env.TEAM_EMAIL) {
       console.warn(
@@ -918,6 +982,33 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
     } catch (mailErr) {
       console.error("Support team mail failed:", mailErr.message);
       emails.team.error = mailErr.message;
+    }
+
+    if (record.email) {
+      try {
+        const mail = buildSupportSubmissionEmail(record);
+        await sendMail({
+          to: record.email,
+          subject: mail.subject,
+          text: mail.text,
+          html: mail.html,
+          replyTo: teamEmail,
+        });
+        emails.customer.sent = true;
+        await prisma.support.update({
+          where: { id: record.id },
+          data: { customerMailStatus: "sent" },
+        });
+        record.customerMailStatus = "sent";
+      } catch (mailErr) {
+        console.error("Support submission mail failed:", mailErr.message);
+        emails.customer.error = mailErr.message;
+        await prisma.support.update({
+          where: { id: record.id },
+          data: { customerMailStatus: "failed" },
+        });
+        record.customerMailStatus = "failed";
+      }
     }
 
     res.status(201).json({

@@ -273,31 +273,10 @@
         border-radius: 18px;
         padding: 16px;
         box-shadow: var(--shadow);
-      }
-      .metric-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 12px;
-      }
-      .metric-icon.blue {
-        background: #e0f2fe;
-        color: var(--primary-dark);
-      }
-      .metric-icon.yellow {
-        background: #fef3c7;
-        color: #92400e;
-      }
-      .metric-icon.indigo {
-        background: #dbeafe;
-        color: #1d4ed8;
-      }
-      .metric-icon.green {
-        background: #dcfce7;
-        color: #166534;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 4px;
       }
       .metric-label {
         font-size: 11px;
@@ -310,7 +289,6 @@
         font-size: 32px;
         font-weight: 800;
         line-height: 1.1;
-        margin: 8px 0 2px;
       }
       .metric-sub {
         font-size: 12px;
@@ -407,6 +385,26 @@
         );
         border-color: transparent;
         color: #fff;
+      }
+      .btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+      .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        border-top-color: #fff;
+        border-radius: 50%;
+        display: inline-block;
+        vertical-align: -2px;
+        margin-right: 8px;
+        animation: spin 0.7s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
       }
       .btn-ghost {
         background: #fff;
@@ -794,39 +792,33 @@
 
           <section class="metrics">
             <div class="metric-card">
-              <div class="metric-icon blue">📋</div>
               <div class="metric-label">Total</div>
               <div class="metric-value" id="totalCount">0</div>
               <div class="metric-sub">All support tickets</div>
             </div>
 
             <div class="metric-card">
-              <div class="metric-icon yellow">🟦</div>
               <div class="metric-label">Open</div>
               <div class="metric-value" id="openCount">0</div>
               <div class="metric-sub">Awaiting action</div>
             </div>
 
             <div class="metric-card">
-              <div class="metric-icon yellow">🙋</div>
               <div class="metric-label">Pending From Customer</div>
               <div class="metric-value" id="pendingCustomerCount">0</div>
               <div class="metric-sub">Waiting on customer</div>
             </div>
             <div class="metric-card">
-              <div class="metric-icon blue">🛠️</div>
               <div class="metric-label">Pending From Fastech</div>
               <div class="metric-value" id="pendingFastechCount">0</div>
               <div class="metric-sub">Waiting on Fastech</div>
             </div>
             <div class="metric-card">
-              <div class="metric-icon yellow">🏭</div>
               <div class="metric-label">Pending From OEM</div>
               <div class="metric-value" id="pendingOemCount">0</div>
               <div class="metric-sub">Waiting on OEM</div>
             </div>
             <div class="metric-card">
-              <div class="metric-icon green">✔️</div>
               <div class="metric-label">Closed</div>
               <div class="metric-value" id="closedCount">0</div>
               <div class="metric-sub">Resolved &amp; confirmed</div>
@@ -944,7 +936,7 @@
         <div class="modal-body" id="modalBody"></div>
         <div class="modal-actions" style="padding: 0 18px 18px">
           <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-          <button class="btn btn-primary" onclick="saveChanges()">
+          <button class="btn btn-primary" id="saveChangesBtn" onclick="saveChanges()">
             Save Changes
           </button>
         </div>
@@ -975,6 +967,15 @@
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;")
           .replace(/'/g, "&#39;");
+      }
+
+      function setBtnLoading(btnId, loading, label, loadingLabel) {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+        btn.disabled = loading;
+        btn.innerHTML = loading
+          ? '<span class="spinner"></span>' + (loadingLabel || label)
+          : label;
       }
 
       function norm(s) {
@@ -1442,6 +1443,8 @@
           pendingForOem: pendingFrom === "oem" ? "Pending from OEM" : "",
         };
 
+        setBtnLoading("saveChangesBtn", true, "Save Changes", "Saving…");
+
         try {
           const res = await fetch(
             "/api/support/" + encodeURIComponent(currentDetail.id),
@@ -1459,6 +1462,7 @@
           closeModal();
           await loadSupport();
         } catch (err) {
+          setBtnLoading("saveChangesBtn", false, "Save Changes");
           showToast("Failed to update: " + err.message, "error");
         }
       }
@@ -1470,6 +1474,7 @@
 
       async function applySupportDecision(approvalDecision) {
         if (!currentDetail) return;
+        setBtnLoading("ticketClosedBtn", true, "✓ Ticket Closed", "Closing…");
         try {
           const res = await fetch(
             "/api/support/" + encodeURIComponent(currentDetail.id),
@@ -1493,6 +1498,7 @@
           closeModal();
           await loadSupport();
         } catch (err) {
+          setBtnLoading("ticketClosedBtn", false, "✓ Ticket Closed");
           showToast("Failed to update: " + err.message, "error");
         }
       }

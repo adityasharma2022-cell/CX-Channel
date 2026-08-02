@@ -1,6 +1,0 @@
-node_modules/
-server/node_modules/
-server/.env
-server/cx_channel.db
-server/sessions.db
-.DS_Store

@@ -65,14 +65,20 @@ async function sendMail({
   attachments = [],
 }) {
   if (!to) {
-    throw new Error("Recipient email (to) is required. Set TEAM_EMAIL in server/.env.");
+    throw new Error(
+      "Recipient email (to) is required. Set TEAM_EMAIL in server/.env.",
+    );
   }
 
-  console.log("[Mailer] Sending mail:", { to, cc: cc || process.env.CC_EMAIL || "(none)", subject });
+  console.log("[Mailer] Sending mail:", {
+    to,
+    cc: cc || process.env.CC_EMAIL || "(none)",
+    subject,
+  });
 
   try {
     const result = await transporter.sendMail({
-      from: `"FASCAL Service Portal" <${SENDER_EMAIL}>`,
+      from: `"Fascal Service Request" <${SENDER_EMAIL}>`,
       to,
       cc: cc || process.env.CC_EMAIL || undefined,
       subject,
