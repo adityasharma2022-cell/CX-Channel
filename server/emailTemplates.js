@@ -34,9 +34,7 @@ function formatDate(value) {
   if (!value) return "";
   const s = String(value).trim();
   const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  return m
-    ? `${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}-${m[3]}`
-    : s;
+  return m ? `${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}-${m[3]}` : s;
 }
 
 function signature(opts = {}) {
@@ -87,7 +85,7 @@ function approvalAttachments() {
   const attachments = [];
   if (fs.existsSync(INSTRUCTION_PDF)) {
     attachments.push({
-      filename: "instruction.pdf",
+      filename: "RMA-Shipping-Instructions.pdf",
       path: INSTRUCTION_PDF,
       contentType: "application/pdf",
     });
@@ -202,6 +200,7 @@ function buildSupportSubmissionEmail(request) {
 function buildApprovalEmail(request, opts = {}) {
   const id = request.id || "";
   const rma = displayRma(request.rmaNumber);
+  const issuedAt = formatDate(request.rmaIssuedAt);
   const subject = `RMA Request Approved - RMA Number: ${rma}`;
   const sign = signature(opts);
   const statusNotes =
@@ -214,9 +213,8 @@ function buildApprovalEmail(request, opts = {}) {
     "",
     "Your RMA Request has been approved.",
     "",
-    "The RMA Number assigned to your request is:",
-    "",
     `RMA Number: ${rma}`,
+    `RMA Issued Date: ${issuedAt || "-"}`,
     "",
     "MATERIAL TO BE SENT TO:",
     "",
@@ -233,9 +231,6 @@ function buildApprovalEmail(request, opts = {}) {
     "",
     "TMI ID:",
     id,
-    "",
-    "RMA Number:",
-    rma,
     "",
     "OEM:",
     request.oem || "",
@@ -306,10 +301,99 @@ function buildApprovalEmail(request, opts = {}) {
     sign.company,
   ].join("\n");
 
+  // Each field renders as its own block (label above value). Blocks are laid
+  // out two-per-row inside an invisible table so multiple fields sit side by
+  // side, spaced apart, with no borders or colors.
+  const fieldCell = (label, value) =>
+    `<td style="padding:4px 20px 4px 0;vertical-align:top;width:50%;">
+      <div style="font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">${escHtml(label)}</div>
+      <div style="word-break:break-word;">${escHtml(value || "-")}</div>
+    </td>`;
+
+  // Pairs the given field cells into rows of two columns.
+  const gridHtml = (cells) => {
+    let rows = "";
+    for (let i = 0; i < cells.length; i += 2) {
+      rows += `<tr>${cells[i]}${cells[i + 1] || '<td style="width:50%;"></td>'}</tr>`;
+    }
+    return `<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;border:0;">${rows}</table>`;
+  };
+
+  const h4 = (title) =>
+    `<h4 style="margin:16px 0 6px;font-size:15px;">${escHtml(title)}</h4>`;
+
+  // Escapes user-provided content.
+  const para = (value) =>
+    `<p style="margin:2px 0;line-height:1.5;white-space:pre-wrap;">${escHtml(value || "-")}</p>`;
+
+  // Static company address may contain intentional <br/> tags, so it is NOT
+  // escaped.
+  const rawPara = (value) =>
+    `<p style="margin:2px 0;line-height:1.5;">${value}</p>`;
+
+  const companyAddress = [
+    COMPANY.name,
+    ...COMPANY.addressLines,
+    `Tel. No.: ${COMPANY.phone}`,
+    `GST No.: ${COMPANY.gst}`,
+  ].join("<br/>");
+
+  const bodyHtml = `
+    <p>Hello ${escHtml(request.name || "")},</p>
+    <p>Your RMA request has been approved. The RMA number assigned to your request is <strong>${escHtml(rma)}</strong>.</p>
+    <p style="margin:14px 0 0;"><strong>RMA Number:</strong> ${escHtml(rma)} &nbsp;&nbsp;&nbsp; <strong>RMA Issued Date:</strong> ${escHtml(issuedAt || "-")}</p>
+    ${h4("RMA Details")}
+    ${gridHtml([
+      fieldCell("RMA Number", rma),
+      fieldCell("RMA Issued Date", issuedAt),
+      fieldCell("Date of Request", formatDate(request.createdAt)),
+      fieldCell("TMI ID", id),
+      fieldCell("OEM", request.oem),
+      fieldCell("Service Type", request.serviceType),
+      fieldCell("Status", "Approved"),
+      fieldCell("Status Notes", statusNotes),
+    ])}
+    ${h4("Customer Details")}
+    ${gridHtml([
+      fieldCell("Full Name", request.name),
+      fieldCell("Contact No", request.phone),
+      fieldCell("Company Name", request.company),
+      fieldCell("Designation", request.designation),
+      fieldCell("Department/Circle", request.location || request.department),
+      fieldCell("Email", request.email),
+      fieldCell("Company Address", billTo),
+    ])}
+    ${h4("Product Details")}
+    ${gridHtml([
+      fieldCell("Product Model", request.product),
+      fieldCell("Base Unit", request.serialBaseUnit || request.serialSingle),
+      fieldCell("Antenna/Probe", request.serialAntenna),
+      fieldCell("Others", request.serialRfCable),
+    ])}
+    ${h4("Description of the Issue")}
+    ${para(request.description)}
+    ${h4("Bill-To Address")}
+    ${para(billTo)}
+    ${h4("Return Address")}
+    ${para(returnTo)}
+    ${h4("Material to be Sent To")}
+    ${rawPara(companyAddress)}
+    <p style="margin-top:16px;">Please refer to the attached RMA instruction document for further instructions regarding the return/shipment process.</p>
+    <p>Regards,<br/>${escHtml(sign.name)}<br/>${escHtml(sign.company)}</p>
+  `;
+
   const attachments = approvalAttachments();
   const includeCidImage = attachments.some((a) => a.cid);
   return {
-    ...buildMessage("RMA Request Approved", subject, text, includeCidImage),
+    subject,
+    text,
+    html: wrapHtml(
+      "RMA Request Approved",
+      bodyHtml +
+        (includeCidImage
+          ? `<p><img src="cid:image001" alt="Fastech" /></p>`
+          : ""),
+    ),
     attachments,
   };
 }
@@ -324,16 +408,8 @@ function buildDisapprovalEmail(request, opts = {}) {
     "",
     "Your RMA request has been disapproved.",
     "",
-    "TMI ID:",
-    id,
-    "",
-    "Status:",
-    "Disapproved",
-    "",
     "Admin Note:",
     reason,
-    "",
-    "If you believe this request was disapproved incorrectly, please contact the Fastech RMA team for further assistance.",
     "",
     "Regards,",
     "",

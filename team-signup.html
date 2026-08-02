@@ -298,6 +298,20 @@
       transform:none;
     }
 
+    .spinner{
+      width:16px;
+      height:16px;
+      border:2px solid rgba(255,255,255,.35);
+      border-top-color:#fff;
+      border-radius:50%;
+      display:inline-block;
+      vertical-align:-2px;
+      margin-right:8px;
+      animation:spin .7s linear infinite;
+    }
+
+    @keyframes spin{ to{ transform:rotate(360deg); } }
+
     .footer-row{
       margin-top:22px;
       padding-top:18px;
@@ -531,7 +545,7 @@
       }
 
       submitBtn.disabled = true;
-      submitBtn.textContent = "Creating Account...";
+      submitBtn.innerHTML = '<span class="spinner"></span>Creating Account…';
 
       try {
         const res = await fetch(`${API}/auth/signup`, {
@@ -552,6 +566,8 @@
         const data = await res.json();
 
         if (!res.ok) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Create Account →";
           showError(data.error || "Could not create account.");
           return;
         }
@@ -559,15 +575,15 @@
         showSuccess("Account created successfully. Redirecting to login...");
         form.reset();
         updateStrength();
+        submitBtn.disabled = true;
 
         setTimeout(() => {
           window.location.href = "login.html";
         }, 1200);
       } catch (err) {
-        showError("Network error. Please try again.");
-      } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = "Create Account →";
+        showError("Network error. Please try again.");
       }
     });
   </script>

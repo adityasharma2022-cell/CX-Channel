@@ -41,6 +41,32 @@ function generateSubmissionId() {
   return `${y}${M}${d}${h}${m}${s}-${r}`;
 }
 
+async function generateSupportTicketId() {
+  const now = new Date();
+  const ist = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+  const pad = (n) => String(n).padStart(2, "0");
+  const y = String(ist.getFullYear()).slice(-2);
+  const M = pad(ist.getMonth() + 1);
+  const d = pad(ist.getDate());
+  const h = pad(ist.getHours());
+  const m = pad(ist.getMinutes());
+  const s = pad(ist.getSeconds());
+  const prefix = `${y}${M}${d}${h}${m}${s}`;
+
+  // Counter increments across ALL support tickets (001, 002, 003, …) so every
+  // new request follows the previous one in order, not resetting per second.
+  const rows = await prisma.support.findMany({
+    select: { id: true },
+  });
+  let maxSeq = 0;
+  for (const row of rows) {
+    const digits = String(row.id).split("-")[1] || "";
+    if (/^\d+$/.test(digits)) maxSeq = Math.max(maxSeq, parseInt(digits, 10));
+  }
+  const seq = String(Math.min(maxSeq + 1, 999)).padStart(3, "0");
+  return `${prefix}-${seq}`;
+}
+
 async function generateRmaNumber() {
   const maxRow = await prisma.request.aggregate({ _max: { rmaNumber: true } });
   let max = 0;
@@ -888,7 +914,7 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
         }))
       : [];
 
-    const id = generateSubmissionId();
+    const id = await generateSupportTicketId();
     const record = await prisma.support.create({
       data: {
         id,

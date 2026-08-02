@@ -28,6 +28,9 @@
     .has-eye input{padding-right:44px;}
     .btn-submit{width:100%;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border:none;border-radius:13px;padding:14px;font:inherit;font-weight:800;font-size:15px;cursor:pointer;margin-top:6px;transition:.2s;box-shadow:0 4px 14px rgba(14,165,233,.35);}
     .btn-submit:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(14,165,233,.45);}
+    .btn-submit:disabled{opacity:.7;cursor:not-allowed;transform:none;}
+    .spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;display:inline-block;vertical-align:-2px;margin-right:8px;animation:spin .7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
     .alert-error{display:none;padding:12px 14px;border-radius:11px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);color:#fca5a5;font-size:13px;font-weight:600;margin-bottom:16px;}
     .alert-error.show{display:flex;align-items:center;gap:8px;}
     .divider{border:none;border-top:1px solid #334155;margin:24px 0;}
@@ -59,7 +62,7 @@
       <input id="uPass" type="password" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
       <button class="eye-btn" onclick="togglePass('uPass','eye1')" aria-label="Toggle password visibility"><span id="eye1">👁</span></button>
     </div>
-    <button class="btn-submit" onclick="doLogin()">Sign In →</button>
+    <button class="btn-submit" id="loginBtn" onclick="doLogin()">Sign In →</button>
     <hr class="divider"/>
     <div class="links">
       <span class="link-text">New team member?</span>
@@ -82,13 +85,16 @@
     const username=document.getElementById("uUser").value.trim();
     const password=document.getElementById("uPass").value.trim();
     if(!username||!password){errMsg.textContent="Please enter your username and password.";errBox.classList.add("show");return;}
+    const loginBtn=document.getElementById("loginBtn");
+    loginBtn.disabled=true;
+    loginBtn.innerHTML='<span class="spinner"></span>Signing In…';
     try{
       const res=await fetch(`${API}/api/auth/login`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})});
       const data=await res.json();
-      if(!res.ok){errMsg.textContent=data.message||"Invalid username or password.";errBox.classList.add("show");return;}
+      if(!res.ok){loginBtn.disabled=false;loginBtn.textContent="Sign In →";errMsg.textContent=data.message||"Invalid username or password.";errBox.classList.add("show");return;}
       localStorage.setItem('cxUser',JSON.stringify(data));
       window.location.href="index.html";
-    }catch{errMsg.textContent="Could not connect to server. Please try again.";errBox.classList.add("show");}
+    }catch{loginBtn.disabled=false;loginBtn.textContent="Sign In →";errMsg.textContent="Could not connect to server. Please try again.";errBox.classList.add("show");}
   }
 </script>
 </body>
