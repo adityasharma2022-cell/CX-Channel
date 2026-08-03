@@ -50,6 +50,66 @@ function textToHtml(text) {
     .join("\n");
 }
 
+// Each field renders as its own block (label above value). Blocks are laid
+// out two-per-row inside an invisible table so multiple fields sit side by
+// side, spaced apart, with no borders or colors.
+// (Used by the support-request email, which keeps the label-above-value style.)
+function fieldCell(label, value) {
+  return `<td style="padding:4px 20px 4px 0;vertical-align:top;width:50%;">
+      <div style="font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">${escHtml(label)}</div>
+      <div style="word-break:break-word;">${escHtml(value || "-")}</div>
+    </td>`;
+}
+
+// Pairs the given field cells into rows of two columns.
+function gridHtml(cells) {
+  let rows = "";
+  for (let i = 0; i < cells.length; i += 2) {
+    rows += `<tr>${cells[i]}${cells[i + 1] || '<td style="width:50%;"></td>'}</tr>`;
+  }
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;border:0;">${rows}</table>`;
+}
+
+function h4(title) {
+  return `<h4 style="margin:16px 0 6px;font-size:15px;">${escHtml(title)}</h4>`;
+}
+
+// Escapes user-provided content.
+function para(value) {
+  return `<p style="margin:2px 0;line-height:1.5;white-space:pre-wrap;">${escHtml(value || "-")}</p>`;
+}
+
+// Static content may contain intentional <br/> tags, so it is NOT escaped.
+function rawPara(value) {
+  return `<p style="margin:2px 0;line-height:1.5;">${value}</p>`;
+}
+
+// --- Flat "Label: Value" row layout used by the approval email ---
+// Renders one row with a label+value pair, and optionally a second
+// label+value pair beside it on the same line (e.g. "OEM: VeEX   Type: Repair").
+function fieldRow(label1, value1, label2, value2) {
+  const secondPair = label2
+    ? `<td style="padding:4px 8px;font-weight:700;white-space:nowrap;">${escHtml(label2)}</td>
+       <td style="padding:4px 0;">${escHtml(value2 || "-")}</td>`
+    : `<td colspan="2"></td>`;
+  return `<tr>
+    <td style="padding:4px 8px 4px 0;font-weight:700;white-space:nowrap;vertical-align:top;">${escHtml(label1)}</td>
+    <td style="padding:4px 24px 4px 0;vertical-align:top;">${escHtml(value1 || "-")}</td>
+    ${secondPair}
+  </tr>`;
+}
+
+// For fields like "Description of the Issue" where the value needs the
+// full row width (can be long or multi-line).
+function fieldRowFull(label, value) {
+  return `<tr><td colspan="4" style="padding:8px 0 2px;font-weight:700;">${escHtml(label)}</td></tr>
+    <tr><td colspan="4" style="padding:0 0 6px;white-space:pre-wrap;">${escHtml(value || "-")}</td></tr>`;
+}
+
+function fieldTable(rows) {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px;border:0;">${rows.join("")}</table>`;
+}
+
 function wrapHtml(title, bodyHtml) {
   return `<!doctype html>
 <html lang="en">
@@ -71,6 +131,14 @@ function buildMessage(title, subject, text, includeCidImage) {
   return { subject, text, html: wrapHtml(title, bodyHtml) };
 }
 
+function buildHtml(title, subject, text, includeCidImage, bodyHtml) {
+  let html = bodyHtml || textToHtml(text);
+  if (includeCidImage) {
+    html += `<p><img src="cid:image001" alt="Fastech" /></p>`;
+  }
+  return { subject, text, html: wrapHtml(title, html) };
+}
+
 function imageAttachment() {
   const imagePath = process.env.MAIL_IMAGE_PATH;
   if (!imagePath || !fs.existsSync(imagePath)) return null;
@@ -81,6 +149,11 @@ function imageAttachment() {
   };
 }
 
+// The PDF is pushed into `attachments` WITHOUT a `cid`, so it is never
+// referenced inside the HTML body. Email clients (Gmail, Outlook, etc.)
+// automatically render any attachment that isn't embedded via cid as a
+// separate item below the message body — that's what places the PDF
+// "below the mail" in the screenshot, with no extra HTML needed for it.
 function approvalAttachments() {
   const attachments = [];
   if (fs.existsSync(INSTRUCTION_PDF)) {
@@ -110,21 +183,19 @@ function buildSubmissionEmail(request) {
     "",
     "Our team will review your request and update you once the request has been processed.",
     "",
-    "Regards,",
-    COMPANY.name,
   ].join("\n");
   return buildMessage("Request Submission", subject, text, false);
 }
 
 function buildSupportSubmissionEmail(request) {
   const id = request.id || "";
-  const subject = `Support Request Submitted - TMI ID: ${id}`;
+  const subject = `Support Request Submitted - Ticket ID: ${id}`;
   const text = [
     `Hello ${request.name || ""},`,
     "",
     "Your support request has been successfully submitted. Our team will review your request and update you once the request has been processed.",
     "",
-    "TMI ID:",
+    "Ticket ID:",
     id,
     "",
     "Date of Submission:",
@@ -191,209 +262,152 @@ function buildSupportSubmissionEmail(request) {
     "",
     request.additionalInfo || "",
     "",
-    "Regards,",
-    COMPANY.name,
   ].join("\n");
-  return buildMessage("Support Request Submission", subject, text, false);
-}
-
-function buildApprovalEmail(request, opts = {}) {
-  const id = request.id || "";
-  const rma = displayRma(request.rmaNumber);
-  const issuedAt = formatDate(request.rmaIssuedAt);
-  const subject = `RMA Request Approved - RMA Number: ${rma}`;
-  const sign = signature(opts);
-  const statusNotes =
-    opts.statusNotes || request.ipAdminNote || "Approved by Admin";
-  const billTo = request.billingAddress || "";
-  const returnTo = request.returnAddress || "";
-
-  const text = [
-    `Hello ${request.name || ""},`,
-    "",
-    "Your RMA Request has been approved.",
-    "",
-    `RMA Number: ${rma}`,
-    `RMA Issued Date: ${issuedAt || "-"}`,
-    "",
-    "MATERIAL TO BE SENT TO:",
-    "",
-    COMPANY.name,
-    ...COMPANY.addressLines,
-    "",
-    `Tel. No.: ${COMPANY.phone}`,
-    `GST No.: ${COMPANY.gst}`,
-    "",
-    "REQUEST DETAILS",
-    "",
-    "Date of Request:",
-    formatDate(request.createdAt),
-    "",
-    "TMI ID:",
-    id,
-    "",
-    "OEM:",
-    request.oem || "",
-    "",
-    "Type:",
-    request.serviceType || "",
-    "",
-    "Status:",
-    "Approved",
-    "",
-    "Status Notes:",
-    statusNotes,
-    "",
-    "DESCRIPTION OF THE ISSUE",
-    "",
-    request.description || "",
-    "",
-    "CUSTOMER DETAILS",
-    "",
-    "Sender's Full Name:",
-    request.name || "",
-    "",
-    "Sender's Contact No:",
-    request.phone || "",
-    "",
-    "Sender's Company Name:",
-    request.company || "",
-    "",
-    "Sender's Designation:",
-    request.designation || "",
-    "",
-    "Sender's Department/Circle:",
-    request.location || request.department || "",
-    "",
-    "Email:",
-    request.email || "",
-    "",
-    "Sender's Company Address:",
-    billTo,
-    "",
-    "PRODUCT DETAILS",
-    "",
-    "Product Model:",
-    request.product || "",
-    "",
-    "Base Unit:",
-    request.serialBaseUnit || request.serialSingle || "-",
-    "",
-    "Antenna/Probe:",
-    request.serialAntenna || "-",
-    "",
-    "Others:",
-    request.serialRfCable || "-",
-    "",
-    "BILL-TO ADDRESS",
-    "",
-    billTo || "-",
-    "",
-    "RETURN ADDRESS",
-    "",
-    returnTo || "-",
-    "",
-    "Please refer to the attached RMA instruction document for further instructions regarding the return/shipment process.",
-    "",
-    "Regards,",
-    "",
-    sign.name,
-    sign.company,
-  ].join("\n");
-
-  // Each field renders as its own block (label above value). Blocks are laid
-  // out two-per-row inside an invisible table so multiple fields sit side by
-  // side, spaced apart, with no borders or colors.
-  const fieldCell = (label, value) =>
-    `<td style="padding:4px 20px 4px 0;vertical-align:top;width:50%;">
-      <div style="font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">${escHtml(label)}</div>
-      <div style="word-break:break-word;">${escHtml(value || "-")}</div>
-    </td>`;
-
-  // Pairs the given field cells into rows of two columns.
-  const gridHtml = (cells) => {
-    let rows = "";
-    for (let i = 0; i < cells.length; i += 2) {
-      rows += `<tr>${cells[i]}${cells[i + 1] || '<td style="width:50%;"></td>'}</tr>`;
-    }
-    return `<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;border:0;">${rows}</table>`;
-  };
-
-  const h4 = (title) =>
-    `<h4 style="margin:16px 0 6px;font-size:15px;">${escHtml(title)}</h4>`;
-
-  // Escapes user-provided content.
-  const para = (value) =>
-    `<p style="margin:2px 0;line-height:1.5;white-space:pre-wrap;">${escHtml(value || "-")}</p>`;
-
-  // Static company address may contain intentional <br/> tags, so it is NOT
-  // escaped.
-  const rawPara = (value) =>
-    `<p style="margin:2px 0;line-height:1.5;">${value}</p>`;
-
-  const companyAddress = [
-    COMPANY.name,
-    ...COMPANY.addressLines,
-    `Tel. No.: ${COMPANY.phone}`,
-    `GST No.: ${COMPANY.gst}`,
-  ].join("<br/>");
 
   const bodyHtml = `
     <p>Hello ${escHtml(request.name || "")},</p>
-    <p>Your RMA request has been approved. The RMA number assigned to your request is <strong>${escHtml(rma)}</strong>.</p>
-    <p style="margin:14px 0 0;"><strong>RMA Number:</strong> ${escHtml(rma)} &nbsp;&nbsp;&nbsp; <strong>RMA Issued Date:</strong> ${escHtml(issuedAt || "-")}</p>
-    ${h4("RMA Details")}
+    <p>Your support request has been successfully submitted. Our team will review your request and update you once the request has been processed.</p>
+    ${h4("Request Details")}
     ${gridHtml([
-      fieldCell("RMA Number", rma),
-      fieldCell("RMA Issued Date", issuedAt),
-      fieldCell("Date of Request", formatDate(request.createdAt)),
-      fieldCell("TMI ID", id),
+      fieldCell("Ticket ID", id),
+      fieldCell("Date of Submission", formatDate(request.createdAt)),
       fieldCell("OEM", request.oem),
-      fieldCell("Service Type", request.serviceType),
-      fieldCell("Status", "Approved"),
-      fieldCell("Status Notes", statusNotes),
+      fieldCell("Service Type", request.serviceType || "Support"),
     ])}
     ${h4("Customer Details")}
     ${gridHtml([
-      fieldCell("Full Name", request.name),
-      fieldCell("Contact No", request.phone),
+      fieldCell("Name", request.name),
+      fieldCell("Contact Number", request.phone),
       fieldCell("Company Name", request.company),
       fieldCell("Designation", request.designation),
       fieldCell("Department/Circle", request.location || request.department),
       fieldCell("Email", request.email),
-      fieldCell("Company Address", billTo),
+      fieldCell("Company Address", request.billingAddress),
     ])}
     ${h4("Product Details")}
     ${gridHtml([
       fieldCell("Product Model", request.product),
       fieldCell("Base Unit", request.serialBaseUnit || request.serialSingle),
       fieldCell("Antenna/Probe", request.serialAntenna),
-      fieldCell("Others", request.serialRfCable),
+      fieldCell("Software Version", request.softwareVersion),
+      fieldCell(
+        "Other Product Information",
+        [
+          request.serialRfCable,
+          request.serialBaseUnit,
+          request.serialSingle,
+          request.serialAntenna,
+        ]
+          .filter(Boolean)
+          .join(", "),
+      ),
     ])}
     ${h4("Description of the Issue")}
     ${para(request.description)}
-    ${h4("Bill-To Address")}
-    ${para(billTo)}
-    ${h4("Return Address")}
-    ${para(returnTo)}
-    ${h4("Material to be Sent To")}
-    ${rawPara(companyAddress)}
-    <p style="margin-top:16px;">Please refer to the attached RMA instruction document for further instructions regarding the return/shipment process.</p>
-    <p>Regards,<br/>${escHtml(sign.name)}<br/>${escHtml(sign.company)}</p>
+    ${h4("Additional Information")}
+    ${para(request.additionalInfo)}
   `;
 
+  return buildHtml(
+    "Support Request Submission",
+    subject,
+    text,
+    false,
+    bodyHtml,
+  );
+}
+
+// Matches the real approval mail layout: flat "Label: Value" rows (two
+// label/value pairs per line where the screenshot shows them side by side),
+// not the boxed/grouped card style used elsewhere in this file.
+function buildApprovalEmail(request, opts = {}) {
+  const id = request.id || "";
+  const rma = displayRma(request.rmaNumber);
+  const requestDate = formatDate(request.createdAt);
+  const subject = `RMA Number - ${rma} Date of Request: ${requestDate}`;
+  const statusNotes = opts.statusNotes || request.ipAdminNote || "";
+  const billTo = request.billingAddress || "";
+  const returnTo = request.returnAddress || "";
+
+  const companyAddressLines = [
+    ...COMPANY.addressLines,
+    `Te. No. ${COMPANY.phone}`,
+    `Our GST No. ${COMPANY.gst}`,
+  ];
+
+  const text = [
+    `Hello ${request.name || ""}!`,
+    `Your RMA Request has been approved and RMA Number for your request is ${rma} .`,
+    "",
+    "Material to be sent to :",
+    COMPANY.name,
+    ...companyAddressLines,
+    "",
+    `Date of Request: ${requestDate}`,
+    `RMA Number: ${rma}`,
+    `OEM: ${request.oem || ""}`,
+    `Type: ${request.serviceType || ""}`,
+    `Status: Approved`,
+    `Status Notes: ${statusNotes}`,
+    "Description of the Issue:",
+    request.description || "",
+    `Sender's Full Name: ${request.name || ""}`,
+    `Sender's Contact No: ${request.phone || ""}`,
+    `Sender's Company Name: ${request.company || ""}`,
+    `Sender's Designation: ${request.designation || ""}`,
+    `Sender's Department/Circle: ${request.location || request.department || ""}`,
+    `Email: ${request.email || ""}`,
+    `Sender's Comapny Address: ${billTo}`,
+    `Product Model: ${request.product || ""}`,
+    `Product Serial Number: ${request.serialBaseUnit || request.serialSingle || ""}`,
+    `Bill-to Address(if applicable): ${billTo}`,
+    `Return Address: ${returnTo}`,
+  ].join("\n");
+
+  const bodyHtml = `
+    <p style="margin:0 0 12px;">Hello ${escHtml(request.name || "")}!</p>
+    <p style="margin:0 0 16px;">Your RMA Request has been approved and RMA Number for your request is ${escHtml(rma)} .</p>
+    <p style="margin:0 0 4px;"><strong>Material to be sent to :</strong> ${escHtml(COMPANY.name)},</p>
+    ${rawPara(companyAddressLines.map(escHtml).join("<br/>"))}
+    ${fieldTable([
+      fieldRow("Date of Request:", requestDate),
+      fieldRow("RMA Number:", rma),
+      fieldRow("OEM:", request.oem, "Type:", request.serviceType),
+      fieldRow("Status:", "Approved", "Status Notes:", statusNotes),
+      fieldRowFull("Description of the Issue:", request.description),
+      fieldRow("Sender's Full Name:", request.name),
+      fieldRow(
+        "Sender's Contact No:",
+        request.phone,
+        "Sender's Company Name:",
+        request.company,
+      ),
+      fieldRow(
+        "Sender's Designation:",
+        request.designation,
+        "Sender's Department/Circle:",
+        request.location || request.department,
+      ),
+      fieldRow("Email:", request.email),
+      fieldRow("Sender's Comapny Address:", billTo),
+      fieldRow("Product Model:", request.product),
+      fieldRow(
+        "Product Serial Number:",
+        request.serialBaseUnit || request.serialSingle,
+      ),
+      fieldRow("Bill-to Address(if applicable):", billTo),
+      fieldRow("Return Address:", returnTo),
+    ])}
+  `;
+
+  // No cid image reference is added here on purpose — the PDF (and any
+  // logo image) are handled purely as attachments (see approvalAttachments),
+  // so they show up below the mail body automatically.
   const attachments = approvalAttachments();
-  const includeCidImage = attachments.some((a) => a.cid);
   return {
     subject,
     text,
-    html: wrapHtml(
-      "RMA Request Approved",
-      bodyHtml +
-        (includeCidImage
-          ? `<p><img src="cid:image001" alt="Fastech" /></p>`
-          : ""),
-    ),
+    html: wrapHtml("RMA Request Approved", bodyHtml),
     attachments,
   };
 }
@@ -411,10 +425,6 @@ function buildDisapprovalEmail(request, opts = {}) {
     "Admin Note:",
     reason,
     "",
-    "Regards,",
-    "",
-    sign.name,
-    sign.company,
   ].join("\n");
   return buildMessage("RMA Request Disapproved", subject, text, false);
 }

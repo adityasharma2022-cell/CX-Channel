@@ -129,6 +129,7 @@ const IP_FIELDS = [
   "ipReasonForWaiting",
   "ipDeliveredDate",
   "ipAckDateFromWh",
+  "ipCourierName",
   "ipRemark",
 ];
 
@@ -652,7 +653,9 @@ app.get("/api/export/csv", async (req, res) => {
       ["RMA Date", (r) => r.rmaIssuedAt || "-"],
       ["Submission Reference", (r) => r.id || "-"],
       ["Status", (r) => fmtStatus(r.status)],
+      ["RMA Current Status", (r) => r.customStatus || "-"],
       ["RMA Status", (r) => r.rmaStatus || "RMA Not Received"],
+      ["PO Number", (r) => r.poNumber || "-"],
       [
         "Pending From",
         (r) => {
@@ -664,7 +667,6 @@ app.get("/api/export/csv", async (req, res) => {
           return "\u2014";
         },
       ],
-      ["RMA Current Status", (r) => r.customStatus || "-"],
       ["OEM", (r) => r.oem || "-"],
       ["Service Type", (r) => r.serviceType || "-"],
       ["Product Model", (r) => r.product || "-"],
@@ -724,6 +726,11 @@ app.get("/api/export/csv", async (req, res) => {
         "Ack. Date from WH",
         (r) => r.processingDetails?.ipAckDateFromWh || "-",
       ],
+      [
+        "Name of Courier",
+        (r) => r.processingDetails?.ipCourierName || "-",
+      ],
+      ["Customer Feedback", (r) => r.customerFeedback || "-"],
       ["Admin Note", (r) => r.processingDetails?.ipAdminNote || "-"],
       [
         "Reason for Waiting",
@@ -1022,7 +1029,7 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
   }
 });
 
-app.put("/api/support/:id", async (req, res) => {
+app.put("/api/support/:id", upload.array("images", 10), async (req, res) => {
   try {
     const existing = await prisma.support.findUnique({
       where: { id: req.params.id },
@@ -1079,6 +1086,28 @@ app.put("/api/support/:id", async (req, res) => {
       data: updateData,
       include: SUPPORT_INCLUDE,
     });
+
+    const uploadedImages = Array.isArray(req.files)
+      ? req.files.map((f) => ({
+          originalName: f.originalname,
+          fileName: f.filename,
+          path: `/uploads/${f.filename}`,
+          mimeType: f.mimetype,
+          size: f.size,
+        }))
+      : [];
+    if (uploadedImages.length) {
+      await prisma.supportImage.createMany({
+        data: uploadedImages.map((img) => ({
+          supportId: req.params.id,
+          ...img,
+        })),
+      });
+      record = await prisma.support.findUnique({
+        where: { id: req.params.id },
+        include: SUPPORT_INCLUDE,
+      });
+    }
 
     let customerMail = { sent: false };
 
@@ -1189,7 +1218,7 @@ app.get("/api/support/export/csv", async (req, res) => {
       key === "assignedTeam"
         ? "Assigned To Team"
         : key === "assignedName"
-          ? "Assigned Name"
+          ? "Assigned to person"
           : key
               .replace(/([A-Z])/g, " $1")
               .replace(/^./, (c) => c.toUpperCase());

@@ -78,7 +78,7 @@ async function sendMail({
 
   try {
     const result = await transporter.sendMail({
-      from: `"Fascal Service Request" <${SENDER_EMAIL}>`,
+      from: `"Admin" <${SENDER_EMAIL}>`,
       to,
       cc: cc || process.env.CC_EMAIL || undefined,
       subject,
