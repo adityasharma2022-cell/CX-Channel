@@ -81,6 +81,7 @@ model Request {
   ipReasonForWaiting       String  @default("") @map("ip_reason_for_waiting")
   ipDeliveredDate          String  @default("") @map("ip_delivered_date")
   ipAckDateFromWh          String  @default("") @map("ip_ack_date_from_wh")
+  ipCourierName            String  @default("") @map("ip_courier_name")
   ipRemark                 String  @default("") @map("ip_remark")
 
   images RequestImage[]
