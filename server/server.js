@@ -205,9 +205,11 @@ app.post("/api/auth/login", async (req, res) => {
     const user = await prisma.user.findFirst({
       where: { username, role: "team" },
     });
-    if (!user) return res.status(401).json({ message: "Invalid team credentials." });
+    if (!user)
+      return res.status(401).json({ message: "Invalid team credentials." });
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(401).json({ message: "Invalid team credentials." });
+    if (!valid)
+      return res.status(401).json({ message: "Invalid team credentials." });
     res.json({
       message: "Login successful.",
       token: `fake-jwt-${user.id}`,
@@ -307,7 +309,9 @@ app.get("/api/requests", async (req, res) => {
       }),
     );
   } catch (err) {
-    res.status(500).json({ message: err.message || "Failed to load requests." });
+    res
+      .status(500)
+      .json({ message: err.message || "Failed to load requests." });
   }
 });
 
@@ -317,7 +321,8 @@ app.get("/api/requests/:id", async (req, res) => {
       where: { id: req.params.id },
       include: REQUEST_INCLUDE,
     });
-    if (!request) return res.status(404).json({ message: "Request not found." });
+    if (!request)
+      return res.status(404).json({ message: "Request not found." });
     const history = await prisma.request.findMany({
       where: { email: request.email, id: { not: request.id } },
       include: REQUEST_INCLUDE,
@@ -399,11 +404,9 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
     try {
       await sendMail({
         to: teamEmail,
-        subject: `New FASCAL request ${record.id}`,
+        subject: `New request `,
         text: `New request received from ${record.name} (${record.email}). Submission reference: ${record.id}`,
         html: `
-          <h3>New FASCAL Request</h3>
-          <p><strong>Submission Reference:</strong> ${record.id}</p>
           <p><strong>Name:</strong> ${record.name}</p>
           <p><strong>Email:</strong> ${record.email}</p>
           <p><strong>OEM:</strong> ${record.oem}</p>
@@ -523,7 +526,9 @@ app.put("/api/requests/:id", async (req, res) => {
     } else if (decision === "disapproved") {
       updateData.approvalStatus = "disapproved";
       updateData.status = "disapproved";
-      updateData.disapprovalReason = String(body.disapprovalReason || "").trim();
+      updateData.disapprovalReason = String(
+        body.disapprovalReason || "",
+      ).trim();
     } else if (decision === "reset") {
       updateData.approvalStatus = "";
       updateData.disapprovalReason = "";
@@ -647,105 +652,83 @@ app.get("/api/export/csv", async (req, res) => {
       return v.charAt(0).toUpperCase() + v.slice(1);
     };
 
+    const pendingFrom = (r) => {
+      if (isPendingFlag(r.pendingForCustomer))
+        return "Pending from Customer";
+      if (isPendingFlag(r.pendingForFastech)) return "Pending from Fastech";
+      if (isPendingFlag(r.pendingForOem)) return "Pending from OEM";
+      return "\u2014";
+    };
+
     const baseFields = [
-      ["Sr.", (_r, i) => i + 1],
+      ["Sr.No", (_r, i) => i + 1],
       ["RMA No", (r) => displayRma(r)],
-      ["RMA Date", (r) => r.rmaIssuedAt || "-"],
-      ["Submission Reference", (r) => r.id || "-"],
-      ["Status", (r) => fmtStatus(r.status)],
-      ["RMA Current Status", (r) => r.customStatus || "-"],
-      ["RMA Status", (r) => r.rmaStatus || "RMA Not Received"],
-      ["PO Number", (r) => r.poNumber || "-"],
-      [
-        "Pending From",
-        (r) => {
-          if (isPendingFlag(r.pendingForCustomer))
-            return "Pending from Customer";
-          if (isPendingFlag(r.pendingForFastech))
-            return "Pending from Fastech";
-          if (isPendingFlag(r.pendingForOem)) return "Pending from OEM";
-          return "\u2014";
-        },
-      ],
+      ["Date of RMA", (r) => r.rmaIssuedAt || "-"],
       ["OEM", (r) => r.oem || "-"],
       ["Service Type", (r) => r.serviceType || "-"],
       ["Product Model", (r) => r.product || "-"],
-      ["Description of Issue", (r) => r.description || "-"],
-      ["Customer Name", (r) => r.name || "-"],
-      ["Company", (r) => r.company || "-"],
-      ["Phone", (r) => r.phone || "-"],
-      ["Email", (r) => r.email || "-"],
-      ["Designation", (r) => r.designation || "-"],
-      ["Location", (r) => r.location || "-"],
+      ["Product S/N", (r) => r.serialBaseUnit || "-"],
+      ["PO Number", (r) => r.poNumber || "-"],
+      ["PO Date", (r) => r.poDate || "-"],
+      ["Antenna", (r) => r.serialAntenna || "-"],
+      ["RF Cable", (r) => r.serialRfCable || "-"],
+      ["Additional Info", (r) => r.additionalInfo || "-"],
+      ["Sender's Full Name", (r) => r.name || "-"],
+      ["Sender's Contact No", (r) => r.phone || "-"],
+      ["Company Name", (r) => r.company || "-"],
+      ["Designation of sender", (r) => r.designation || "-"],
+      ["Department of sender", (r) => r.location || "-"],
+      ["Email ID", (r) => r.email || "-"],
+      ["Approved / Disapproved", (r) => fmtStatus(r.status)],
       ["Billing Address", (r) => r.billingAddress || "-"],
       ["Return Address", (r) => r.returnAddress || "-"],
-      ["Base Unit S-Number", (r) => r.serialBaseUnit || "-"],
-      ["RF Cable Serial Number", (r) => r.serialRfCable || "-"],
-      ["Antenna Serial Number", (r) => r.serialAntenna || "-"],
-      ["Received Date", (r) => r.processingDetails?.ipReceivedDate || "-"],
-      ["Warranty", (r) => r.processingDetails?.ipWarranty || "-"],
-      ["Estimate Date", (r) => r.processingDetails?.ipEstimateDate || "-"],
-      ["Estimate Number", (r) => r.processingDetails?.ipEstimateNumber || "-"],
-      [
-        "Estimate Amount (INR)",
-        (r) => r.processingDetails?.ipEstimateAmount || "-",
-      ],
-      [
-        "P.O. No. & Date",
-        (r) => r.processingDetails?.ipPoNoAndDate || "-",
-      ],
-      [
-        "PO Received Date",
-        (r) => r.processingDetails?.ipPoReceivedDate || "-",
-      ],
-      ["OEM RMA No.", (r) => r.processingDetails?.ipOemRmaNo || "-"],
-      ["Date of Sent", (r) => r.processingDetails?.ipDateOfSent || "-"],
-      [
-        "Platform / Module",
-        (r) => r.processingDetails?.ipPlatformModule || "-",
-      ],
-      [
-        "OEM Quotation",
-        (r) => r.processingDetails?.ipOemQuotation || "-",
-      ],
-      [
-        "Date of Receiving from OEM",
-        (r) => r.processingDetails?.ipDateOfReceivingFromOem || "-",
-      ],
-      ["DC No. & Date", (r) => r.processingDetails?.ipDcNoAndDate || "-"],
-      [
-        "Dispatched Date",
-        (r) => r.processingDetails?.ipDispatchedDate || "-",
-      ],
-      ["LR No.", (r) => r.processingDetails?.ipLrNo || "-"],
-      [
-        "Delivered Date",
-        (r) => r.processingDetails?.ipDeliveredDate || "-",
-      ],
-      [
-        "Ack. Date from WH",
-        (r) => r.processingDetails?.ipAckDateFromWh || "-",
-      ],
-      [
-        "Name of Courier",
-        (r) => r.processingDetails?.ipCourierName || "-",
-      ],
-      ["Customer Feedback", (r) => r.customerFeedback || "-"],
+      ["Address for Cal Certificate", (r) => r.calCertificateAddress || "-"],
+      ["Description of Issue", (r) => r.description || "-"],
       ["Admin Note", (r) => r.processingDetails?.ipAdminNote || "-"],
-      [
-        "Reason for Waiting",
-        (r) => r.processingDetails?.ipReasonForWaiting || "-",
-      ],
-      ["Remark", (r) => r.processingDetails?.ipRemark || "-"],
+      ["Received Date", (r) => r.processingDetails?.ipReceivedDate || "-"],
       [
         "Date of Investigation",
         (r) => r.processingDetails?.ipDateOfInvestigation || "-",
       ],
+      ["Warranty", (r) => r.processingDetails?.ipWarranty || "-"],
       [
         "Investigation Details",
         (r) => r.processingDetails?.ipInvestigationDetails || "-",
       ],
       ["Repair Details", (r) => r.processingDetails?.ipRepairDetails || "-"],
+      ["Estimate Date", (r) => r.processingDetails?.ipEstimateDate || "-"],
+      [
+        "Estimate Amount INR",
+        (r) => r.processingDetails?.ipEstimateAmount || "-",
+      ],
+      ["P.O. No. & Date", (r) => r.processingDetails?.ipPoNoAndDate || "-"],
+      ["PO Received Date", (r) => r.processingDetails?.ipPoReceivedDate || "-"],
+      ["OEM RMA No.", (r) => r.processingDetails?.ipOemRmaNo || "-"],
+      ["Date of Sent", (r) => r.processingDetails?.ipDateOfSent || "-"],
+      [
+        "Platform/ Module",
+        (r) => r.processingDetails?.ipPlatformModule || "-",
+      ],
+      ["OEM Quotation", (r) => r.processingDetails?.ipOemQuotation || "-"],
+      [
+        "Date of Receving",
+        (r) => r.processingDetails?.ipDateOfReceivingFromOem || "-",
+      ],
+      ["DC No. & Date", (r) => r.processingDetails?.ipDcNoAndDate || "-"],
+      ["Dispatched Date", (r) => r.processingDetails?.ipDispatchedDate || "-"],
+      ["LR No.", (r) => r.processingDetails?.ipLrNo || "-"],
+      ["Open / Closed", (r) => fmtStatus(r.status)],
+      ["Open Awaiting for", (r) => pendingFrom(r)],
+      ["Reason for waiting", (r) => r.processingDetails?.ipReasonForWaiting || "-"],
+      ["Delivered Date", (r) => r.processingDetails?.ipDeliveredDate || "-"],
+      ["Ack. Date", (r) => r.processingDetails?.ipAckDateFromWh || "-"],
+      ["Submission Reference", (r) => r.id || "-"],
+      ["RMA Current Status", (r) => r.customStatus || "-"],
+      ["RMA Status", (r) => r.rmaStatus || "RMA Not Received"],
+      ["Name of Courier", (r) => r.processingDetails?.ipCourierName || "-"],
+      ["Customer Feedback", (r) => r.customerFeedback || "-"],
+      ["Estimate Number", (r) => r.processingDetails?.ipEstimateNumber || "-"],
+      ["Remark", (r) => r.processingDetails?.ipRemark || "-"],
       [
         "Uploaded Files",
         (r) =>
@@ -814,12 +797,10 @@ app.get("/api/stats", async (req, res) => {
       total: db.length,
       fresh: countStatus("fresh"),
       pending: countStatus("pending"),
-      pendingFromCustomer: db.filter((r) =>
-        isPendingFlag(r.pendingForCustomer),
-      ).length,
-      pendingFromFastech: db.filter((r) =>
-        isPendingFlag(r.pendingForFastech),
-      ).length,
+      pendingFromCustomer: db.filter((r) => isPendingFlag(r.pendingForCustomer))
+        .length,
+      pendingFromFastech: db.filter((r) => isPendingFlag(r.pendingForFastech))
+        .length,
       pendingFromOem: db.filter((r) => isPendingFlag(r.pendingForOem)).length,
       disapproved: countStatus("disapproved"),
       closed: countStatus("closed"),
@@ -842,9 +823,7 @@ app.get("/api/support", async (req, res) => {
     });
     const formatted = rows.map(formatSupport);
     res.json(
-      formatted.sort(
-        (a, b) => parseIST(b.createdAt) - parseIST(a.createdAt),
-      ),
+      formatted.sort((a, b) => parseIST(b.createdAt) - parseIST(a.createdAt)),
     );
   } catch (err) {
     res.status(500).json({ message: err.message || "Failed to load support." });
@@ -865,8 +844,7 @@ app.get("/api/support/stats", async (req, res) => {
       String(s || "")
         .toLowerCase()
         .replace(/\s+/g, "");
-    const count = (s) =>
-      support.filter((r) => norm(r.status) === s).length;
+    const count = (s) => support.filter((r) => norm(r.status) === s).length;
     res.json({
       total: support.length,
       open: count("open"),
@@ -877,9 +855,8 @@ app.get("/api/support/stats", async (req, res) => {
       pendingFromFastech: support.filter((r) =>
         isPendingFlag(r.pendingForFastech),
       ).length,
-      pendingFromOem: support.filter((r) =>
-        isPendingFlag(r.pendingForOem),
-      ).length,
+      pendingFromOem: support.filter((r) => isPendingFlag(r.pendingForOem))
+        .length,
     });
   } catch (err) {
     res.status(500).json({ message: err.message || "Support stats failed." });
@@ -1123,7 +1100,7 @@ app.put("/api/support/:id", upload.array("images", 10), async (req, res) => {
       try {
         await sendMail({
           to: record.email,
-          subject: "Your FASCAL support ticket has been closed",
+          subject: "Your support ticket has been closed",
           text: `Hi ${record.name}, your support ticket ${ticketRef} has been successfully resolved and closed. If you need any further help, please reach out to us.`,
           html: `<p>Hi ${escapeHtml(record.name)},</p><p>Your support ticket <strong>${escapeHtml(ticketRef)}</strong> has been successfully resolved and closed.</p><p>If you need any further help, please reach out to us.</p>`,
         });

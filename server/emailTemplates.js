@@ -110,25 +110,25 @@ function fieldTable(rows) {
   return `<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px;border:0;">${rows.join("")}</table>`;
 }
 
-function wrapHtml(title, bodyHtml) {
+function wrapHtml(title = "", bodyHtml) {
   return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
   </head>
   <body>
-    <h3>${escHtml(title)}</h3>
+    ${title ? `<h3>${escHtml(title)}</h3>` : ""}
     ${bodyHtml}
   </body>
 </html>`;
 }
 
-function buildMessage(title, subject, text, includeCidImage) {
+function buildMessage(subject, text, includeCidImage) {
   let bodyHtml = textToHtml(text);
   if (includeCidImage) {
     bodyHtml += `<p><img src="cid:image001" alt="Fastech" /></p>`;
   }
-  return { subject, text, html: wrapHtml(title, bodyHtml) };
+  return { subject, text, html: wrapHtml("", bodyHtml) };
 }
 
 function buildHtml(title, subject, text, includeCidImage, bodyHtml) {
@@ -170,7 +170,7 @@ function approvalAttachments() {
 
 function buildSubmissionEmail(request) {
   const id = request.id || "";
-  const subject = `RMA Request Submitted Successfully - TMI ID: ${id}`;
+  const subject = `RMA Request Submitted Successfully `;
   const text = [
     `Hello ${request.name || ""},`,
     "",
@@ -184,7 +184,7 @@ function buildSubmissionEmail(request) {
     "Our team will review your request and update you once the request has been processed.",
     "",
   ].join("\n");
-  return buildMessage("Request Submission", subject, text, false);
+  return buildMessage(subject, text, false);
 }
 
 function buildSupportSubmissionEmail(request) {
@@ -328,6 +328,9 @@ function buildApprovalEmail(request, opts = {}) {
   const statusNotes = opts.statusNotes || request.ipAdminNote || "";
   const billTo = request.billingAddress || "";
   const returnTo = request.returnAddress || "";
+  const isNarda = String(request.oem || "").toLowerCase() === "narda";
+  const isCalibration =
+    String(request.serviceType || "").toLowerCase() === "calibration";
 
   const companyAddressLines = [
     ...COMPANY.addressLines,
@@ -359,7 +362,19 @@ function buildApprovalEmail(request, opts = {}) {
     `Email: ${request.email || ""}`,
     `Sender's Comapny Address: ${billTo}`,
     `Product Model: ${request.product || ""}`,
-    `Product Serial Number: ${request.serialBaseUnit || request.serialSingle || ""}`,
+    ...(isNarda
+      ? [
+          `Base Unit S/N: ${request.serialBaseUnit || ""}`,
+          `RF Cable S/N: ${request.serialRfCable || ""}`,
+          `Antenna S/N: ${request.serialAntenna || ""}`,
+        ]
+      : [`Product Serial Number: ${request.serialSingle || ""}`]),
+    ...(isCalibration
+      ? [
+          `PO Number: ${request.poNumber || ""}`,
+          `PO Date: ${formatDate(request.poDate)}`,
+        ]
+      : []),
     `Bill-to Address(if applicable): ${billTo}`,
     `Return Address: ${returnTo}`,
   ].join("\n");
@@ -391,10 +406,19 @@ function buildApprovalEmail(request, opts = {}) {
       fieldRow("Email:", request.email),
       fieldRow("Sender's Comapny Address:", billTo),
       fieldRow("Product Model:", request.product),
-      fieldRow(
-        "Product Serial Number:",
-        request.serialBaseUnit || request.serialSingle,
-      ),
+      ...(isNarda
+        ? [
+            fieldRow("Base Unit S/N:", request.serialBaseUnit),
+            fieldRow("RF Cable S/N:", request.serialRfCable),
+            fieldRow("Antenna S/N:", request.serialAntenna),
+          ]
+        : [fieldRow("Product Serial Number:", request.serialSingle)]),
+      ...(isCalibration
+        ? [
+            fieldRow("PO Number:", request.poNumber),
+            fieldRow("PO Date:", formatDate(request.poDate)),
+          ]
+        : []),
       fieldRow("Bill-to Address(if applicable):", billTo),
       fieldRow("Return Address:", returnTo),
     ])}
@@ -407,20 +431,18 @@ function buildApprovalEmail(request, opts = {}) {
   return {
     subject,
     text,
-    html: wrapHtml("RMA Request Approved", bodyHtml),
+    html: wrapHtml(bodyHtml),
     attachments,
   };
 }
 
 function buildDisapprovalEmail(request, opts = {}) {
   const id = request.id || "";
-  const subject = `RMA Request Disapproved - TMI ID: ${id}`;
+  const subject = `RMA Request Disapproved`;
   const sign = signature(opts);
   const reason = request.disapprovalReason || "No reason was provided.";
   const text = [
     `Hello ${request.name || ""},`,
-    "",
-    "Your RMA request has been disapproved.",
     "",
     "Admin Note:",
     reason,
