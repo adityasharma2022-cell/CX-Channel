@@ -80,7 +80,7 @@ async function sendMail({
     const result = await transporter.sendMail({
       from: `"Admin" <${SENDER_EMAIL}>`,
       to,
-      cc: cc || process.env.CC_EMAIL || undefined,
+      cc: cc || undefined,
       subject,
       text,
       html: html || text,

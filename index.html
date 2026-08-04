@@ -501,13 +501,13 @@
         color: #b91c1c;
       }
       .rma-current-status-input {
-        border-color: var(--primary) !important;
-        background: #f0f9ff !important;
-        color: #0c4a6e !important;
-        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
+        border-color: #f59e0b !important;
+        background: #fff7ed !important;
+        color: #7c2d12 !important;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
       }
       .rma-current-status-input:focus {
-        border-color: var(--primary) !important;
+        border-color: #f59e0b !important;
       }
       .pagination {
         display: flex;
@@ -891,9 +891,9 @@
               <div>
                 <h3>View RMA Requests</h3>
                 <p>
-                  Filter by OEM, service type, status, PO number, or RMA
-                  number. Click any row to view full details and update the
-                  request inline.
+                  Filter by OEM, service type, status, PO number, or RMA number.
+                  Click any row to view full details and update the request
+                  inline.
                 </p>
               </div>
               <button class="btn btn-primary" onclick="exportCsv()">
@@ -1352,7 +1352,7 @@
             return false;
           if (
             af.poNumber &&
-            !String(r.poNumber || "")
+            !String(r.processingDetails?.ipPoNoAndDate || "")
               .toLowerCase()
               .includes(af.poNumber)
           )
@@ -1433,7 +1433,7 @@
           </button>
         </td>
         <td style="font-size:12px;color:var(--muted);white-space:nowrap;">${esc(r.rmaIssuedAt || "-")}</td>
-        <td>${esc(r.poNumber || "-")}</td>
+        <td>${esc(r.processingDetails?.ipPoNoAndDate || "")}</td>
         <td>${esc(r.oem || "-")}</td>
         <td>${esc(r.serviceType || "-")}</td>
         <td>
@@ -1493,7 +1493,7 @@
         const cr = currentRequest;
 
         document.getElementById("modalTitle").textContent =
-          `Request — ${displayRma(cr) !== "—" ? displayRma(cr) : shortId(cr.id || "")}`;
+          `RMA number — ${displayRma(cr) !== "—" ? displayRma(cr) : shortId(cr.id || "")}`;
 
         document.getElementById("modalDetailsWrap").innerHTML = `
       <div class="detail-section" style="margin-bottom:14px;">
@@ -1524,7 +1524,7 @@
             <div class="d-value"><span class="${pillClass(cr.status)}">${esc(fmtStatus(cr.status))}</span></div>
           </div>
           <div class="detail-item">
-            <div class="d-label" style="color: var(--primary-dark);">RMA Current Status</div>
+            <div class="d-label" style="color: #ea580c;">RMA Current Status</div>
             <div class="field">
               <input
                 id="uCustomStatus"
@@ -1833,9 +1833,8 @@
 
         loadInternalDetails(cr.id);
 
-        const ipCustomerFeedbackEl = document.getElementById(
-          "ipCustomerFeedback",
-        );
+        const ipCustomerFeedbackEl =
+          document.getElementById("ipCustomerFeedback");
         if (ipCustomerFeedbackEl)
           ipCustomerFeedbackEl.value = cr.customerFeedback || "";
 
