@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ path: __dirname + "/.env" });
 const fs = require("fs");
 const path = require("path");
 
@@ -198,6 +198,39 @@ function buildSubmissionEmail(request) {
       : []),
     "",
     "Our team will review your request and update you once the request has been processed.",
+    "",
+  ].join("\n");
+  return buildMessage(subject, text, false);
+}
+
+function buildAdminSubmissionEmail(request) {
+  const id = request.id || "";
+  const subject = `RMA Request Submitted Successfully `;
+  const isNarda = String(request.oem || "").toLowerCase() === "narda";
+  const isCalibration =
+    String(request.serviceType || "").toLowerCase() === "calibration";
+  const text = [
+    "Hello!",
+    "",
+    `You have a new request for ${request.oem || ""} ${request.serviceType || ""}`,
+    "",
+    `Date of Submission: ${formatDate(request.createdAt)}`,
+    `OEM: ${request.oem || ""}`,
+    `Service Type: ${request.serviceType || ""}`,
+    `Product Model: ${request.product || ""}`,
+    ...(isNarda
+      ? [
+          `Base Unit S/N: ${request.serialBaseUnit || ""}`,
+          `RF Cable S/N: ${request.serialRfCable || ""}`,
+          `Antenna S/N: ${request.serialAntenna || ""}`,
+        ]
+      : [`Product Serial Number: ${request.serialSingle || ""}`]),
+    ...(isCalibration
+      ? [
+          `PO Number: ${request.poNumber || ""}`,
+          `PO Date: ${formatDate(request.poDate)}`,
+        ]
+      : []),
     "",
   ].join("\n");
   return buildMessage(subject, text, false);
@@ -460,6 +493,7 @@ function buildDisapprovalEmail(request, opts = {}) {
 
 module.exports = {
   buildSubmissionEmail,
+  buildAdminSubmissionEmail,
   buildSupportSubmissionEmail,
   buildApprovalEmail,
   buildDisapprovalEmail,

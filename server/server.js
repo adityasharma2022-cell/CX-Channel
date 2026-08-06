@@ -7,6 +7,7 @@ const bcrypt = require("bcryptjs");
 const { sendMail, verifyMailer } = require("./mailer");
 const {
   buildSubmissionEmail,
+  buildAdminSubmissionEmail,
   buildSupportSubmissionEmail,
   buildApprovalEmail,
   buildDisapprovalEmail,
@@ -402,7 +403,7 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
     }
 
     try {
-      const mail = buildSubmissionEmail(record);
+      const mail = buildAdminSubmissionEmail(record);
       await sendMail({
         to: teamEmail,
         subject: mail.subject,
@@ -1156,33 +1157,18 @@ app.get("/api/support/export/csv", async (req, res) => {
       "oem",
       "product",
       "softwareVersion",
-      "serialSingle",
-      "serialBaseUnit",
-      "serialRfCable",
-      "serialAntenna",
-      "billingAddress",
-      "returnAddress",
-      "calCertificateAddress",
       "description",
       "additionalInfo",
       "priority",
       "status",
-      "pendingForCustomer",
-      "pendingForFastech",
-      "pendingForOem",
       "assignedTeam",
       "assignedName",
       "internalNote",
       "customerFeedback",
-      "approvalStatus",
-      "customerMailStatus",
-      "disapprovalReason",
       "createdAt",
       "updatedAt",
     ];
-    const keys = [
-      ...new Set([...viewKeys, ...rows.flatMap((r) => Object.keys(r))]),
-    ].filter((key) => !excluded.has(key));
+    const keys = viewKeys.filter((key) => !excluded.has(key));
     const heading = (key) =>
       key === "assignedTeam"
         ? "Assigned To Team"

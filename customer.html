@@ -606,7 +606,7 @@
                 <div class="search-results" id="productResults"></div>
                 <input id="product" type="hidden" />
                 <div class="note">
-                  Select one product model from the available options.
+                  Type to search from available models or enter your own model.
                 </div>
               </div>
 
@@ -996,7 +996,7 @@
 
         if (!filtered.length) {
           results.innerHTML =
-            '<div class="search-result empty">No matching models found</div>';
+            '<div class="search-result empty">No matching models found. You can still type your own model.</div>';
           return;
         }
 
@@ -1008,6 +1008,31 @@
           )
           .join("");
 
+        results.querySelectorAll(".search-result").forEach((button) => {
+          button.addEventListener("click", () => {
+            const value = button.getAttribute("data-value");
+            productInput.value = value;
+            searchInput.value = value;
+            results.innerHTML = "";
+          });
+        });
+      }
+
+      function showAllProductModels() {
+        const oem = document.getElementById("oem").value;
+        const results = document.getElementById("productResults");
+        if (!oem || oem === "Others") return;
+        const options = OEM_MODELS[oem] || [];
+        if (!options.length) return;
+        const productInput = document.getElementById("product");
+        const searchInput = document.getElementById("productSearch");
+        results.innerHTML = options
+          .map(
+            (item) => `
+      <button type="button" class="search-result" data-value="${escapeHtml(item)}">${escapeHtml(item)}</button>
+    `,
+          )
+          .join("");
         results.querySelectorAll(".search-result").forEach((button) => {
           button.addEventListener("click", () => {
             const value = button.getAttribute("data-value");
@@ -1090,11 +1115,18 @@
       document
         .getElementById("productSearch")
         .addEventListener("input", (event) => {
+          document.getElementById("product").value =
+            event.target.value.trim();
           renderProductResults(event.target.value);
         });
 
       document.getElementById("productSearch").addEventListener("focus", () => {
-        renderProductResults(document.getElementById("productSearch").value);
+        const current = document.getElementById("productSearch").value;
+        if (current.trim()) {
+          renderProductResults(current);
+        } else {
+          showAllProductModels();
+        }
       });
 
       document

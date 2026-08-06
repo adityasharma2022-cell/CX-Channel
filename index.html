@@ -947,6 +947,11 @@
                 <input id="fPoNumber" placeholder="Search PO number" />
               </div>
 
+              <div class="field">
+                <label>Received Date</label>
+                <input id="fReceivedDate" placeholder="Search received date" />
+              </div>
+
               <div class="filter-actions">
                 <button class="btn btn-primary" onclick="applyFilters()">
                   Search
@@ -1026,13 +1031,13 @@
                     <th>Sr.</th>
                     <th>RMA No</th>
                     <th>RMA Date</th>
+                    <th>Received Date</th>
                     <th>PO Number</th>
                     <th>OEM</th>
                     <th>Service Type</th>
                     <th>Product Model</th>
                     <th>Customer Name</th>
                     <th>Company</th>
-                    <th>Designation</th>
                     <th>Status</th>
                     <th>RMA Status</th>
                     <th>Pending From</th>
@@ -1128,6 +1133,7 @@
         service: "",
         status: "",
         poNumber: "",
+        receivedDate: "",
       };
 
       const esc = (s) =>
@@ -1288,12 +1294,17 @@
         af.poNumber = (document.getElementById("fPoNumber").value || "")
           .trim()
           .toLowerCase();
+        af.receivedDate = (
+          document.getElementById("fReceivedDate").value || ""
+        )
+          .trim()
+          .toLowerCase();
         page = 1;
         buildFiltered();
       }
 
       function resetFilters() {
-        ["fKeyword", "fOem", "fService", "fStatus", "fPoNumber"].forEach(
+        ["fKeyword", "fOem", "fService", "fStatus", "fPoNumber", "fReceivedDate"].forEach(
           (id) => (document.getElementById(id).value = ""),
         );
         Object.keys(af).forEach((k) => (af[k] = ""));
@@ -1355,6 +1366,13 @@
             !String(r.processingDetails?.ipPoNoAndDate || "")
               .toLowerCase()
               .includes(af.poNumber)
+          )
+            return false;
+          if (
+            af.receivedDate &&
+            !String(r.processingDetails?.ipReceivedDate || "")
+              .toLowerCase()
+              .includes(af.receivedDate)
           )
             return false;
           if (af.keyword) {
@@ -1432,7 +1450,8 @@
             <strong>${esc(displayRma(r))}</strong>
           </button>
         </td>
-        <td style="font-size:12px;color:var(--muted);white-space:nowrap;">${esc(r.rmaIssuedAt || "-")}</td>
+        <td style="font-size:12px;color:var(--muted);white-space:nowrap;">${esc(String(r.rmaIssuedAt || "").split(", ")[0] || "-")}</td>
+        <td style="font-size:12px;color:var(--muted);white-space:nowrap;">${esc(r.processingDetails?.ipReceivedDate || "-")}</td>
         <td>${esc(r.processingDetails?.ipPoNoAndDate || "")}</td>
         <td>${esc(r.oem || "-")}</td>
         <td>${esc(r.serviceType || "-")}</td>
@@ -1446,7 +1465,6 @@
           </button>
         </td>
         <td>${esc(r.company || "-")}</td>
-        <td>${esc(r.designation || "-")}</td>
         <td><span class="${pillClass(r.status)}">${esc(fmtStatus(r.status))}</span></td>
         <td><span class="${pillClass(r.rmaStatus || "RMA Not Received")}">${esc(r.rmaStatus || "RMA Not Received")}</span></td>
         <td>${pendingFromCell}</td>
