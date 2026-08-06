@@ -1277,25 +1277,6 @@
           '<div class="detail-item"><div class="d-label">Software Version</div><div class="d-value">' +
           esc(record.softwareVersion || "—") +
           "</div></div>" +
-          '<div class="detail-item full"><div class="d-label">Serial Numbers</div><div class="d-value">' +
-          +(record.serialSingle ||
-          record.serialBaseUnit ||
-          record.serialRfCable ||
-          record.serialAntenna
-            ? "<div>Single: " +
-              esc(record.serialSingle || "—") +
-              "</div>" +
-              "<div>Base Unit: " +
-              esc(record.serialBaseUnit || "—") +
-              "</div>" +
-              "<div>RF Cable: " +
-              esc(record.serialRfCable || "—") +
-              "</div>" +
-              "<div>Antenna: " +
-              esc(record.serialAntenna || "—") +
-              "</div>"
-            : "—") +
-          "</div></div>" +
           '<div class="detail-item full"><div class="d-label">Billing Address</div><div class="d-value">' +
           esc(record.billingAddress || "—") +
           "</div></div>" +

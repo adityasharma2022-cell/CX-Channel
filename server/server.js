@@ -402,21 +402,12 @@ app.post("/api/requests", upload.array("images", 10), async (req, res) => {
     }
 
     try {
+      const mail = buildSubmissionEmail(record);
       await sendMail({
         to: teamEmail,
-        subject: `New request `,
-        text: `New request received from ${record.name} (${record.email}). Submission reference: ${record.id}`,
-        html: `
-          <p><strong>Name:</strong> ${record.name}</p>
-          <p><strong>Email:</strong> ${record.email}</p>
-          <p><strong>OEM:</strong> ${record.oem}</p>
-          <p><strong>Service:</strong> ${record.serviceType}</p>
-          <p><strong>Product:</strong> ${record.product}</p>
-          <p><strong>Location:</strong> ${record.location || "\u2014"}</p>
-          ${record.poNumber || record.poDate ? `<p><strong>PO:</strong> ${record.poNumber || "\u2014"} / ${record.poDate || "\u2014"}</p>` : ""}
-          <p><strong>Description:</strong> ${record.description}</p>
-          <p><em>RMA number will be assigned after admin approval.</em></p>
-        `,
+        subject: mail.subject,
+        text: mail.text,
+        html: mail.html,
         replyTo: record.email,
       });
       emails.team.sent = true;
@@ -564,6 +555,7 @@ app.put("/api/requests/:id", async (req, res) => {
           html: mail.html,
           replyTo: process.env.TEAM_EMAIL,
           attachments: mail.attachments,
+          cc: process.env.CC_EMAIL,
         });
         customerMail.sent = true;
         await prisma.request.update({
@@ -593,6 +585,7 @@ app.put("/api/requests/:id", async (req, res) => {
           text: mail.text,
           html: mail.html,
           replyTo: process.env.TEAM_EMAIL,
+          cc: process.env.CC_EMAIL,
         });
         customerMail.sent = true;
         await prisma.request.update({
@@ -944,10 +937,10 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
     try {
       await sendMail({
         to: teamEmail,
-        subject: `New FASCAL Support Request ${record.id}`,
+        subject: `New Support Request (${record.id})`,
         text: `New support request from ${record.name} (${record.email}). Priority: ${record.priority}.`,
         html: `
-          <h3>New FASCAL Support Request</h3>
+          <h3>New Support Request</h3>
           <p><strong>Submission Reference:</strong> ${record.id}</p>
           <p><strong>Priority:</strong> ${record.priority}</p>
           <p><strong>Name:</strong> ${record.name}</p>
@@ -957,8 +950,6 @@ app.post("/api/support", upload.array("images", 10), async (req, res) => {
           <p><strong>OEM:</strong> ${record.oem}</p>
           <p><strong>Product:</strong> ${record.product}</p>
           <p><strong>Software Version:</strong> ${record.softwareVersion || "\u2014"}</p>
-          <p><strong>Description:</strong> ${record.description || "\u2014"}</p>
-          <p><em>RMA number will be assigned after admin approval.</em></p>
         `,
         replyTo: record.email,
       });
@@ -1101,8 +1092,9 @@ app.put("/api/support/:id", upload.array("images", 10), async (req, res) => {
         await sendMail({
           to: record.email,
           subject: "Your support ticket has been closed",
-          text: `Hi ${record.name}, your support ticket ${ticketRef} has been successfully resolved and closed. If you need any further help, please reach out to us.`,
-          html: `<p>Hi ${escapeHtml(record.name)},</p><p>Your support ticket <strong>${escapeHtml(ticketRef)}</strong> has been successfully resolved and closed.</p><p>If you need any further help, please reach out to us.</p>`,
+          text: `Hi ${record.name}, your support ticket ${ticketRef} has been successfully resolved and closed. If you need any further help, please reach out to us.\n\nService@fastech-india.com\n8693888676`,
+          html: `<p>Hi ${escapeHtml(record.name)},</p><p>Your support ticket <strong>${escapeHtml(ticketRef)}</strong> has been successfully resolved and closed.</p><p>If you need any further help, please reach out to us.</p><p>Service@fastech-india.com<br/>8693888676</p>`,
+          cc: process.env.CC_EMAIL,
         });
         customerMail.sent = true;
         await prisma.support.update({
