@@ -171,15 +171,31 @@ function approvalAttachments() {
 function buildSubmissionEmail(request) {
   const id = request.id || "";
   const subject = `RMA Request Submitted Successfully `;
+  const isNarda = String(request.oem || "").toLowerCase() === "narda";
+  const isCalibration =
+    String(request.serviceType || "").toLowerCase() === "calibration";
   const text = [
     `Hello ${request.name || ""},`,
     "",
     "Your RMA request has been successfully submitted.",
     "",
-    `TMI ID: ${id}`,
     `Date of Submission: ${formatDate(request.createdAt)}`,
     `OEM: ${request.oem || ""}`,
     `Service Type: ${request.serviceType || ""}`,
+    `Product Model: ${request.product || ""}`,
+    ...(isNarda
+      ? [
+          `Base Unit S/N: ${request.serialBaseUnit || ""}`,
+          `RF Cable S/N: ${request.serialRfCable || ""}`,
+          `Antenna S/N: ${request.serialAntenna || ""}`,
+        ]
+      : [`Product Serial Number: ${request.serialSingle || ""}`]),
+    ...(isCalibration
+      ? [
+          `PO Number: ${request.poNumber || ""}`,
+          `PO Date: ${formatDate(request.poDate)}`,
+        ]
+      : []),
     "",
     "Our team will review your request and update you once the request has been processed.",
     "",
@@ -221,8 +237,8 @@ function buildSupportSubmissionEmail(request) {
     "Designation:",
     request.designation || "",
     "",
-    "Department/Circle:",
-    request.location || request.department || "",
+    "Location:",
+    request.location || "",
     "",
     "Email:",
     request.email || "",
@@ -234,12 +250,6 @@ function buildSupportSubmissionEmail(request) {
     "",
     "Product Model:",
     request.product || "",
-    "",
-    "Base Unit:",
-    request.serialBaseUnit || request.serialSingle || "",
-    "",
-    "Antenna/Probe:",
-    request.serialAntenna || "",
     "",
     "Software Version:",
     request.softwareVersion || "",
@@ -280,15 +290,13 @@ function buildSupportSubmissionEmail(request) {
       fieldCell("Contact Number", request.phone),
       fieldCell("Company Name", request.company),
       fieldCell("Designation", request.designation),
-      fieldCell("Department/Circle", request.location || request.department),
+      fieldCell("Location", request.location),
       fieldCell("Email", request.email),
       fieldCell("Company Address", request.billingAddress),
     ])}
     ${h4("Product Details")}
     ${gridHtml([
       fieldCell("Product Model", request.product),
-      fieldCell("Base Unit", request.serialBaseUnit || request.serialSingle),
-      fieldCell("Antenna/Probe", request.serialAntenna),
       fieldCell("Software Version", request.softwareVersion),
       fieldCell(
         "Other Product Information",
@@ -358,7 +366,7 @@ function buildApprovalEmail(request, opts = {}) {
     `Sender's Contact No: ${request.phone || ""}`,
     `Sender's Company Name: ${request.company || ""}`,
     `Sender's Designation: ${request.designation || ""}`,
-    `Sender's Department/Circle: ${request.location || request.department || ""}`,
+    `Sender's Location: ${request.location || ""}`,
     `Email: ${request.email || ""}`,
     `Sender's Comapny Address: ${billTo}`,
     `Product Model: ${request.product || ""}`,
@@ -400,8 +408,8 @@ function buildApprovalEmail(request, opts = {}) {
       fieldRow(
         "Sender's Designation:",
         request.designation,
-        "Sender's Department/Circle:",
-        request.location || request.department,
+        "Sender's Location:",
+        request.location,
       ),
       fieldRow("Email:", request.email),
       fieldRow("Sender's Comapny Address:", billTo),
@@ -431,24 +439,23 @@ function buildApprovalEmail(request, opts = {}) {
   return {
     subject,
     text,
-    html: wrapHtml(bodyHtml),
+    html: wrapHtml("", bodyHtml),
     attachments,
   };
 }
 
 function buildDisapprovalEmail(request, opts = {}) {
   const id = request.id || "";
-  const subject = `RMA Request Disapproved`;
+  const subject = `RMA Request Disapproved - ${id}`;
   const sign = signature(opts);
   const reason = request.disapprovalReason || "No reason was provided.";
   const text = [
-    `Hello ${request.name || ""},`,
-    "",
-    "Admin Note:",
-    reason,
+    `Hello, ${request.name || ""}.`,
+    "Your RMA has been disapproved",
+    `Admin Note: ${reason}`,
     "",
   ].join("\n");
-  return buildMessage("RMA Request Disapproved", subject, text, false);
+  return buildMessage(subject, text, false);
 }
 
 module.exports = {
